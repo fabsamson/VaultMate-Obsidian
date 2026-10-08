@@ -40,7 +40,7 @@ describe("normalizeSettings", () => {
 	});
 
 	it("keeps valid values", () => {
-		const saved = { journal: { enabled: false, decisionTag: "choix", predictionTag: "pari" } };
+		const saved = { journal: { enabled: false, decisionTag: "choix", predictionTag: "pari" }, journalState: { lastNoticeDate: "2026-10-09" } };
 		expect(normalizeSettings(saved)).toEqual(saved);
 	});
 
@@ -52,6 +52,12 @@ describe("normalizeSettings", () => {
 	it("resets both tags when they clash", () => {
 		const loaded = normalizeSettings({ journal: { decisionTag: "pari", predictionTag: "PARI" } });
 		expect(loaded.journal).toMatchObject({ decisionTag: "decision", predictionTag: "prediction" });
+	});
+
+	it("drops an invalid notice date", () => {
+		for (const bad of ["yesterday", 5, null, "2026-1-9"]) {
+			expect(normalizeSettings({ journalState: { lastNoticeDate: bad } }).journalState.lastNoticeDate).toBe("");
+		}
 	});
 
 	it("drops unknown keys and does not share the defaults object", () => {

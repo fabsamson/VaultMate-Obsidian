@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
 	ensureTag,
+	getDescription,
 	getInlineField,
 	getTags,
 	getTaskDate,
@@ -310,5 +311,14 @@ describe("whole-line workflow", () => {
 		line = { ...line, body: setInlineField(line.body, "quality", "good") };
 		line = { ...line, body: setTaskDate(line.body, "done", "2027-01-08") };
 		expect(serializeTaskLine(line)).toBe("    - [x] Move to Lyon #decision [confidence:: 70%] [outcome:: better] [quality:: good] ➕ 2026-10-08 📅 2027-01-08 ✅ 2027-01-08 ^dec1");
+	});
+});
+
+describe("getDescription", () => {
+	it("returns the text without tags, fields, emojis and block id", () => {
+		expect(getDescription("Move to Lyon #decision [confidence:: 70%] ➕ 2026-10-08 📅 2027-01-08 ^id")).toBe("Move to Lyon");
+		expect(getDescription("Buy #decision a desk [confidence:: 70%]")).toBe("Buy a desk");
+		expect(getDescription("Read `#code` and [[Note#Heading]] #decision ⏫ 🔁 every month")).toBe("Read `#code` and [[Note#Heading]]");
+		expect(getDescription("#decision")).toBe("");
 	});
 });

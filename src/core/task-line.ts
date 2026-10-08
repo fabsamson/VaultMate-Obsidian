@@ -156,6 +156,19 @@ export function hasTag(body: string, tag: string): boolean {
 	});
 }
 
+/** The description of a body: its text without tags, inline fields, Tasks emojis and block id, on one line. */
+export function getDescription(body: string): string {
+	const { main } = splitBody(body);
+	const spans = [...findTags(main).map((tag) => ({ start: tag.start, end: tag.start + 1 + tag.name.length })), ...findFields(main)];
+	let out = "";
+	let from = 0;
+	for (const { start, end } of spans.sort((a, b) => a.start - b.start)) {
+		out += `${main.slice(from, start)} `;
+		from = Math.max(from, end);
+	}
+	return (out + main.slice(from)).replace(/\s+/g, " ").trim();
+}
+
 /** Adds `#tag` after the description, before the inline fields and the emoji block, unless the body already has it. */
 export function ensureTag(body: string, tag: string): string {
 	if (hasTag(body, tag)) return body;

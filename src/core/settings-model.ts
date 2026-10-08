@@ -8,13 +8,21 @@ export interface JournalSettings {
 	predictionTag: string;
 }
 
+/** Small state a feature keeps next to its settings (shared between devices by Syncthing, rarely written). */
+export interface JournalState {
+	/** Day (`YYYY-MM-DD`) of the last "reviews due" notice; empty until one was shown. */
+	lastNoticeDate: string;
+}
+
 /** Nested per feature; a feature's settings live under its own key. */
 export interface VaultMateSettings {
 	journal: JournalSettings;
+	journalState: JournalState;
 }
 
 export const DEFAULT_SETTINGS: VaultMateSettings = {
 	journal: { enabled: true, decisionTag: "decision", predictionTag: "prediction" },
+	journalState: { lastNoticeDate: "" },
 };
 
 const TAG_RE = /^[\p{L}\p{N}\p{M}_/-]+$/u;
@@ -59,7 +67,10 @@ export function normalizeSettings(value: unknown): VaultMateSettings {
 		decisionTag = defaults.decisionTag;
 		predictionTag = defaults.predictionTag;
 	}
+	const state = isRecord(value) && isRecord(value.journalState) ? value.journalState : {};
+	const lastNoticeDate = typeof state.lastNoticeDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(state.lastNoticeDate) ? state.lastNoticeDate : "";
 	return {
 		journal: { enabled: typeof journal.enabled === "boolean" ? journal.enabled : defaults.enabled, decisionTag, predictionTag },
+		journalState: { lastNoticeDate },
 	};
 }
