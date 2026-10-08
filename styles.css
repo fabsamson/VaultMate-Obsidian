@@ -8,6 +8,7 @@
 	--vaultmate-text: #1d315d;
 	--vaultmate-text-muted: #53576a;
 	--vaultmate-primary: #315fb8;
+	--vaultmate-on-primary: #fffaed;
 	--vaultmate-seal: #e6573f;
 	--vaultmate-sakura: #f6d8d8;
 	--vaultmate-border: #1d315d;
@@ -23,6 +24,7 @@
 	--vaultmate-text: #fffaed;
 	--vaultmate-text-muted: #c3c8da;
 	--vaultmate-primary: #f2b84b;
+	--vaultmate-on-primary: #101a3e;
 	--vaultmate-seal: #ff8a73;
 	--vaultmate-sakura: #1f2e62;
 	--vaultmate-border: #fffaed;
@@ -108,4 +110,90 @@
 	margin: var(--size-4-1) 0 0;
 	color: var(--vaultmate-text-muted);
 	font-size: var(--font-ui-small);
+}
+
+.vaultmate-hub-section {
+	margin-bottom: var(--size-4-4);
+}
+
+/* VaultMate modals: add the `vaultmate` class to `modalEl`, so the palette and the paper look apply. */
+.modal.vaultmate {
+	border: 2px solid var(--vaultmate-border);
+	border-radius: 0;
+	background-color: var(--vaultmate-surface);
+	box-shadow: 4px 4px 0 var(--vaultmate-shadow);
+	color: var(--vaultmate-text);
+}
+
+/* Hanko stamp: sprite, bold label and an optional state line (HankoStamp.kt). */
+.vaultmate-hanko {
+	display: inline-flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 2px;
+	text-align: center;
+}
+
+.vaultmate-hanko-unearned .vaultmate-sprite {
+	opacity: 0.3;
+}
+
+.vaultmate-hanko-label {
+	font-size: var(--font-ui-small);
+	font-weight: 700;
+}
+
+.vaultmate-hanko-state {
+	color: var(--vaultmate-text-muted);
+	font-size: var(--font-ui-smaller);
+}
+
+/* Single-choice group: segmented control and chip row (PixelChip.kt). */
+.vaultmate-choice {
+	display: flex;
+	flex-wrap: wrap;
+}
+
+.vaultmate-choice-option {
+	min-height: 40px;
+	min-width: 40px;
+	height: auto;
+	padding: var(--size-4-1) var(--size-4-3);
+	border: 2px solid var(--vaultmate-rule);
+	border-radius: 0;
+	background-color: var(--vaultmate-surface);
+	box-shadow: none;
+	color: var(--vaultmate-text);
+	font-size: var(--font-ui-small);
+	font-weight: 500;
+	cursor: pointer;
+}
+
+/* Selected: filled, bold and ticked, so the state never relies on color alone. */
+.vaultmate-choice-option.is-selected {
+	border-color: var(--vaultmate-border);
+	background-color: var(--vaultmate-primary);
+	color: var(--vaultmate-on-primary);
+	font-weight: 700;
+}
+
+.vaultmate-choice-option.is-selected::before {
+	content: "\2713\00a0";
+}
+
+.vaultmate-choice-option:focus-visible {
+	outline: 2px solid var(--vaultmate-seal);
+	outline-offset: 2px;
+}
+
+.vaultmate-segmented .vaultmate-choice-option {
+	flex: 1 1 0;
+}
+
+.vaultmate-segmented .vaultmate-choice-option + .vaultmate-choice-option {
+	margin-left: -2px;
+}
+
+.vaultmate-chips {
+	gap: var(--size-4-2);
 }

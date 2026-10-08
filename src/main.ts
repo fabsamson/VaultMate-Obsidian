@@ -2,17 +2,18 @@ import { addIcon, Plugin, type WorkspaceLeaf } from "obsidian";
 
 import { normalizeSettings, type VaultMateSettings } from "./core/settings-model";
 import { VaultMateSettingTab } from "./settings";
-import { HUB_VIEW_TYPE, HubView } from "./ui/hub-view";
+import { HUB_VIEW_TYPE, HubView, type HubSection } from "./ui/hub-view";
 import { CAT_ICON_ID, CAT_ICON_SVG } from "./ui/icon";
 
 export default class VaultMatePlugin extends Plugin {
 	public settings: VaultMateSettings = normalizeSettings(undefined);
+	private readonly hubSections = new Map<string, HubSection>();
 
 	public async onload(): Promise<void> {
 		this.settings = normalizeSettings(await this.loadData());
 		this.addSettingTab(new VaultMateSettingTab(this));
 		addIcon(CAT_ICON_ID, CAT_ICON_SVG);
-		this.registerView(HUB_VIEW_TYPE, (leaf) => new HubView(leaf));
+		this.registerView(HUB_VIEW_TYPE, (leaf) => new HubView(leaf, () => this.sortedHubSections()));
 		this.addRibbonIcon(CAT_ICON_ID, "Open VaultMate", () => void this.openHub());
 		this.addCommand({
 			id: "open-panel",
@@ -26,8 +27,29 @@ export default class VaultMatePlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
+	/**
+	 * Called after a setting changed. Features read `this.settings` when they run, so the only thing
+	 * left to refresh is what is already on screen.
+	 */
 	public onSettingsChanged(): void {
-		// Nothing is cached yet; features read this.settings when they run.
+		this.refreshHubs();
+	}
+
+	/** Adds or replaces (same `id`) a section of the hub, then redraws the open hubs. */
+	public registerHubSection(section: HubSection): void {
+		this.hubSections.set(section.id, section);
+		this.refreshHubs();
+	}
+
+	/** Redraws every open hub; call it when the data behind a section changed. */
+	public refreshHubs(): void {
+		for (const leaf of this.app.workspace.getLeavesOfType(HUB_VIEW_TYPE)) {
+			if (leaf.view instanceof HubView) leaf.view.render();
+		}
+	}
+
+	private sortedHubSections(): HubSection[] {
+		return [...this.hubSections.values()].sort((a, b) => a.order - b.order);
 	}
 
 	private async openHub(): Promise<void> {
