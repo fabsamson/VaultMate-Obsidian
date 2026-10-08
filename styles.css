@@ -1,8 +1,10 @@
 /*
  * VaultMate palette, shared with the Android app (obsidian_widget core/ui/Palette.kt and
- * ObsidianWidgetTheme.kt). Only VaultMate's own views use it; notes keep the user's theme.
+ * ObsidianWidgetTheme.kt). Only VaultMate's own views use it; notes keep the user's theme, except for the
+ * line badge, which is the one VaultMate mark inside notes.
  */
-.vaultmate {
+.vaultmate,
+.vaultmate-badge {
 	--vaultmate-surface: #fffaed;
 	--vaultmate-surface-raised: #fff4d7;
 	--vaultmate-text: #1d315d;
@@ -18,7 +20,8 @@
 }
 
 /* Night indigo, as in the app's dark scheme. */
-.theme-dark .vaultmate {
+.theme-dark .vaultmate,
+.theme-dark .vaultmate-badge {
 	--vaultmate-surface: #101a3e;
 	--vaultmate-surface-raised: #17234e;
 	--vaultmate-text: #fffaed;
@@ -196,4 +199,201 @@
 
 .vaultmate-chips {
 	gap: var(--size-4-2);
+}
+
+/* Modal forms: labelled fields, actions and the read-only context of a review. */
+.vaultmate-field {
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-4-1);
+	margin: var(--size-4-3) 0;
+}
+
+.vaultmate-field-label {
+	color: var(--vaultmate-text-muted);
+	font-size: var(--font-ui-small);
+	font-weight: 700;
+}
+
+.vaultmate-input {
+	width: 100%;
+	min-height: 40px;
+}
+
+.vaultmate-statement {
+	margin: var(--size-4-2) 0 0;
+	font-weight: 700;
+}
+
+.vaultmate-context {
+	margin: var(--size-4-2) 0;
+	padding: var(--size-4-2) var(--size-4-2) var(--size-4-2) var(--size-4-6);
+	border-left: 3px solid var(--vaultmate-rule);
+	color: var(--vaultmate-text-muted);
+	font-size: var(--font-ui-small);
+}
+
+.vaultmate-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--size-4-2);
+	margin-top: var(--size-4-3);
+}
+
+.vaultmate-again {
+	margin-top: var(--size-4-4);
+	padding-top: var(--size-4-2);
+	border-top: 2px solid var(--vaultmate-rule);
+}
+
+.vaultmate-button {
+	min-height: 40px;
+	min-width: 40px;
+	padding: var(--size-4-1) var(--size-4-4);
+	border: 2px solid var(--vaultmate-border);
+	border-radius: 0;
+	background-color: var(--vaultmate-surface);
+	box-shadow: 2px 2px 0 var(--vaultmate-shadow);
+	color: var(--vaultmate-text);
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.vaultmate-button.mod-cta {
+	background-color: var(--vaultmate-primary);
+	color: var(--vaultmate-on-primary);
+}
+
+.vaultmate-button:disabled {
+	opacity: 0.5;
+	box-shadow: none;
+	cursor: not-allowed;
+}
+
+.vaultmate-button:focus-visible,
+.vaultmate-link:focus-visible,
+.vaultmate-review-main:focus-visible {
+	outline: 2px solid var(--vaultmate-seal);
+	outline-offset: 2px;
+}
+
+.vaultmate-link {
+	min-height: 40px;
+	padding: 0 var(--size-4-2);
+	border: none;
+	background: none;
+	box-shadow: none;
+	color: var(--vaultmate-primary);
+	font-weight: 700;
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+/* Hub: reviews grouped by date. */
+.vaultmate-review-group {
+	margin-bottom: var(--size-4-3);
+}
+
+.vaultmate-review-group-title {
+	margin-bottom: var(--size-4-1);
+	color: var(--vaultmate-text-muted);
+	font-size: var(--font-ui-smaller);
+	font-weight: 700;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+.vaultmate-review-row {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-2);
+	padding: var(--size-4-1) 0;
+	border-bottom: 1px solid var(--vaultmate-rule);
+}
+
+.vaultmate-review-main {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	align-items: flex-start;
+	min-height: 40px;
+	min-width: 0;
+	padding: var(--size-4-1) 0;
+	border: none;
+	background: none;
+	box-shadow: none;
+	color: var(--vaultmate-text);
+	text-align: left;
+	white-space: normal;
+	cursor: pointer;
+}
+
+.vaultmate-review-kind {
+	color: var(--vaultmate-primary);
+	font-size: var(--font-ui-smaller);
+	font-weight: 900;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+.vaultmate-review-statement {
+	font-weight: 500;
+	overflow-wrap: anywhere;
+}
+
+/* Editor suggestion: label and date. */
+.vaultmate-suggestion {
+	display: flex;
+	justify-content: space-between;
+	gap: var(--size-4-4);
+}
+
+.vaultmate-suggestion-date {
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+}
+
+.vaultmate-notice {
+	cursor: pointer;
+}
+
+/* Line badge: the one VaultMate mark inside notes. Small, discreet, readable in both themes. */
+.vaultmate-badge {
+	display: inline-block;
+	position: relative;
+	margin-left: 0.6em;
+	padding: 0 0.5em;
+	border: 1px solid var(--vaultmate-rule);
+	border-radius: 0;
+	background-color: var(--vaultmate-surface-raised);
+	box-shadow: none;
+	color: var(--vaultmate-text);
+	font-family: var(--font-interface);
+	font-size: 0.75em;
+	font-weight: 500;
+	line-height: 1.6;
+	height: auto;
+	vertical-align: baseline;
+	white-space: nowrap;
+	user-select: none;
+}
+
+button.vaultmate-badge.is-action {
+	cursor: pointer;
+}
+
+button.vaultmate-badge.is-action:hover {
+	border-color: var(--vaultmate-border);
+}
+
+button.vaultmate-badge:focus-visible {
+	outline: 2px solid var(--vaultmate-seal);
+	outline-offset: 1px;
+}
+
+/* A 40 px touch target without making the line taller. */
+.is-mobile button.vaultmate-badge::after {
+	content: "";
+	position: absolute;
+	inset: -10px -4px;
 }

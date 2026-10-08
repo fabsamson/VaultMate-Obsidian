@@ -140,3 +140,8 @@ export function newEntryLines(input: NewEntryInput): string[] {
 	});
 	return [line, ...items];
 }
+
+/** True for an empty line, or one that only has quote markers and indentation. */
+export function isEmptyLine(line: string): boolean {
+	return splitLine(line).content.trim() === "";
+}

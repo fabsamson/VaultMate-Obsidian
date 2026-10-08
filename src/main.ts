@@ -1,12 +1,14 @@
 import { addIcon, Plugin, type WorkspaceLeaf } from "obsidian";
 
 import { normalizeSettings, type VaultMateSettings } from "./core/settings-model";
+import { JournalFeature } from "./features/journal/journal";
 import { VaultMateSettingTab } from "./settings";
 import { HUB_VIEW_TYPE, HubView, type HubSection } from "./ui/hub-view";
 import { CAT_ICON_ID, CAT_ICON_SVG } from "./ui/icon";
 
 export default class VaultMatePlugin extends Plugin {
 	public settings: VaultMateSettings = normalizeSettings(undefined);
+	private readonly journal = new JournalFeature(this);
 	private readonly hubSections = new Map<string, HubSection>();
 
 	public async onload(): Promise<void> {
@@ -21,6 +23,7 @@ export default class VaultMatePlugin extends Plugin {
 			icon: CAT_ICON_ID,
 			callback: () => void this.openHub(),
 		});
+		this.journal.register();
 	}
 
 	public async saveSettings(): Promise<void> {
@@ -32,6 +35,7 @@ export default class VaultMatePlugin extends Plugin {
 	 * left to refresh is what is already on screen.
 	 */
 	public onSettingsChanged(): void {
+		this.journal.onSettingsChanged();
 		this.refreshHubs();
 	}
 
@@ -52,7 +56,7 @@ export default class VaultMatePlugin extends Plugin {
 		return [...this.hubSections.values()].sort((a, b) => a.order - b.order);
 	}
 
-	private async openHub(): Promise<void> {
+	public async openHub(): Promise<void> {
 		const { workspace } = this.app;
 		let leaf: WorkspaceLeaf | null = workspace.getLeavesOfType(HUB_VIEW_TYPE)[0] ?? null;
 		if (!leaf) {
