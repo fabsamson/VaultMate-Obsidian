@@ -1,0 +1,12 @@
+node_modules/
+main.js
+main.js.map
+data.json
+coverage/
+.DS_Store
+
+# Local planning and agent instructions: kept current locally, never committed
+docs/
+agents.md
+AGENTS.md
+PRODUCT.md

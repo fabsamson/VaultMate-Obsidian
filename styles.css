@@ -1,0 +1,111 @@
+/*
+ * VaultMate palette, shared with the Android app (obsidian_widget core/ui/Palette.kt and
+ * ObsidianWidgetTheme.kt). Only VaultMate's own views use it; notes keep the user's theme.
+ */
+.vaultmate {
+	--vaultmate-surface: #fffaed;
+	--vaultmate-surface-raised: #fff4d7;
+	--vaultmate-text: #1d315d;
+	--vaultmate-text-muted: #53576a;
+	--vaultmate-primary: #315fb8;
+	--vaultmate-seal: #e6573f;
+	--vaultmate-sakura: #f6d8d8;
+	--vaultmate-border: #1d315d;
+	--vaultmate-rule: #d6cebb;
+	--vaultmate-shadow: #1d315d;
+	--vaultmate-pattern-tint: #315fb8;
+}
+
+/* Night indigo, as in the app's dark scheme. */
+.theme-dark .vaultmate {
+	--vaultmate-surface: #101a3e;
+	--vaultmate-surface-raised: #17234e;
+	--vaultmate-text: #fffaed;
+	--vaultmate-text-muted: #c3c8da;
+	--vaultmate-primary: #f2b84b;
+	--vaultmate-seal: #ff8a73;
+	--vaultmate-sakura: #1f2e62;
+	--vaultmate-border: #fffaed;
+	--vaultmate-rule: #34457a;
+	--vaultmate-shadow: #060b1f;
+	--vaultmate-pattern-tint: #8fb0ea;
+}
+
+.vaultmate-hub {
+	background-color: var(--vaultmate-surface);
+	color: var(--vaultmate-text);
+}
+
+.vaultmate-sprite {
+	width: var(--vaultmate-sprite-size);
+	height: var(--vaultmate-sprite-size);
+	image-rendering: pixelated;
+}
+
+/* Seigaiha tile used as a mask, so one ink sprite takes the theme's tint. */
+.vaultmate-pattern-band {
+	height: 16px;
+	margin: calc(-1 * var(--size-4-3)) calc(-1 * var(--size-4-3)) var(--size-4-3);
+	background-color: var(--vaultmate-pattern-tint);
+	opacity: 0.35;
+	mask-image: var(--vaultmate-pattern);
+	mask-size: 16px 16px;
+	mask-repeat: repeat;
+}
+
+/* Small capitals label, a rule and an optional decorative kanji (SectionHeader.kt). */
+.vaultmate-section-header {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin: var(--size-4-2) 0 var(--size-4-3);
+}
+
+.vaultmate-section-label {
+	color: var(--vaultmate-primary);
+	font-size: var(--font-ui-smaller);
+	font-weight: 900;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+}
+
+.vaultmate-section-rule {
+	flex: 1;
+	height: 2px;
+	background-color: var(--vaultmate-rule);
+}
+
+.vaultmate-section-kanji {
+	color: var(--vaultmate-seal);
+	font-size: var(--font-ui-large);
+	font-weight: 700;
+}
+
+/* Paper panel: 2 px border and a hard 2 px offset shadow, no blur (PixelPanel.kt). */
+.vaultmate-panel {
+	margin: 0 2px 2px 0;
+	padding: var(--size-4-3);
+	border: 2px solid var(--vaultmate-border);
+	border-radius: 0;
+	background-color: var(--vaultmate-surface-raised);
+	box-shadow: 2px 2px 0 var(--vaultmate-shadow);
+	color: var(--vaultmate-text);
+}
+
+.vaultmate-empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+}
+
+.vaultmate-empty-title {
+	margin: var(--size-4-2) 0 0;
+	font-weight: 700;
+}
+
+.vaultmate-muted {
+	margin: var(--size-4-1) 0 0;
+	color: var(--vaultmate-text-muted);
+	font-size: var(--font-ui-small);
+}

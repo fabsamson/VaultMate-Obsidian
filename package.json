@@ -1,0 +1,35 @@
+{
+  "name": "vaultmate",
+  "version": "0.1.0",
+  "description": "A personal Obsidian companion that works with the VaultMate Android app.",
+  "main": "main.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "tsc --noEmit --skipLibCheck && node esbuild.config.mjs production",
+    "test": "vitest run",
+    "check": "tsc --noEmit --skipLibCheck",
+    "lint": "eslint src tests",
+    "sync-sprites": "node scripts/sync-sprites.mjs",
+    "version": "node version-bump.mjs && git add manifest.json versions.json"
+  },
+  "keywords": [
+    "obsidian",
+    "decision journal",
+    "related notes",
+    "location"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@eslint/json": "^0.14.0",
+    "@types/node": "^24.19.1",
+    "esbuild": "^0.28.2",
+    "eslint": "^10.12.0",
+    "eslint-plugin-obsidianmd": "^0.4.2",
+    "obsidian": "^1.13.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.71.1",
+    "vitest": "^5.0.3"
+  }
+}
