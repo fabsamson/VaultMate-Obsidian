@@ -3,7 +3,7 @@
   "name": "VaultMate",
   "version": "0.1.0",
   "minAppVersion": "1.13.0",
-  "description": "Track decisions and predictions, surface related notes and recommendations from your own vault, and add your location to notes with the VaultMate Android app.",
+  "description": "Track decisions and predictions, get questions that challenge a note, add places to notes, get collection recommendations, and find related notes.",
   "author": "Fabian Samson",
   "authorUrl": "https://github.com/fabsamson",
   "fundingUrl": "https://buymeacoffee.com/gibbonolive9442",

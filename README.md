@@ -6,14 +6,17 @@ VaultMate is a personal companion plugin for Obsidian, and the in-Obsidian half 
 
 ## Planned features
 
-- **Decision and prediction journal:** record a decision or a prediction, schedule its review ("Review this decision in 3 months"), review it with a guided form, and follow your track record.
-- **Context finder:** see which notes are worth reading next to the active note, and why each one was picked.
-- **Personal recommendations:** picks computed only from your vault, such as what to start next from your collections.
-- **Location stamp:** add your current latitude and longitude to a note's properties. On Android, the position comes from the VaultMate app, because Obsidian has no access to device location.
+- **Decision and prediction journal:** write a decision or a prediction anywhere as a task-style line, such as `- [ ] Move to Lyon #decision [confidence:: 70%] ➕ 2026-10-08 📅 2027-01-08`. The due date is the review date. Review it with a short guided form, and follow your track record and calibration.
+- **Challenge questions:** on request, an AI provider you configure reads the current note and returns a few open questions that challenge it. VaultMate shows questions only, never generated prose.
+- **Location:** add `latitude`, `longitude` and a place label to a note's properties by searching OpenStreetMap. On Android, the optional VaultMate app can supply the current position, because Obsidian has no access to device location.
+- **Collection recommendations:** on request, an AI provider suggests titles from a taste profile built from your own ratings.
+- **Context finder:** see which notes are worth reading next to the active note, and why each one was picked. Computed locally.
+
+AI features run only when you ask for them, with the provider, model and prompts you choose.
 
 ## Working with the VaultMate Android app
 
-The plugin and the app share data only through Markdown notes and properties in your vault. Review reminders are written as [Tasks](https://publish.obsidian.md/tasks/)-style lines with a due date, so the app's task widgets show them on the right day.
+The plugin and the app share data only through Markdown notes and properties in your vault. Review reminders are [Tasks](https://publish.obsidian.md/tasks/)-style lines with a due date, so the app's task widgets show them on the right day.
 
 ## Privacy
 
