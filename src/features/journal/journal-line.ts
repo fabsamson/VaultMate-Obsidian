@@ -163,7 +163,8 @@ export function convertToEntry(line: string, options: ConvertOptions): string {
 	let parsed = parseTaskLine(text);
 	if (classifyLine(text, options.tags)?.type === "prose") {
 		const prose = PROSE_RE.exec(parsed.body);
-		parsed = { ...parsed, body: parsed.body.slice(prose?.[0].length ?? 0) };
+		// The prose statement starts a sentence once the label is gone: capitalize a lowercase first letter.
+		parsed = { ...parsed, body: parsed.body.slice(prose?.[0].length ?? 0).replace(/^\p{Ll}/u, (c) => c.toUpperCase()) };
 	}
 	let { body } = toTaskLine(parsed);
 	body = ensureTag(body, tagOf(options.kind, options.tags));

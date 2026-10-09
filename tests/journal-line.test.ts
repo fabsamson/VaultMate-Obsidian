@@ -173,17 +173,26 @@ const OPTIONS: ConvertOptions = { kind: "decision", tags: TAGS, today: "2026-10-
 
 describe("convertToEntry", () => {
 	it("converts a prose line", () => {
-		expect(convertToEntry("Decision: switch the notes backup", OPTIONS)).toBe("- [ ] switch the notes backup #decision ➕ 2026-10-09 📅 2027-01-09");
+		expect(convertToEntry("Decision: switch the notes backup", OPTIONS)).toBe("- [ ] Switch the notes backup #decision ➕ 2026-10-09 📅 2027-01-09");
 		expect(convertToEntry("Prédiction : il pleuvra demain", { ...OPTIONS, kind: "prediction", confidence: 70 })).toBe(
-			"- [ ] il pleuvra demain #prediction [confidence:: 70%] ➕ 2026-10-09 📅 2027-01-09",
+			"- [ ] Il pleuvra demain #prediction [confidence:: 70%] ➕ 2026-10-09 📅 2027-01-09",
 		);
-		expect(convertToEntry("Decision：move the standup", OPTIONS)).toBe("- [ ] move the standup #decision ➕ 2026-10-09 📅 2027-01-09");
+		expect(convertToEntry("Decision：move the standup", OPTIONS)).toBe("- [ ] Move the standup #decision ➕ 2026-10-09 📅 2027-01-09");
+	});
+
+	it("capitalizes a cased first letter of a prose statement only", () => {
+		expect(convertToEntry("Prediction: the new release will not need a hotfix", { ...OPTIONS, kind: "prediction" })).toBe(
+			"- [ ] The new release will not need a hotfix #prediction ➕ 2026-10-09 📅 2027-01-09",
+		);
+		expect(convertToEntry("Décision : économiser plus", OPTIONS)).toBe("- [ ] Économiser plus #decision ➕ 2026-10-09 📅 2027-01-09");
+		expect(convertToEntry("Decision: 来週引っ越す", OPTIONS)).toBe("- [ ] 来週引っ越す #decision ➕ 2026-10-09 📅 2027-01-09");
+		expect(convertToEntry("- [ ] buy a desk #decision", OPTIONS)).toBe("- [ ] buy a desk #decision ➕ 2026-10-09 📅 2027-01-09");
 	});
 
 	it("keeps the list marker, checkbox and callout prefix", () => {
-		expect(convertToEntry("- Decision: ask for a raise", OPTIONS)).toBe("- [ ] ask for a raise #decision ➕ 2026-10-09 📅 2027-01-09");
-		expect(convertToEntry("> * Decision: in a callout", OPTIONS)).toBe("> * [ ] in a callout #decision ➕ 2026-10-09 📅 2027-01-09");
-		expect(convertToEntry("  - [ ] Decision: indented", OPTIONS)).toBe("  - [ ] indented #decision ➕ 2026-10-09 📅 2027-01-09");
+		expect(convertToEntry("- Decision: ask for a raise", OPTIONS)).toBe("- [ ] Ask for a raise #decision ➕ 2026-10-09 📅 2027-01-09");
+		expect(convertToEntry("> * Decision: in a callout", OPTIONS)).toBe("> * [ ] In a callout #decision ➕ 2026-10-09 📅 2027-01-09");
+		expect(convertToEntry("  - [ ] Decision: indented", OPTIONS)).toBe("  - [ ] Indented #decision ➕ 2026-10-09 📅 2027-01-09");
 	});
 
 	it("converts a tagged line, with or without a trailing space", () => {
@@ -218,7 +227,7 @@ describe("convertToEntry", () => {
 
 	it("produces a line that parses back", () => {
 		const parsed = entry(convertToEntry("Prediction: it rains", { ...OPTIONS, kind: "prediction", confidence: 65 }));
-		expect(parsed).toMatchObject({ kind: "prediction", statement: "it rains", confidence: 65, created: "2026-10-09", due: "2027-01-09" });
+		expect(parsed).toMatchObject({ kind: "prediction", statement: "It rains", confidence: 65, created: "2026-10-09", due: "2027-01-09" });
 	});
 });
 
