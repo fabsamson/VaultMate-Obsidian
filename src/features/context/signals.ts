@@ -231,11 +231,22 @@ function nameTokens(name: string): string[] | null {
 	return tokens.join("").length >= 4 || hasCjk(name) ? tokens : null;
 }
 
+/** `2026-10`, `2026-10-05`, `2026-W41`: the notes of a period are named by their date, and dates fill the vault. */
+const DATE_NAME = /^\d{4}-(?:W\d{1,2}|\d{1,2}(?:-\d{1,2})?)$/i;
+
 function names(note: NoteMeta): { label: string; phrase: string }[] {
 	return [note.title, ...note.aliases].flatMap((label) => {
+		if (!/\p{L}/u.test(label) || DATE_NAME.test(label.trim())) return [];
 		const tokens = nameTokens(label);
 		return tokens ? [{ label, phrase: ` ${tokens.join(" ")} ` }] : [];
 	});
+}
+
+/** A single word that many notes use ("notice") says nothing when it is a title: more than 3 notes and more than 1% of them. */
+function isCommonWord(text: TextIndex, phrase: string): boolean {
+	const word = phrase.trim();
+	if (word.includes(" ")) return false;
+	return text.bodyPaths(word).length > Math.max(3, text.size * 0.01);
 }
 
 const MAX_VERIFIED_READS = 40;
@@ -262,7 +273,7 @@ export interface MentionInput {
  */
 export async function unlinkedMentions(input: MentionInput): Promise<Signals> {
 	const { context, text, skip } = input;
-	const namesOfActive = names(context.active);
+	const namesOfActive = names(context.active).filter((name) => !isCommonWord(text, name.phrase));
 	const mentionsActive = new Map<string, string>(); // note -> the name of the active note it uses
 	const mentionedByActive = new Map<string, string>();
 
@@ -274,7 +285,7 @@ export async function unlinkedMentions(input: MentionInput): Promise<Signals> {
 		if (note.path === context.active.path || skip.has(note.path)) continue;
 		for (const name of names(note)) {
 			const first = name.phrase.trim().split(" ")[0] ?? "";
-			if (activeSet.has(first) && activeString.includes(name.phrase)) {
+			if (activeSet.has(first) && activeString.includes(name.phrase) && !isCommonWord(text, name.phrase)) {
 				mentionedByActive.set(note.path, name.label);
 				break;
 			}

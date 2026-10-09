@@ -36,6 +36,10 @@ function filler(count: number, prefix = "Filler"): Record<string, Fixture> {
 	return notes;
 }
 
+function kindsOf(result: RelatedNote[]): string[] {
+	return result.flatMap((note) => note.reasons.map((reason) => reason.kind));
+}
+
 function reasonsOf(result: RelatedNote[], name: string): string[] {
 	return result.find((note) => note.path === `${name}.md`)?.reasons.map((reason) => reason.text) ?? [];
 }
@@ -101,6 +105,29 @@ describe("findRelated", () => {
 		});
 		expect(reasonsOf(result, "Diary")).toContain("Mentions Metropolis without a link");
 		expect(result.map((note) => note.path)).not.toContain("Linked.md");
+	});
+
+	it("ignores date-like and digit-only names", async () => {
+		const names = ["2026-10", "2026-10-05", "2026-W41", "12"];
+		const vault: Record<string, Fixture> = { ...filler(10), Journal: { text: "Met on 2026-10-12, week 2026-W41, then 12 people came to 2026-10-05 and 2026-10." } };
+		for (const name of names) vault[name] = { text: "monthly review" };
+		const result = await related("2026-10", vault);
+		expect(kindsOf(result)).not.toContain("mention");
+		const reverse = await related("Journal", vault);
+		expect(kindsOf(reverse)).not.toContain("mention");
+	});
+
+	it("ignores a single-word title that many notes use, keeps a rare one and multi-word titles", async () => {
+		const common: Record<string, Fixture> = {};
+		for (let i = 0; i < 6; i++) common[`Memo ${i}`] = { text: `Please take notice of the change ${i}.` };
+		const result = await related("Notice", { ...filler(10), ...common, Notice: { text: "x" } });
+		expect(kindsOf(result)).not.toContain("mention");
+
+		const rare = await related("Metropolis", { ...filler(10), Metropolis: { text: "x" }, Diary: { text: "We visited the metropolis." } });
+		expect(reasonsOf(rare, "Diary")).toContain("Mentions Metropolis without a link");
+
+		const phrase = await related("Take notice", { ...filler(10), ...common, "Take notice": { text: "x" } });
+		expect(kindsOf(phrase)).toContain("mention");
 	});
 
 	it("does not take a mention inside code, a wikilink or frontmatter", async () => {
