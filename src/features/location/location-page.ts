@@ -27,7 +27,7 @@ export function createLocationPage(host: LocationPageHost): HubPage {
 		order: 40,
 		title: "Places",
 		// No 24 px location icon exists yet; the map mascot is drawn at the tile size.
-		sprite: SPRITES.mascotMap,
+		sprite: SPRITES.moduleLocation,
 		enabled: () => host.enabled(),
 		summary: () => {
 			const name = host.contextName();
