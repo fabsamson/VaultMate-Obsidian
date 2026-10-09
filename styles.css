@@ -820,7 +820,9 @@ button.vaultmate-badge:focus-visible {
 	list-style: none;
 }
 
-.vaultmate-related-title {
+/* Higher specificity than Obsidian's `button` rules, which add a background, a shadow and a fixed height. */
+.vaultmate button.vaultmate-related-title,
+.is-mobile .vaultmate button.vaultmate-related-title {
 	display: block;
 	width: auto;
 	height: auto;
@@ -829,6 +831,7 @@ button.vaultmate-badge:focus-visible {
 	border: 0;
 	background: none;
 	box-shadow: none;
+	border-radius: 0;
 	color: var(--vaultmate-text);
 	font-weight: 700;
 	text-align: left;
