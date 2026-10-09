@@ -20,7 +20,7 @@ export function questionsContract(count: number): string {
 		"Output contract (mandatory; it overrides any instruction above about the format of your answer):",
 		'Return only a JSON object, with no text before or after it and no code fence: {"questions":[{"kind":"assumption","text":"..."}]}',
 		`- At most ${count} items in "questions".`,
-		`- "kind" is one of: ${QUESTION_KINDS.join(", ")}.`,
+		`- "kind" is one of these English words, whatever the language of the questions: ${QUESTION_KINDS.join(", ")}.`,
 		`- "text" is one sentence that ends with a question mark, at most ${MAX_QUESTION_LENGTH} characters, on a single line.`,
 	].join("\n");
 }
