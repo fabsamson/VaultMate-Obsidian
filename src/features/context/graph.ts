@@ -88,3 +88,10 @@ export function graphDistances(context: GraphContext, maxDepth: number): Map<str
 	}
 	return distances;
 }
+
+/** Whether two notes are linked either way or cited together by a third note. */
+export function areTied(context: GraphContext, a: string, b: string): boolean {
+	if (context.notes.get(a)?.links.includes(b) || context.notes.get(b)?.links.includes(a)) return true;
+	const citingB = context.backlinks.get(b);
+	return [...(context.backlinks.get(a) ?? [])].some((from) => citingB?.has(from));
+}

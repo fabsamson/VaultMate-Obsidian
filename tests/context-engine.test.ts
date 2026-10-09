@@ -290,6 +290,20 @@ describe("findConnections", () => {
 		expect(best?.score).toBeGreaterThan(MIN_SCORE);
 	});
 
+	it("does not offer three near-identical notes", async () => {
+		const text = "marmalade quince jelly preserve citrus orchard";
+		const result = await connections("Active", {
+			...filler(10),
+			Active: { text },
+			"Twin one": { text },
+			"Twin two": { text },
+			"Twin three": { text },
+			Other: { text: "marmalade quince jelly sugar" },
+		});
+		expect(paths(result)).toHaveLength(4);
+		expect(paths(result).indexOf("Other")).toBeLessThan(2);
+	});
+
 	it("returns nothing for an unknown note", async () => {
 		expect(await connections("Missing", { Other: {} })).toEqual([]);
 	});

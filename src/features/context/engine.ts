@@ -6,10 +6,11 @@
 // Relevance comes only from bridge signals (an unlinked mention, distinctive shared terms, the same
 // person or place, a place within a kilometre) and has a minimum. Novelty and the hub bonus only
 // multiply it, so two notes with nothing in common are never proposed.
-import { buildGraphContext, eligibleNotes, graphDistances, type GraphContext } from "./graph";
+import { pickDiverse } from "./diversity";
+import { areTied, buildGraphContext, eligibleNotes, graphDistances, type GraphContext } from "./graph";
 import type { NoteMeta } from "./note-meta";
 import { geoProximity, sameProperty, unlinkedMentions, type Signal } from "./signals";
-import { sharedTerms } from "./terms";
+import { sharedTerms, wordingSimilarity } from "./terms";
 import type { TextIndex } from "./text-index";
 
 export type ReasonKind = "mention" | "property" | "place";
@@ -111,5 +112,6 @@ export async function findConnections(input: EngineInput): Promise<Connection[]>
 		if (score < MIN_SCORE) continue;
 		found.push({ path, score, terms: match?.terms ?? [], reasons: list.sort((a, b) => b.weight - a.weight) });
 	}
-	return found.sort((a, b) => b.score - a.score || (a.path < b.path ? -1 : 1)).slice(0, input.limit ?? DEFAULT_LIMIT);
+	const similarity = (a: string, b: string): number => (areTied(context, a, b) ? 1 : wordingSimilarity(input.text, a, b));
+	return pickDiverse(found, similarity, input.limit ?? DEFAULT_LIMIT);
 }
