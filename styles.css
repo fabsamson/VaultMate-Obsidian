@@ -339,14 +339,6 @@
 	height: auto;
 }
 
-.vaultmate-review-kind {
-	color: var(--vaultmate-primary);
-	font-size: var(--font-ui-smaller);
-	font-weight: 900;
-	letter-spacing: 0.05em;
-	text-transform: uppercase;
-}
-
 .vaultmate-review-statement {
 	font-weight: 500;
 	overflow-wrap: anywhere;
@@ -666,6 +658,7 @@ button.vaultmate-badge:focus-visible {
 	box-shadow: 2px 2px 0 var(--vaultmate-shadow);
 	color: var(--vaultmate-text);
 	text-align: left;
+	white-space: normal;
 	cursor: pointer;
 }
 
@@ -681,6 +674,7 @@ button.vaultmate-badge:focus-visible {
 	flex: 1;
 	flex-direction: column;
 	min-width: 0;
+	overflow-wrap: anywhere;
 }
 
 .vaultmate-tile-label {

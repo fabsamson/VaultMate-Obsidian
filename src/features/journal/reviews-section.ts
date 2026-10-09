@@ -30,7 +30,6 @@ export function createReviewsBlock(host: ReviewsHost): (body: HTMLElement, items
 		const row = list.createDiv({ cls: "vaultmate-review-row" });
 		createSprite(row, entry.kind === "decision" ? SPRITES.moduleDecision : SPRITES.modulePrediction, 24);
 		const main = row.createEl("button", { cls: "vaultmate-review-main", attr: { type: "button" } });
-		main.createSpan({ cls: "vaultmate-review-kind", text: kindName(entry.kind) });
 		main.createSpan({ cls: "vaultmate-review-statement", text: entry.statement || "(no text)" });
 		const due = entry.due === null ? null : parseDate(entry.due);
 		main.createSpan({ cls: "vaultmate-muted", text: `${noteName(item.path)} · ${due ? dueLabel(due, today) : "no review date"}` });
