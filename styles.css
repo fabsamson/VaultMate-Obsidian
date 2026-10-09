@@ -805,3 +805,18 @@ button.vaultmate-badge:focus-visible {
 	outline: 2px solid var(--vaultmate-seal);
 	outline-offset: -2px;
 }
+
+.vaultmate-related-item {
+	margin-bottom: var(--size-4-3);
+}
+
+.vaultmate-related-title {
+	font-weight: 700;
+}
+
+.vaultmate-related-reasons {
+	margin: var(--size-4-1) 0 0;
+	padding-left: var(--size-4-5);
+	color: var(--vaultmate-text-muted);
+	font-size: var(--font-ui-small);
+}

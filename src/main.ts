@@ -2,6 +2,7 @@ import { addIcon, debounce, MarkdownView, Plugin, type TFile, type WorkspaceLeaf
 
 import { normalizeSettings, type VaultMateSettings } from "./core/settings-model";
 import { AiActionsFeature } from "./features/ai-actions/ai-actions";
+import { ContextFeature } from "./features/context/context";
 import { JournalFeature } from "./features/journal/journal";
 import { LocationFeature } from "./features/location/location";
 import { VaultMateSettingTab } from "./settings";
@@ -13,6 +14,8 @@ export default class VaultMatePlugin extends Plugin {
 	private readonly journal = new JournalFeature(this);
 	private readonly aiActions = new AiActionsFeature(this);
 	private readonly location = new LocationFeature(this);
+	/** Related notes. Public: `app.plugins.plugins.vaultmate.context.related(file)` for measuring and for the hub. */
+	public readonly context = new ContextFeature(this);
 	private readonly hubPages = new Map<string, HubPage>();
 
 	public async onload(): Promise<void> {
@@ -30,6 +33,7 @@ export default class VaultMatePlugin extends Plugin {
 		this.journal.register();
 		this.aiActions.register();
 		this.location.register();
+		this.context.register();
 		// The pages name the note they work on, so redraw when another note opens.
 		this.registerEvent(this.app.workspace.on("file-open", debounce(() => this.refreshHubs(), 300, true)));
 	}
