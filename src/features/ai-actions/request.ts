@@ -3,6 +3,7 @@ import type { ActionDefinition, SourceName } from "./definition";
 import type { CollectionNote } from "./collection";
 import { collectionProfile } from "./collection-profile";
 import { questionsContract } from "./questions";
+import { suggestionsContract } from "./suggestions";
 import { noteSource, propertiesSource, selectionSource, type SourceText } from "./sources";
 
 const LABELS: Record<SourceName, string> = { note: "Note", selection: "Selection", properties: "Properties", "collection-profile": "Collection profile" };
@@ -20,7 +21,7 @@ export function applyParams(prompt: string, labels: Record<string, string>): str
 /** System = the action's prompt, then the output contract (last, so the prompt cannot override it). User = labelled sources. */
 export function buildMessages(action: ActionDefinition, sources: SourceText[], labels: Record<string, string> = {}): RequestMessages {
 	return {
-		system: `${applyParams(action.prompt, labels)}\n\n${questionsContract(action.count)}`,
+		system: `${applyParams(action.prompt, labels)}\n\n${(action.output === "suggestions" ? suggestionsContract : questionsContract)(action.count)}`,
 		user: sources.map((source) => `### ${LABELS[source.name]}\n${source.text}`).join("\n\n"),
 	};
 }

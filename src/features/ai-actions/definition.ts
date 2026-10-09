@@ -7,7 +7,7 @@ export type SourceName = (typeof SOURCES)[number];
 
 /** Known to the plan but not built yet: the action is listed as unavailable instead of failing. */
 const LATER_SOURCES = ["linked-notes", "recent-notes", "tag", "decisions"];
-const LATER_OUTPUTS = ["suggestions", "items"];
+const LATER_OUTPUTS = ["items"];
 
 /** Where the choices of a launch parameter come from. */
 export const CHOICE_SOURCES = ["collection-types"] as const;
@@ -30,7 +30,7 @@ export interface ActionDefinition {
 	icon: string;
 	command: boolean;
 	sources: SourceName[];
-	output: "questions";
+	output: "questions" | "suggestions";
 	count: number;
 	params: ParamDefinition[];
 	/** null = show the result only. */
@@ -122,7 +122,9 @@ export function parseAction(path: string, frontmatter: unknown, body: string): A
 
 	const output = typeof frontmatter.output === "string" ? frontmatter.output.trim() : "";
 	if (LATER_OUTPUTS.includes(output)) return fail(`Output ${output} is not available yet.`);
-	if (output !== "questions") return fail(output ? `Unknown output "${output}". Use questions.` : "The action needs output: questions.");
+	if (output !== "questions" && output !== "suggestions") {
+		return fail(output ? `Unknown output "${output}". Use questions or suggestions.` : "The action needs output: questions or suggestions.");
+	}
 
 	const count = frontmatter.count === undefined ? DEFAULT_COUNT : frontmatter.count;
 	if (typeof count !== "number" || !Number.isInteger(count) || count < 1 || count > 10) return fail("count must be a whole number from 1 to 10.");
@@ -137,6 +139,9 @@ export function parseAction(path: string, frontmatter: unknown, body: string): A
 		return fail("Source collection-profile needs the type parameter: add params with type, label and choices: collection-types.");
 	}
 
+	if (output === "suggestions" && !sources.includes("collection-profile")) return fail("Output suggestions needs the collection-profile source.");
+	if (output === "suggestions" && insert) return fail("Output suggestions cannot be inserted into a note. Remove insert.");
+
 	const prompt = body.replaceAll("{{count}}", String(count)).trim();
 	if (!prompt) return fail("The prompt is empty. Write it below the properties.");
 
@@ -149,7 +154,7 @@ export function parseAction(path: string, frontmatter: unknown, body: string): A
 			icon: typeof frontmatter.icon === "string" && frontmatter.icon.trim() ? frontmatter.icon.trim() : "sparkles",
 			command: frontmatter.command === true,
 			sources,
-			output: "questions",
+			output,
 			count,
 			params,
 			insert,

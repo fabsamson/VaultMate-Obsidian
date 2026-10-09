@@ -624,6 +624,47 @@ button.vaultmate-badge:focus-visible {
 	text-transform: uppercase;
 }
 
+.vaultmate-suggestion {
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-4-1);
+	padding: var(--size-4-3) 0;
+	border-bottom: 1px solid var(--vaultmate-rule);
+}
+
+.vaultmate-suggestion:last-child {
+	border-bottom: none;
+}
+
+.vaultmate-suggestion.is-dimmed > :not(.vaultmate-suggestion-actions) {
+	opacity: 0.45;
+}
+
+.vaultmate-suggestion-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: var(--size-4-2);
+}
+
+.vaultmate-suggestion-title {
+	color: var(--vaultmate-text);
+	font-weight: 900;
+	overflow-wrap: anywhere;
+}
+
+.vaultmate-suggestion-because {
+	color: var(--vaultmate-primary);
+	font-weight: 700;
+}
+
+.vaultmate-suggestion-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--size-4-2);
+	margin-top: var(--size-4-1);
+}
+
 /* Hub navigation: landing tiles, page top bar and the journal switcher. */
 .vaultmate-hub-title {
 	margin: var(--size-4-2) 0 var(--size-4-3);

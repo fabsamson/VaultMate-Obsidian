@@ -4,6 +4,7 @@ import type { ActionDefinition } from "../src/features/ai-actions/definition";
 import { normalizeForCompare, parseQuestions, questionsContract } from "../src/features/ai-actions/questions";
 import { applyParams, buildMessages, collectSources, sourceProblem } from "../src/features/ai-actions/request";
 import { noteSource, selectionSource } from "../src/features/ai-actions/sources";
+import { suggestionsContract } from "../src/features/ai-actions/suggestions";
 
 const parse = (answer: string, count = 5, noteText = ""): ReturnType<typeof parseQuestions> => parseQuestions(answer, { count, noteText });
 const texts = (answer: string, count = 5, noteText = ""): string[] => parse(answer, count, noteText).map((question) => question.text);
@@ -162,6 +163,12 @@ describe("request messages", () => {
 		expect(system).toContain('{"questions":[{"kind"');
 		expect(system).toContain("At most 3 items");
 		expect(system).toContain("assumption, evidence, consequence, alternative, connection, personal");
+	});
+
+	it("appends the contract of the action's output type", () => {
+		const { system } = buildMessages({ ...action, output: "suggestions" }, []);
+		expect(system.endsWith(suggestionsContract(3))).toBe(true);
+		expect(system).not.toContain('{"questions"');
 	});
 
 	it("replaces {{name}} with the chosen label, before the contract", () => {

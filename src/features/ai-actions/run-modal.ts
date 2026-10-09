@@ -5,7 +5,8 @@ import { complete, configurationProblem } from "../../core/ai/client";
 import { baseUrlHost } from "../../core/ai/endpoint";
 import type VaultMatePlugin from "../../main";
 import { createPanel, createSectionHeader } from "../../ui/components";
-import { collectionTypes } from "./collection";
+import { collectionTypes, normalizeTitle } from "./collection";
+import { collectionProfile, type RatedTitle } from "./collection-profile";
 import { isConfirmed, withConfirmation } from "./confirmation";
 import type { ActionDefinition, ParamDefinition } from "./definition";
 import { insertQuestions } from "./insert-write";
@@ -13,6 +14,8 @@ import { renderLine } from "./insertion";
 import { parseQuestions, type Question } from "./questions";
 import { buildMessages, collectSources, sourceProblem, type RequestMessages, type SourceInput } from "./request";
 import type { SourceText } from "./sources";
+import { renderSuggestionCards } from "./suggestion-cards";
+import { parseSuggestions, searchUrl, type Suggestion } from "./suggestions";
 
 /** The note an action runs on, with what was read from it when the action started. */
 export interface RunContext extends SourceInput {
@@ -25,7 +28,13 @@ function formatCount(count: number): string {
 	return `${count.toLocaleString("en-US")} characters`;
 }
 
-type State = { type: "params" } | { type: "preview" } | { type: "loading" } | { type: "results"; questions: Question[] } | { type: "error"; message: string };
+type State =
+	| { type: "params" }
+	| { type: "preview" }
+	| { type: "loading" }
+	| { type: "results"; questions: Question[] }
+	| { type: "suggestions"; suggestions: Suggestion[]; rated: RatedTitle[] }
+	| { type: "error"; message: string };
 
 export class RunModal extends Modal {
 	private sources: SourceText[] = [];
@@ -95,6 +104,9 @@ export class RunModal extends Modal {
 				break;
 			case "results":
 				this.renderResults(this.state.questions);
+				break;
+			case "suggestions":
+				this.renderSuggestions(this.state.suggestions, this.state.rated);
 				break;
 			case "error":
 				this.renderError(this.state.message);
@@ -211,12 +223,32 @@ export class RunModal extends Modal {
 		try {
 			const answer = await complete(this.app, this.plugin.settings.ai, this.messages);
 			if (this.closed) return;
-			this.state = { type: "results", questions: parseQuestions(answer, { count: this.action.count, noteText: this.context.raw }) };
+			this.state = this.parse(answer);
 		} catch (error) {
 			if (this.closed) return;
 			this.state = { type: "error", message: error instanceof Error ? error.message : String(error) };
 		}
 		this.render();
+	}
+
+	/** Ask again is a new call; if the Not interested list changed, the request changed, so the preview comes back first. */
+	private askAgain(): void {
+		const before = this.messages.user;
+		this.prepare();
+		if (this.messages.user === before) {
+			void this.ask();
+			return;
+		}
+		this.state = { type: "preview" };
+		this.render();
+	}
+
+	private parse(answer: string): State {
+		const { action, context } = this;
+		if (action.output === "questions") return { type: "results", questions: parseQuestions(answer, { count: action.count, noteText: context.raw }) };
+		const type = this.values.type ?? "";
+		const { rated, excluded } = collectionProfile(context.collection, type, this.plugin.settings.aiState.notInterested[type] ?? []);
+		return { type: "suggestions", suggestions: parseSuggestions(answer, { count: action.count, rated, excluded }), rated };
 	}
 
 	// ---- Results ------------------------------------------------------------------------------------
@@ -226,7 +258,40 @@ export class RunModal extends Modal {
 		contentEl.createEl("p", { cls: "vaultmate-error", text: message, attr: { role: "alert" } });
 		const actions = contentEl.createDiv({ cls: "vaultmate-actions" });
 		this.button(actions, "Close", false, () => this.close());
-		this.button(actions, "Ask again", true, () => void this.ask());
+		this.button(actions, "Ask again", true, () => this.askAgain());
+	}
+
+	private renderSuggestions(suggestions: Suggestion[], rated: RatedTitle[]): void {
+		const { contentEl } = this;
+		if (suggestions.length === 0) {
+			createPanel(contentEl).createEl("p", { text: "The AI answer had no usable suggestions." });
+		} else {
+			renderSuggestionCards(contentEl, suggestions, rated, {
+				search: (suggestion) => void activeWindow.open(searchUrl(suggestion), "_blank", "noopener"),
+				copyTitle: (suggestion) => void this.copyTitle(suggestion.title),
+				setNotInterested: (suggestion, rejected) => void this.setNotInterested(suggestion.title, rejected),
+			});
+		}
+		const actions = contentEl.createDiv({ cls: "vaultmate-actions" });
+		this.button(actions, "Close", false, () => this.close());
+		this.button(actions, "Ask again", true, () => this.askAgain());
+	}
+
+	private async copyTitle(title: string): Promise<void> {
+		await activeWindow.navigator.clipboard.writeText(title);
+		new Notice("Copied.");
+	}
+
+	/** Adds the title to (or removes it from) the Not interested list of the chosen type, in data.json. */
+	private async setNotInterested(title: string, rejected: boolean): Promise<void> {
+		const { notInterested } = this.plugin.settings.aiState;
+		const type = this.values.type ?? "";
+		const key = normalizeTitle(title);
+		const others = (notInterested[type] ?? []).filter((saved) => normalizeTitle(saved) !== key);
+		const next = rejected ? [...others, title] : others;
+		if (next.length > 0) notInterested[type] = next;
+		else delete notInterested[type];
+		await this.plugin.saveSettings();
 	}
 
 	private renderResults(questions: Question[]): void {
@@ -235,7 +300,7 @@ export class RunModal extends Modal {
 			createPanel(contentEl).createEl("p", { text: "The AI answer had no usable questions." });
 			const none = contentEl.createDiv({ cls: "vaultmate-actions" });
 			this.button(none, "Close", false, () => this.close());
-			this.button(none, "Ask again", true, () => void this.ask());
+			this.button(none, "Ask again", true, () => this.askAgain());
 			return;
 		}
 		const checks: HTMLInputElement[] = [];
@@ -254,7 +319,7 @@ export class RunModal extends Modal {
 		const selected = (): string[] => questions.filter((_, index) => checks[index]?.checked).map((question) => question.text);
 
 		this.button(actions, "Close", false, () => this.close());
-		this.button(actions, "Ask again", false, () => void this.ask());
+		this.button(actions, "Ask again", false, () => this.askAgain());
 		this.button(actions, "Copy", false, () => void this.copy(selected()));
 		if (action.insert) {
 			const { insert } = action;

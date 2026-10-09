@@ -82,7 +82,7 @@ describe("parseAction", () => {
 	});
 
 	it("rejects unavailable and unknown outputs", () => {
-		expect(message({ ...valid, output: "suggestions" })).toBe("Output suggestions is not available yet.");
+		expect(message({ ...valid, output: "items" })).toBe("Output items is not available yet.");
 		expect(message({ ...valid, output: "poem" })).toContain('Unknown output "poem"');
 		expect(message({ ...valid, output: undefined })).toContain("output");
 	});
@@ -111,6 +111,13 @@ describe("parseAction", () => {
 		expect(ok({ ...valid, sources: ["collection-profile"], params }).sources).toEqual(["collection-profile"]);
 		expect(message({ ...valid, sources: ["collection-profile"] })).toContain("needs the type parameter");
 		expect(message({ ...valid, sources: ["collection-profile"], params: { kind: params.type } })).toContain("needs the type parameter");
+	});
+
+	it("accepts the suggestions output with the collection profile, and nothing to insert", () => {
+		const recommend = { ...valid, sources: ["collection-profile"], output: "suggestions", params: { type: { label: "Type", choices: "collection-types" } } };
+		expect(ok(recommend).output).toBe("suggestions");
+		expect(message({ ...recommend, sources: ["note"] })).toBe("Output suggestions needs the collection-profile source.");
+		expect(message({ ...recommend, insert: { at: "cursor" } })).toContain("cannot be inserted");
 	});
 
 	it("rejects a bad count", () => {
