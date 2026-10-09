@@ -2,12 +2,11 @@
 // (the hub, or a modal whose `modalEl` has the class) so the palette tokens apply.
 import { createSprite, type Sprite } from "./pixel";
 
-/** Small capitals label, a rule and an optional decorative kanji (SectionHeader.kt). */
-export function createSectionHeader(parent: HTMLElement, label: string, kanji?: string): HTMLElement {
+/** Small capitals label and a rule (SectionHeader.kt). */
+export function createSectionHeader(parent: HTMLElement, label: string): HTMLElement {
 	const header = parent.createDiv({ cls: "vaultmate-section-header", attr: { role: "heading", "aria-level": "2" } });
 	header.createSpan({ cls: "vaultmate-section-label", text: label });
 	header.createDiv({ cls: "vaultmate-section-rule" });
-	if (kanji) header.createSpan({ cls: "vaultmate-section-kanji", text: kanji, attr: { "aria-hidden": "true" } });
 	return header;
 }
 

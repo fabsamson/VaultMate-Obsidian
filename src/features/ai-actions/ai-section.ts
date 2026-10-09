@@ -18,7 +18,6 @@ export function createAiSection(host: AiSectionHost): HubSection {
 		id: "ai-actions",
 		order: 30,
 		label: "AI",
-		kanji: "問",
 		enabled: () => host.enabled(),
 		render: (body) => {
 			const entries = host.entries();

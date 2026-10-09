@@ -76,7 +76,6 @@ export function createReviewsSection(host: ReviewsHost): HubSection {
 		id: "journal-reviews",
 		order: 10,
 		label: "Reviews",
-		kanji: "省",
 		enabled: () => host.enabled(),
 		render: (body) => {
 			showAllUpcoming = false;

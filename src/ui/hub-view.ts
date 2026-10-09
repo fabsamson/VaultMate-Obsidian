@@ -15,8 +15,6 @@ export interface HubSection {
 	order: number;
 	/** Header text, in sentence case. */
 	label: string;
-	/** Decorative kanji at the end of the header; it never carries meaning. */
-	kanji?: string;
 	/** Checked on every redraw, so turning a feature off hides its section without a reload. */
 	enabled: () => boolean;
 	/** Fills the empty `body`; it may be async. Add a panel with `createPanel(body)` when you need one. */
@@ -59,7 +57,7 @@ export class HubView extends ItemView {
 			return;
 		}
 		for (const section of sections) {
-			createSectionHeader(root, section.label, section.kanji);
+			createSectionHeader(root, section.label);
 			void this.fill(section, root.createDiv({ cls: "vaultmate-hub-section" }));
 		}
 	}
@@ -75,7 +73,7 @@ export class HubView extends ItemView {
 	}
 
 	private renderEmpty(root: HTMLElement): void {
-		createSectionHeader(root, "Today", "今");
+		createSectionHeader(root, "Today");
 		const panel = createPanel(root, "vaultmate-empty");
 		createSprite(panel, SPRITES.mascotTea, 96);
 		panel.createEl("p", { cls: "vaultmate-empty-title", text: "Nothing to review yet" });

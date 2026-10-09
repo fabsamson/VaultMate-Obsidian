@@ -122,7 +122,6 @@ export function createTrackRecordSection(host: TrackRecordHost): HubSection {
 		id: "journal-track-record",
 		order: 20,
 		label: "Track record",
-		kanji: "績",
 		enabled: () => host.enabled(),
 		render: (body) => {
 			showAllLessons = false;

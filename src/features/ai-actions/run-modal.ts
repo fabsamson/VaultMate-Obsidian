@@ -60,7 +60,7 @@ export class RunModal extends Modal {
 	private render(): void {
 		const { contentEl, action } = this;
 		contentEl.empty();
-		createSectionHeader(contentEl, action.name, "問");
+		createSectionHeader(contentEl, action.name);
 		if (action.description) contentEl.createEl("p", { cls: "vaultmate-muted", text: action.description });
 		switch (this.state.type) {
 			case "preview":
@@ -179,7 +179,7 @@ export class RunModal extends Modal {
 		const list = createPanel(contentEl, "vaultmate-questions");
 		for (const question of questions) {
 			const card = list.createEl("label", { cls: "vaultmate-question" });
-			card.createSpan({ cls: "vaultmate-section-kanji", text: "問", attr: { "aria-hidden": "true" } });
+			createActionIcon(card, "circle-help");
 			const box = card.createEl("input", { attr: { type: "checkbox" } });
 			box.checked = true;
 			checks.push(box);

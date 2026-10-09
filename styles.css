@@ -58,7 +58,7 @@
 	mask-repeat: repeat;
 }
 
-/* Small capitals label, a rule and an optional decorative kanji (SectionHeader.kt). */
+/* Small capitals label and a rule (SectionHeader.kt). */
 .vaultmate-section-header {
 	display: flex;
 	align-items: center;
@@ -78,12 +78,6 @@
 	flex: 1;
 	height: 2px;
 	background-color: var(--vaultmate-rule);
-}
-
-.vaultmate-section-kanji {
-	color: var(--vaultmate-seal);
-	font-size: var(--font-ui-large);
-	font-weight: 700;
 }
 
 /* Paper panel: 2 px border and a hard 2 px offset shadow, no blur (PixelPanel.kt). */

@@ -89,10 +89,6 @@ function confidenceLabel(kind: JournalKind): string {
 	return kind === "decision" ? "Confidence in percent (optional)" : "Probability in percent";
 }
 
-function kanjiOf(kind: JournalKind): string {
-	return kind === "decision" ? "決" : "予";
-}
-
 // ---- New entry --------------------------------------------------------------------------------------
 
 export interface NewEntryResult {
@@ -114,7 +110,7 @@ export class NewEntryModal extends JournalModal {
 
 	public onOpen(): void {
 		const { contentEl, kind } = this;
-		createSectionHeader(contentEl, `New ${kindName(kind)}`, kanjiOf(kind));
+		createSectionHeader(contentEl, `New ${kindName(kind)}`);
 		const statement = textField(contentEl, capitalize(kindName(kind)), { placeholder: kind === "decision" ? "What did you decide?" : "What do you expect to happen?" });
 		const confidence = textField(contentEl, confidenceLabel(kind), { placeholder: "70", numeric: true });
 		const interval = intervalField(contentEl, "Review in");
@@ -163,7 +159,7 @@ export class TrackModal extends JournalModal {
 
 	public onOpen(): void {
 		const { contentEl, kind } = this;
-		createSectionHeader(contentEl, `Track as ${kindName(kind)}`, kanjiOf(kind));
+		createSectionHeader(contentEl, `Track as ${kindName(kind)}`);
 		contentEl.createEl("p", { cls: "vaultmate-statement", text: this.statement || "(no text yet)" });
 		const confidence = textField(contentEl, confidenceLabel(kind), { placeholder: "70", numeric: true });
 		if (this.confidence !== null) confidence.value = String(this.confidence);
@@ -222,7 +218,7 @@ export class ReviewModal extends JournalModal {
 		const { contentEl, item } = this;
 		const { entry } = item;
 		const decision = entry.kind === "decision";
-		createSectionHeader(contentEl, `Review ${kindName(entry.kind)}`, "省");
+		createSectionHeader(contentEl, `Review ${kindName(entry.kind)}`);
 		contentEl.createEl("p", { cls: "vaultmate-statement", text: entry.statement || "(no text)" });
 		contentEl.createEl("p", { cls: "vaultmate-muted", text: summary(entry) });
 		if (item.children.length > 0) {
