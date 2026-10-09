@@ -70,10 +70,10 @@ export function noveltyOf(context: GraphContext, path: string, distances: Readon
 	return novelty;
 }
 
-/** Well-linked notes are good places to attach a new link: up to HUB_MAX times. */
+/** Notes that many notes link to are good places to attach a new link: up to HUB_MAX times. Only backlinks count: a daily or log note links out a lot without being a crossroads. */
 export function hubBonus(context: GraphContext, path: string): number {
-	const degree = (context.backlinks.get(path)?.size ?? 0) + (context.notes.get(path)?.links.length ?? 0);
-	return Math.min(HUB_MAX, 1 + HUB_STEP * Math.log(1 + degree));
+	const backlinks = context.backlinks.get(path)?.size ?? 0;
+	return Math.min(HUB_MAX, 1 + HUB_STEP * Math.log(1 + backlinks));
 }
 
 export async function findConnections(input: EngineInput): Promise<Connection[]> {

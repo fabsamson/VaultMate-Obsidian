@@ -254,8 +254,11 @@ describe("findConnections", () => {
 		metas.set("Tagged.md", meta("Tagged.md", [], ["x"]));
 		const context = buildGraphContext(active, metas);
 		expect(hubBonus(context, "A.md")).toBe(1);
+		// Outgoing links do not count: a note that links to many notes is not a crossroads.
+		metas.set("Logger.md", meta("Logger.md", Array.from({ length: 50 }, (_, i) => `R${i}.md`)));
+		expect(hubBonus(buildGraphContext(active, metas), "Logger.md")).toBe(1);
 		expect(hubBonus(context, "Hub.md")).toBe(1.5);
-		expect(hubBonus(context, "R0.md")).toBeCloseTo(1 + 0.15 * Math.log(2), 5);
+		expect(hubBonus(context, "R0.md")).toBe(1);
 		expect(noveltyOf(context, "R0.md", new Map())).toBe(0.85);
 		expect(noveltyOf(context, "R0.md", new Map([["R0.md", 3]]))).toBe(1);
 		expect(noveltyOf(context, "R0.md", new Map([["R0.md", 2]]))).toBe(0.9);
