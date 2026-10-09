@@ -24,6 +24,7 @@ import { getChildren, isEmptyLine, newEntryLines, reviewItemText, usesTabs } fro
 import { writeEntryLine } from "./journal-write";
 import { createBadgeExtension } from "./line-badge";
 import { createReviewsSection } from "./reviews-section";
+import { createTrackRecordSection } from "./track-record-section";
 
 function editorLines(editor: Editor): string[] {
 	return Array.from({ length: editor.lineCount() }, (_, index) => editor.getLine(index));
@@ -60,6 +61,7 @@ export class JournalFeature {
 				openReview: (item) => this.openReview(item),
 			}),
 		);
+		plugin.registerHubSection(createTrackRecordSection({ enabled: () => this.enabled(), entries: () => this.index.entries(), openItem: (item) => void this.openAtLine(item) }));
 		plugin.registerEditorSuggest(new CaptureSuggest(plugin.app, this));
 		plugin.registerEditorExtension(
 			createBadgeExtension({
