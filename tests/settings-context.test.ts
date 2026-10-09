@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { DEFAULT_SETTINGS, normalizeSettings, parseList, validatePropertyList } from "../src/core/settings-model";
 
-describe("related notes settings", () => {
+describe("new connections settings", () => {
 	it("has generic defaults", () => {
 		expect(DEFAULT_SETTINGS.context).toEqual({ enabled: true, excludedFolders: [], peopleProperties: ["author", "authors", "people"], maxConnections: 3 });
 		expect(DEFAULT_SETTINGS.contextState).toEqual({ notUseful: [] });
