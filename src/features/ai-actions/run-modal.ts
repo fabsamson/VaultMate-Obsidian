@@ -5,7 +5,7 @@ import { complete, configurationProblem } from "../../core/ai/client";
 import { baseUrlHost } from "../../core/ai/endpoint";
 import type VaultMatePlugin from "../../main";
 import { createPanel, createSectionHeader } from "../../ui/components";
-import { collectionTypes, type CollectionNote } from "./collection";
+import { collectionTypes } from "./collection";
 import { isConfirmed, withConfirmation } from "./confirmation";
 import type { ActionDefinition, ParamDefinition } from "./definition";
 import { insertQuestions } from "./insert-write";
@@ -17,11 +17,9 @@ import type { SourceText } from "./sources";
 /** The note an action runs on, with what was read from it when the action started. */
 export interface RunContext extends SourceInput {
 	path: string;
-	/** The collection notes found when the action started. */
-	collection: CollectionNote[];
 }
 
-const SOURCE_LABELS = { note: "Note", selection: "Selection", properties: "Properties" } as const;
+const SOURCE_LABELS = { note: "Note", selection: "Selection", properties: "Properties", "collection-profile": "Collection profile" } as const;
 
 function formatCount(count: number): string {
 	return `${count.toLocaleString("en-US")} characters`;
@@ -53,7 +51,8 @@ export class RunModal extends Modal {
 	private prepare(): void {
 		const labels: Record<string, string> = {};
 		for (const param of this.action.params) labels[param.name] = this.chosenLabel(param);
-		this.sources = collectSources(this.action, this.context);
+		// The Not interested titles are read now, so a rejection made in this window is part of the next preview.
+		this.sources = collectSources(this.action, { ...this.context, notInterested: this.plugin.settings.aiState.notInterested }, this.values);
 		this.messages = buildMessages(this.action, this.sources, labels);
 	}
 
@@ -158,7 +157,7 @@ export class RunModal extends Modal {
 			line.createSpan({ cls: "vaultmate-field-label", text: label });
 			line.createSpan({ text: value });
 		};
-		row("Note", context.path);
+		if (context.path) row("Note", context.path);
 		for (const param of action.params) row(param.label, this.chosenLabel(param));
 		row("Sent to", `${this.host} · ${ai.model.trim()}`);
 		for (const source of sources) row(SOURCE_LABELS[source.name], `${formatCount(source.chars)}${source.truncated ? " (truncated)" : ""}`);

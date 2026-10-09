@@ -1,7 +1,7 @@
 // What each source sends: extraction and size caps. Pure, so the preview and the request cannot differ.
 import { splitFrontmatter, type SourceName } from "./definition";
 
-export const SOURCE_CAPS: Record<SourceName, number> = { note: 24_000, selection: 8_000, properties: 2_000 };
+export const SOURCE_CAPS: Record<SourceName, number> = { note: 24_000, selection: 8_000, properties: 2_000, "collection-profile": 12_000 };
 
 export interface SourceText {
 	name: SourceName;
@@ -9,6 +9,8 @@ export interface SourceText {
 	/** Length of `text` in characters. */
 	chars: number;
 	truncated: boolean;
+	/** Why the action cannot run on this source, when it cannot. */
+	problem?: string;
 }
 
 function cap(name: SourceName, text: string): SourceText {

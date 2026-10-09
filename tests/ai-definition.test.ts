@@ -77,7 +77,7 @@ describe("parseAction", () => {
 	it("rejects bad sources with a clear message", () => {
 		expect(message({ ...valid, sources: [] })).toContain("at least one");
 		expect(message({ ...valid, sources: undefined })).toContain("at least one");
-		expect(message({ ...valid, sources: ["note", "collection-profile"] })).toBe("Source collection-profile is not available yet.");
+		expect(message({ ...valid, sources: ["note", "linked-notes"] })).toBe("Source linked-notes is not available yet.");
 		expect(message({ ...valid, sources: ["clipboard"] })).toContain('Unknown source "clipboard"');
 	});
 
@@ -104,6 +104,13 @@ describe("parseAction", () => {
 		expect(message({ ...valid, params: ["type"] })).toContain("params must list parameters");
 		expect(message({ ...valid, params: { count: { choices: "collection-types" } } })).toContain("cannot be the name");
 		expect(message({ ...valid, params: { "my type": { choices: "collection-types" } } })).toContain("cannot be the name");
+	});
+
+	it("accepts collection-profile with a type parameter and requires that parameter", () => {
+		const params = { type: { label: "Type", choices: "collection-types" } };
+		expect(ok({ ...valid, sources: ["collection-profile"], params }).sources).toEqual(["collection-profile"]);
+		expect(message({ ...valid, sources: ["collection-profile"] })).toContain("needs the type parameter");
+		expect(message({ ...valid, sources: ["collection-profile"], params: { kind: params.type } })).toContain("needs the type parameter");
 	});
 
 	it("rejects a bad count", () => {

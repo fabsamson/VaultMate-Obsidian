@@ -78,22 +78,25 @@ export class AiActionsFeature {
 	}
 
 	/** Reads the note and the selection now: this is what the preview shows and what is sent. */
-	private async readContext(file: TFile, action: ActionDefinition): Promise<RunContext> {
+	private async readContext(file: TFile | null, action: ActionDefinition): Promise<RunContext> {
 		const { vault, metadataCache } = this.plugin.app;
-		const editor = this.editorOf(file.path);
+		const editor = file ? this.editorOf(file.path) : null;
 		return {
-			path: file.path,
-			title: file.basename,
-			raw: editor ? editor.getValue() : await vault.read(file),
+			path: file?.path ?? "",
+			title: file?.basename ?? "",
+			raw: file ? (editor ? editor.getValue() : await vault.read(file)) : "",
 			selection: editor ? editor.getSelection() : "",
-			frontmatter: metadataCache.getFileCache(file)?.frontmatter,
-			collection: action.params.length > 0 ? this.readCollection() : [],
+			frontmatter: file ? metadataCache.getFileCache(file)?.frontmatter : undefined,
+			collection: action.sources.includes("collection-profile") ? this.readCollection() : [],
+			notInterested: this.plugin.settings.aiState.notInterested,
 		};
 	}
 
 	public async run(action: ActionDefinition): Promise<void> {
-		const file = this.plugin.contextFile();
-		if (!file) {
+		// An action that reads only the collection does not need a note, and does not read one.
+		const needsNote = action.sources.some((source) => source !== "collection-profile");
+		const file = needsNote ? this.plugin.contextFile() : null;
+		if (needsNote && !file) {
 			new Notice("Open a note first.");
 			return;
 		}

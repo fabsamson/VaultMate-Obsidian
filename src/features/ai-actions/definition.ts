@@ -2,11 +2,11 @@
 // and whose body is the prompt. Public format of the plugin; changing it breaks users' files. Pure.
 
 /** Sources an action can use today. */
-export const SOURCES = ["note", "selection", "properties"] as const;
+export const SOURCES = ["note", "selection", "properties", "collection-profile"] as const;
 export type SourceName = (typeof SOURCES)[number];
 
 /** Known to the plan but not built yet: the action is listed as unavailable instead of failing. */
-const LATER_SOURCES = ["collection-profile", "linked-notes", "recent-notes", "tag", "decisions"];
+const LATER_SOURCES = ["linked-notes", "recent-notes", "tag", "decisions"];
 const LATER_OUTPUTS = ["suggestions", "items"];
 
 /** Where the choices of a launch parameter come from. */
@@ -132,6 +132,10 @@ export function parseAction(path: string, frontmatter: unknown, body: string): A
 
 	const params = parseParams(frontmatter.params);
 	if (typeof params === "string") return fail(params);
+
+	if (sources.includes("collection-profile") && !params.some((param) => param.name === "type")) {
+		return fail("Source collection-profile needs the type parameter: add params with type, label and choices: collection-types.");
+	}
 
 	const prompt = body.replaceAll("{{count}}", String(count)).trim();
 	if (!prompt) return fail("The prompt is empty. Write it below the properties.");

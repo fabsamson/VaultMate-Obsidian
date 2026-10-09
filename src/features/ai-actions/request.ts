@@ -1,9 +1,11 @@
 // The messages of one request. Pure: the preview shows the sizes of exactly these texts.
 import type { ActionDefinition, SourceName } from "./definition";
+import type { CollectionNote } from "./collection";
+import { collectionProfile } from "./collection-profile";
 import { questionsContract } from "./questions";
 import { noteSource, propertiesSource, selectionSource, type SourceText } from "./sources";
 
-const LABELS: Record<SourceName, string> = { note: "Note", selection: "Selection", properties: "Properties" };
+const LABELS: Record<SourceName, string> = { note: "Note", selection: "Selection", properties: "Properties", "collection-profile": "Collection profile" };
 
 export interface RequestMessages {
 	system: string;
@@ -30,10 +32,13 @@ export interface SourceInput {
 	raw: string;
 	selection: string;
 	frontmatter: Record<string, unknown> | undefined;
+	collection: CollectionNote[];
+	/** Collection type -> titles the user does not want suggested again. */
+	notInterested: Record<string, string[]>;
 }
 
 /** The texts the action's sources send, in the order the action lists them. */
-export function collectSources(action: ActionDefinition, input: SourceInput): SourceText[] {
+export function collectSources(action: ActionDefinition, input: SourceInput, values: Record<string, string> = {}): SourceText[] {
 	return action.sources.map((name) => {
 		switch (name) {
 			case "note":
@@ -42,11 +47,16 @@ export function collectSources(action: ActionDefinition, input: SourceInput): So
 				return selectionSource(input.selection);
 			case "properties":
 				return propertiesSource(input.frontmatter);
+			case "collection-profile": {
+				const type = values.type ?? "";
+				return collectionProfile(input.collection, type, input.notInterested[type] ?? []).source;
+			}
 		}
 	});
 }
 
 /** Why the action cannot run on these sources, or null. */
 export function sourceProblem(sources: SourceText[]): string | null {
-	return sources.some((source) => source.name === "selection" && source.chars === 0) ? "Select some text first." : null;
+	if (sources.some((source) => source.name === "selection" && source.chars === 0)) return "Select some text first.";
+	return sources.find((source) => source.problem)?.problem ?? null;
 }

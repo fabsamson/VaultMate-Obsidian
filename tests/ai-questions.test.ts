@@ -180,7 +180,7 @@ describe("collectSources", () => {
 	const action = (sources: ActionDefinition["sources"]): ActionDefinition => ({
 		path: "a.md", name: "A", description: "", icon: "sparkles", command: false, sources, output: "questions", count: 5, params: [], insert: null, prompt: "P",
 	});
-	const input = { title: "Lyon", raw: "---\nstatus: open\n---\nBody [[Link]]", selection: " picked ", frontmatter: { status: "open" } };
+	const input = { title: "Lyon", raw: "---\nstatus: open\n---\nBody [[Link]]", selection: " picked ", frontmatter: { status: "open" }, collection: [], notInterested: {} };
 
 	it("reads each source in the action's order", () => {
 		const sources = collectSources(action(["properties", "note", "selection"]), input);

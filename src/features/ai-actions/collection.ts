@@ -101,3 +101,19 @@ export function collectionTypes(notes: readonly CollectionNote[]): CollectionTyp
 	}
 	return [...found.values()].sort((a, b) => b.notes - a.notes || a.label.localeCompare(b.label));
 }
+
+/**
+ * For comparing titles: case, accents, punctuation, a leading article ("The", "Le", "La", "Les", "L'") and a
+ * trailing "(year)" do not count. Only Latin accents are removed, so kana and kanji keep their marks.
+ */
+export function normalizeTitle(title: string): string {
+	const base = title
+		.normalize("NFD")
+		.replace(/[\u0300-\u036f]/g, "")
+		.normalize("NFKC")
+		.toLowerCase()
+		.trim()
+		.replace(/\s*\(\d{4}\)$/, "");
+	const withoutArticle = base.replace(/^(?:the|le|la|les)\s+/, "").replace(/^l['\u2019]\s*/, "");
+	return (withoutArticle || base).replace(/[^\p{L}\p{N}\p{M}]+/gu, "");
+}
