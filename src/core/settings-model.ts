@@ -1,6 +1,7 @@
 // Settings data: types, defaults, loading and validation. Pure, so Vitest can test it.
 import { validateBaseUrl } from "./ai/endpoint";
 import type { Confirmations } from "../features/ai-actions/confirmation";
+import { cleanPairs, type NotePair } from "../features/context/dismissed";
 
 export interface JournalSettings {
 	enabled: boolean;
@@ -56,8 +57,18 @@ export interface ContextSettings {
 	enabled: boolean;
 	/** Folders whose notes are neither indexed nor suggested. */
 	excludedFolders: string[];
-	/** Properties whose values are people or places; notes sharing a value are related. */
+	/** Properties whose values are people or places; notes sharing a value can be connected. */
 	peopleProperties: string[];
+	/** Most connections shown for a note, 1 to MAX_CONNECTIONS. */
+	maxConnections: number;
+}
+
+export const MAX_CONNECTIONS = 5;
+
+/** Small state the connections keep next to their settings (shared between devices). */
+export interface ContextState {
+	/** Pairs of note paths the user marked "Not useful". */
+	notUseful: NotePair[];
 }
 
 /** Nested per feature; a feature's settings live under its own key. */
@@ -69,6 +80,7 @@ export interface VaultMateSettings {
 	collections: CollectionsSettings;
 	location: LocationSettings;
 	context: ContextSettings;
+	contextState: ContextState;
 }
 
 export const DEFAULT_SETTINGS: VaultMateSettings = {
@@ -78,7 +90,8 @@ export const DEFAULT_SETTINGS: VaultMateSettings = {
 	aiState: { confirmed: {}, notInterested: {} },
 	collections: { folder: "", typeProperty: "type", ratingProperty: "rating" },
 	location: { enabled: true, latitudeProperty: "latitude", longitudeProperty: "longitude", labelProperty: "location", androidApp: false },
-	context: { enabled: true, excludedFolders: [], peopleProperties: ["author", "authors", "people"] },
+	context: { enabled: true, excludedFolders: [], peopleProperties: ["author", "authors", "people"], maxConnections: 3 },
+	contextState: { notUseful: [] },
 };
 
 const TAG_RE = /^[\p{L}\p{N}\p{M}_/-]+$/u;
@@ -196,8 +209,11 @@ export function normalizeSettings(value: unknown): VaultMateSettings {
 	const ctxDefaults = DEFAULT_SETTINGS.context;
 	const stringList = (raw: unknown, clean: (item: string) => string): string[] | undefined =>
 		Array.isArray(raw) ? [...new Set(raw.filter((item): item is string => typeof item === "string").map(clean).filter((item) => item !== ""))] : undefined;
+	const ctxState = isRecord(value) && isRecord(value.contextState) ? value.contextState : {};
 	return {
+		contextState: { notUseful: cleanPairs(ctxState.notUseful) },
 		context: {
+			maxConnections: typeof ctx.maxConnections === "number" && Number.isInteger(ctx.maxConnections) && ctx.maxConnections >= 1 && ctx.maxConnections <= MAX_CONNECTIONS ? ctx.maxConnections : ctxDefaults.maxConnections,
 			enabled: typeof ctx.enabled === "boolean" ? ctx.enabled : ctxDefaults.enabled,
 			excludedFolders: stringList(ctx.excludedFolders, cleanFolderPath) ?? [...ctxDefaults.excludedFolders],
 			peopleProperties: stringList(ctx.peopleProperties, (item) => item.trim())?.filter((item) => validatePropertyName(item) === undefined) ?? [...ctxDefaults.peopleProperties],
