@@ -94,7 +94,7 @@ export async function findConnections(input: EngineInput): Promise<Connection[]>
 	const reasons = new Map<string, ConnectionReason[]>();
 	for (const [kind, found] of signals) {
 		for (const [path, signal] of found) {
-			if (!eligible.has(path)) continue;
+			if (!eligible.has(path) || (signal.weak && !matches.has(path))) continue;
 			let list = reasons.get(path);
 			if (!list) reasons.set(path, (list = []));
 			list.push({ kind, text: signal.text, weight: WEIGHTS[kind] * signal.strength });

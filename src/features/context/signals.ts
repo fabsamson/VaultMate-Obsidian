@@ -10,12 +10,14 @@ export interface Signal {
 	/** 0 to 1. */
 	strength: number;
 	text: string;
+	/** The signal rests on a single-word name, which is not enough alone: it counts only next to shared terms. */
+	weak?: boolean;
 }
 
 export type Signals = Map<string, Signal>;
 
-function add(signals: Signals, path: string, strength: number, text: string): void {
-	signals.set(path, { strength: Math.min(1, strength), text });
+function add(signals: Signals, path: string, strength: number, text: string, weak = false): void {
+	signals.set(path, weak ? { strength: Math.min(1, strength), text, weak } : { strength: Math.min(1, strength), text });
 }
 
 /** The notes that carry each key (a property value). */
@@ -102,6 +104,11 @@ function names(note: NoteMeta): { label: string; phrase: string }[] {
 	});
 }
 
+/** A name of one word (not Chinese or Japanese), such as "Processes": a note often uses it without meaning the note. */
+function isSingleWord(label: string): boolean {
+	return !hasCjk(label) && tokenize(label).length === 1;
+}
+
 /** A single word that many notes use ("notice") says nothing when it is a title: more than 3 notes and more than 1% of them. */
 function isCommonWord(text: TextIndex, phrase: string): boolean {
 	const word = phrase.trim();
@@ -169,9 +176,9 @@ export async function unlinkedMentions(input: MentionInput): Promise<Signals> {
 	for (const path of new Set([...mentionsActive.keys(), ...mentionedByActive.keys()])) {
 		const named = mentionedByActive.get(path);
 		const usesName = mentionsActive.get(path);
-		if (named !== undefined && usesName !== undefined) add(signals, path, 1, "Mentions each other without a link");
-		else if (usesName !== undefined) add(signals, path, 0.85, `Mentions ${usesName} without a link`);
-		else add(signals, path, 0.85, `Named in this note without a link: ${named ?? ""}`);
+		if (named !== undefined && usesName !== undefined) add(signals, path, 1, "Mentions each other without a link", isSingleWord(named) && isSingleWord(usesName));
+		else if (usesName !== undefined) add(signals, path, 0.85, `Mentions ${usesName} without a link`, isSingleWord(usesName));
+		else add(signals, path, 0.85, `Named in this note without a link: ${named ?? ""}`, isSingleWord(named ?? ""));
 	}
 	return signals;
 }

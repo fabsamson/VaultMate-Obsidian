@@ -98,14 +98,30 @@ describe("findConnections", () => {
 		expect(reasonsOf(result, "Marie Curie biography")).toContain("Named in this note without a link: Marie Curie biography");
 	});
 
+	it("takes a one-word name as a mention only next to shared terms", async () => {
+		const vault: Record<string, Fixture> = {
+			...filler(10),
+			Processes: { text: "Notes on lathe turning, spindle speed and tool steel." },
+			Diary: { text: "Today I read about processes at work and ate lunch." },
+			Annex: { text: "Processes in the lathe shop: spindle speed, tool steel and turning." },
+		};
+		const result = await connections("Processes", vault);
+		expect(paths(result)).toEqual(["Annex"]);
+		expect(kindsOf(result)).toContain("mention");
+		// A name of several words keeps its strength alone.
+		vault["Lathe shop"] = { text: "Notes on lathe turning, spindle speed and tool steel." };
+		vault.Journal = { text: "A day in the lathe shop again." };
+		expect(reasonsOf(await connections("Lathe shop", vault), "Journal")).toContain("Mentions Lathe shop without a link");
+	});
+
 	it("matches aliases and ignores a name that is already linked", async () => {
 		const result = await connections("Big city", {
 			...filler(10),
-			"Big city": { frontmatter: { aliases: ["Metropolis"] } },
-			Diary: { text: "We visited the Metropolis last summer." },
+			"Big city": { frontmatter: { aliases: ["Grand Metropolis"] } },
+			Diary: { text: "We visited the Grand Metropolis last summer." },
 			Linked: { text: "The metropolis is large.", links: ["Big city"] },
 		});
-		expect(reasonsOf(result, "Diary")).toContain("Mentions Metropolis without a link");
+		expect(reasonsOf(result, "Diary")).toContain("Mentions Grand Metropolis without a link");
 		expect(paths(result)).not.toContain("Linked");
 	});
 
@@ -117,13 +133,13 @@ describe("findConnections", () => {
 		expect(kindsOf(await connections("Journal", vault))).not.toContain("mention");
 	});
 
-	it("ignores a single-word title that many notes use, keeps a rare one and multi-word titles", async () => {
+	it("ignores a single-word title that many notes use, keeps a rare multi-word one", async () => {
 		const common: Record<string, Fixture> = {};
 		for (let i = 0; i < 6; i++) common[`Memo ${i}`] = { text: `Please take notice of the change ${i}.` };
 		expect(kindsOf(await connections("Notice", { ...filler(10), ...common, Notice: { text: "x" } }))).not.toContain("mention");
 
-		const rare = await connections("Metropolis", { ...filler(10), Metropolis: { text: "x" }, Diary: { text: "We visited the metropolis." } });
-		expect(reasonsOf(rare, "Diary")).toContain("Mentions Metropolis without a link");
+		const rare = await connections("Grand Metropolis", { ...filler(10), "Grand Metropolis": { text: "x" }, Diary: { text: "We visited the grand metropolis." } });
+		expect(reasonsOf(rare, "Diary")).toContain("Mentions Grand Metropolis without a link");
 
 		expect(kindsOf(await connections("Take notice", { ...filler(10), ...common, "Take notice": { text: "x" } }))).toContain("mention");
 	});
