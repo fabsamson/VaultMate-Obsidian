@@ -21,6 +21,8 @@ export interface CollectionNote {
 	rating: number | null;
 	genres: string[];
 	creators: string[];
+	/** The `plot` property, when it is text. */
+	plot: string | null;
 }
 
 export interface CollectionType {
@@ -85,7 +87,7 @@ export function collectionNoteOf(path: string, frontmatter: Record<string, unkno
 	if (!title) return null;
 	const year = /\d{4}/.exec(textList(frontmatter.year).join(" "))?.[0] ?? null;
 	const creators = CREATOR_PROPERTIES.map((name) => textList(frontmatter[name])).find((names) => names.length > 0) ?? [];
-	return { path, title, type, year, rating: parseRating(frontmatter[properties.ratingProperty]), genres: textList(frontmatter.genres), creators };
+	return { path, title, type, year, rating: parseRating(frontmatter[properties.ratingProperty]), genres: textList(frontmatter.genres), creators, plot: typeof frontmatter.plot === "string" && frontmatter.plot.trim() ? frontmatter.plot.trim() : null };
 }
 
 /** Whether a file path is inside the collections folder (an empty folder is the whole vault). */

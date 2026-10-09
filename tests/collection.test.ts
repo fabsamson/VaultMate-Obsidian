@@ -5,7 +5,7 @@ import { collectionNoteOf, collectionTypes, entryChoices, inFolder, parseRating,
 const PROPS: CollectionProperties = { folder: "", typeProperty: "type", ratingProperty: "rating" };
 
 function note(type: string, rating: number | null, title = `${type} ${rating}`): CollectionNote {
-	return { path: `${title}.md`, title, type, year: null, rating, genres: [], creators: [] };
+	return { path: `${title}.md`, title, type, year: null, rating, genres: [], creators: [], plot: null };
 }
 
 describe("parseRating", () => {
@@ -32,7 +32,12 @@ describe("ratingLabel", () => {
 describe("collectionNoteOf", () => {
 	it("reads a Media DB movie note", () => {
 		const frontmatter = { type: "movie", title: "Heat", year: "1995", genres: ["Crime", "Drama"], director: ["Michael Mann"], actors: ["Al Pacino"], rating: 9 };
-		expect(collectionNoteOf("Heat - (1995)", frontmatter, PROPS)).toEqual({ path: "Heat - (1995)", title: "Heat", type: "movie", year: "1995", rating: 9, genres: ["Crime", "Drama"], creators: ["Michael Mann"] });
+		expect(collectionNoteOf("Heat - (1995)", frontmatter, PROPS)).toEqual({ path: "Heat - (1995)", title: "Heat", type: "movie", year: "1995", rating: 9, genres: ["Crime", "Drama"], creators: ["Michael Mann"], plot: null });
+	});
+
+	it("keeps the plot text and ignores other plot values", () => {
+		expect(collectionNoteOf("A", { type: "movie", plot: "  A story. " }, PROPS)?.plot).toBe("A story.");
+		expect(collectionNoteOf("A", { type: "movie", plot: ["x"] }, PROPS)?.plot).toBeNull();
 	});
 
 	it("takes the file name from a vault path", () => {

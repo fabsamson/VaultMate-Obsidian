@@ -22,7 +22,7 @@ export const MAX_BECAUSE = 2;
 const MAX_ANSWER_LENGTH = 50_000;
 
 /** Appended after the user's prompt, so a custom prompt cannot break the parsing. */
-export function suggestionsContract(count: number): string {
+export function suggestionsContract(count: number, entryTitle = ""): string {
 	return [
 		"Output contract (mandatory; it overrides any instruction above about the format of your answer):",
 		'Return only a JSON object, with no text before or after it and no code fence: {"suggestions":[{"title":"...","year":"2010","creator":"...","because":["..."],"why":"..."}]}',
@@ -30,7 +30,9 @@ export function suggestionsContract(count: number): string {
 		`- "title" is the exact title of a real work, on a single line, at most ${MAX_TITLE_LENGTH} characters.`,
 		'- "year" is the four-digit year of release, or "" if you are not sure.',
 		`- "creator" is the main director, author, studio or developer, at most ${MAX_CREATOR_LENGTH} characters, or "" if you are not sure.`,
-		`- "because" lists one or two titles copied exactly from the user's rated list that this suggestion is close to (at most ${MAX_BECAUSE}).`,
+		entryTitle
+			? `- "because" is [${JSON.stringify(entryTitle)}], the title the suggestion is close to, copied exactly.`
+			: `- "because" lists one or two titles copied exactly from the user's rated list that this suggestion is close to (at most ${MAX_BECAUSE}).`,
 		`- "why" is one short sentence, at most ${MAX_WHY_LENGTH} characters, on a single line.`,
 		"- Never suggest a title from the \"Already in the vault\" list.",
 	].join("\n");
@@ -121,11 +123,11 @@ export function parseSuggestions(answer: string, options: SuggestionOptions): Su
 
 // ---- Result card text -----------------------------------------------------------------------------------------
 
-/** "Because you rated Heat 9/10", with the real rating from the vault, or null when no reason survived the guard. */
+/** "Because you rated Heat 9/10" with the real rating from the vault, "Close to Heat" when it is not rated, or null when no reason survived the guard. */
 export function becauseLine(suggestion: Suggestion, rated: readonly RatedTitle[]): string | null {
 	const first = suggestion.because[0];
 	const found = first === undefined ? undefined : rated.find((item) => item.title === first);
-	return found ? `Because you rated ${found.title} ${ratingLabel(found.rating)}` : null;
+	return found && found.rating !== null ? `Because you rated ${found.title} ${ratingLabel(found.rating)}` : null;
 }
 
 /** A web search for the suggestion, opened in the user's browser. */

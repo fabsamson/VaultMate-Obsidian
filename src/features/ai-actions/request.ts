@@ -18,10 +18,14 @@ export function applyParams(prompt: string, labels: Record<string, string>): str
 	return Object.entries(labels).reduce((text, [name, label]) => text.replaceAll(`{{${name}}}`, label), prompt);
 }
 
-/** System = the action's prompt, then the output contract (last, so the prompt cannot override it). User = labelled sources. */
-export function buildMessages(action: ActionDefinition, sources: SourceText[], labels: Record<string, string> = {}): RequestMessages {
+/**
+ * System = the action's prompt, then the output contract (last, so the prompt cannot override it). User = labelled sources.
+ * `{{based_on}}` is the chosen entry (`entryTitle`) or, without one, the user's ratings.
+ */
+export function buildMessages(action: ActionDefinition, sources: SourceText[], labels: Record<string, string> = {}, entryTitle = ""): RequestMessages {
+	const basedOn = entryTitle ? `the title \u201c${entryTitle}\u201d` : "the titles they rated high and low";
 	return {
-		system: `${applyParams(action.prompt, labels)}\n\n${(action.output === "suggestions" ? suggestionsContract : questionsContract)(action.count)}`,
+		system: `${applyParams(action.prompt, { ...labels, based_on: basedOn })}\n\n${action.output === "suggestions" ? suggestionsContract(action.count, entryTitle) : questionsContract(action.count)}`,
 		user: sources.map((source) => `### ${LABELS[source.name]}\n${source.text}`).join("\n\n"),
 	};
 }
@@ -38,6 +42,11 @@ export interface SourceInput {
 	notInterested: Record<string, string[]>;
 }
 
+/** The name of the parameter that chooses one entry, if the action has one. */
+export function entryParam(action: ActionDefinition): string | undefined {
+	return action.params.find((param) => param.choices === "collection-entries")?.name;
+}
+
 /** The texts the action's sources send, in the order the action lists them. */
 export function collectSources(action: ActionDefinition, input: SourceInput, values: Record<string, string> = {}): SourceText[] {
 	return action.sources.map((name) => {
@@ -50,7 +59,8 @@ export function collectSources(action: ActionDefinition, input: SourceInput, val
 				return propertiesSource(input.frontmatter);
 			case "collection-profile": {
 				const type = values.type ?? "";
-				return collectionProfile(input.collection, type, input.notInterested[type] ?? []).source;
+				const entry = entryParam(action);
+				return collectionProfile(input.collection, type, input.notInterested[type] ?? [], entry ? (values[entry] ?? "") : "").source;
 			}
 		}
 	});

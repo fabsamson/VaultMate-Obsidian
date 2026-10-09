@@ -64,6 +64,9 @@ describe("Recommend me", () => {
 				"  type:",
 				"    label: Type",
 				"    choices: collection-types",
+				"  entry:",
+				"    label: Based on",
+				"    choices: collection-entries",
 				"output: suggestions",
 				"count: 5",
 			].join("\n"),
@@ -78,15 +81,15 @@ describe("Recommend me", () => {
 			icon: "sparkles",
 			command: true,
 			sources: ["collection-profile"],
-			params: { type: { label: "Type", choices: "collection-types" } },
+			params: { type: { label: "Type", choices: "collection-types" }, entry: { label: "Based on", choices: "collection-entries" } },
 			output: "suggestions",
 			count: 5,
 		};
 		const entry = parseAction("VaultMate/AI actions/Recommend me.md", frontmatter, body);
 		expect(entry.ok).toBe(true);
 		if (!entry.ok) return;
-		expect(entry.action).toMatchObject({ command: true, sources: ["collection-profile"], output: "suggestions", count: 5, insert: null, params: [{ name: "type", label: "Type", choices: "collection-types" }] });
-		expect(entry.action.prompt).toContain("Suggest 5 {{type}}");
+		expect(entry.action).toMatchObject({ command: true, sources: ["collection-profile"], output: "suggestions", count: 5, insert: null, params: [{ name: "type", label: "Type", choices: "collection-types" }, { name: "entry", label: "Based on", choices: "collection-entries" }] });
+		expect(entry.action.prompt).toContain("Suggest 5 {{type}} the user has not seen, close to {{based_on}}.");
 		expect(entry.action.prompt).not.toContain("{{count}}");
 		expect(entry.action.prompt).toContain("Already in the vault");
 	});

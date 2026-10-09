@@ -201,3 +201,43 @@ describe("collectSources", () => {
 		expect(sourceProblem(collectSources(action(["note"]), { ...input, selection: "" }))).toBeNull();
 	});
 });
+
+describe("one-entry requests", () => {
+	const recommend: ActionDefinition = {
+		path: "A/Recommend me.md",
+		name: "Recommend me",
+		description: "",
+		icon: "sparkles",
+		command: false,
+		sources: ["collection-profile"],
+		output: "suggestions",
+		count: 4,
+		params: [
+			{ name: "type", label: "Type", choices: "collection-types" },
+			{ name: "entry", label: "Based on", choices: "collection-entries" },
+		],
+		insert: null,
+		prompt: "Suggest 4 {{type}} close to {{based_on}}.",
+	};
+	const notes = [{ path: "Films/Blade Runner.md", title: "Blade Runner", type: "movie", year: "1982", rating: 9, genres: [], creators: [], plot: null }];
+	const input = { title: "", raw: "", selection: "", frontmatter: undefined, collection: notes, notInterested: {} };
+
+	it("replaces {{based_on}} with the ratings or with the chosen title", () => {
+		expect(buildMessages(recommend, [], { type: "Movies" }).system).toContain("Suggest 4 Movies close to the titles they rated high and low.");
+		const { system } = buildMessages(recommend, [], { type: "Movies" }, "Blade Runner");
+		expect(system).toContain("Suggest 4 Movies close to the title \u201cBlade Runner\u201d.");
+		expect(system.endsWith(suggestionsContract(4, "Blade Runner"))).toBe(true);
+		expect(system).toContain('"because" is ["Blade Runner"]');
+	});
+
+	it("keeps the usual because rule without an entry", () => {
+		expect(suggestionsContract(4)).toContain("one or two titles copied exactly");
+		expect(suggestionsContract(4)).not.toContain('"because" is [');
+	});
+
+	it("builds the profile of the entry chosen in the entry parameter", () => {
+		const [source] = collectSources(recommend, input, { type: "movie", entry: "Films/Blade Runner.md" });
+		expect(source?.text.startsWith("Recommend titles close to this one:\nBlade Runner (1982) · 9/10")).toBe(true);
+		expect(collectSources(recommend, input, { type: "movie", entry: "" })[0]?.problem).toContain("Rate a few more Movies");
+	});
+});

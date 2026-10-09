@@ -5,14 +5,14 @@ import { complete, configurationProblem } from "../../core/ai/client";
 import { baseUrlHost } from "../../core/ai/endpoint";
 import type VaultMatePlugin from "../../main";
 import { createPanel, createSectionHeader } from "../../ui/components";
-import { collectionTypes, entryChoices, normalizeTitle } from "./collection";
+import { collectionTypes, entryChoices, normalizeTitle, type CollectionNote } from "./collection";
 import { collectionProfile, type RatedTitle } from "./collection-profile";
 import { isConfirmed, withConfirmation } from "./confirmation";
 import type { ActionDefinition, ParamDefinition } from "./definition";
 import { insertQuestions } from "./insert-write";
 import { renderLine } from "./insertion";
 import { parseQuestions, type Question } from "./questions";
-import { buildMessages, collectSources, sourceProblem, type RequestMessages, type SourceInput } from "./request";
+import { buildMessages, collectSources, entryParam, sourceProblem, type RequestMessages, type SourceInput } from "./request";
 import type { SourceText } from "./sources";
 import { renderSuggestionCards } from "./suggestion-cards";
 import { parseSuggestions, searchUrl, type Suggestion } from "./suggestions";
@@ -64,7 +64,14 @@ export class RunModal extends Modal {
 		for (const param of this.action.params) labels[param.name] = this.chosenLabel(param);
 		// The Not interested titles are read now, so a rejection made in this window is part of the next preview.
 		this.sources = collectSources(this.action, { ...this.context, notInterested: this.plugin.settings.aiState.notInterested }, this.values);
-		this.messages = buildMessages(this.action, this.sources, labels);
+		this.messages = buildMessages(this.action, this.sources, labels, this.entry()?.title ?? "");
+	}
+
+	/** The entry chosen in the Based on parameter, if the action has one and an entry (not "All my ratings") is chosen. */
+	private entry(): CollectionNote | undefined {
+		const name = entryParam(this.action);
+		const path = name ? this.values[name] : "";
+		return path ? this.context.collection.find((note) => note.path === path) : undefined;
 	}
 
 	/** The options of a parameter. The entries depend on the type chosen in the `type` parameter. */
@@ -265,7 +272,7 @@ export class RunModal extends Modal {
 		const { action, context } = this;
 		if (action.output === "questions") return { type: "results", questions: parseQuestions(answer, { count: action.count, noteText: context.raw }) };
 		const type = this.values.type ?? "";
-		const { rated, excluded } = collectionProfile(context.collection, type, this.plugin.settings.aiState.notInterested[type] ?? []);
+		const { rated, excluded } = collectionProfile(context.collection, type, this.plugin.settings.aiState.notInterested[type] ?? [], this.entry()?.path);
 		return { type: "suggestions", suggestions: parseSuggestions(answer, { count: action.count, rated, excluded }), rated };
 	}
 

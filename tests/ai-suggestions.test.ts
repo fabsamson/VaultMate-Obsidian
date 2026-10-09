@@ -142,3 +142,13 @@ describe("searchUrl", () => {
 		expect(searchUrl({ title: "Heat", year: null, creator: null, because: [], why: null })).toBe("https://duckduckgo.com/?q=Heat");
 	});
 });
+
+describe("parseSuggestions with one entry", () => {
+	const entryOptions = { count: 5, rated: [{ title: "Cats", rating: null }], excluded };
+
+	it("keeps only the chosen title in because", () => {
+		const [suggestion] = parseSuggestions(answer({ ...good, because: ["Heat", "Cats"] }), entryOptions);
+		expect(suggestion?.because).toEqual(["Cats"]);
+		expect(parseSuggestions(answer({ ...good, because: ["Heat"] }), entryOptions)[0]?.because).toEqual([]);
+	});
+});
