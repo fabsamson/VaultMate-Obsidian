@@ -1,29 +1,53 @@
-import { ItemView, type WorkspaceLeaf } from "obsidian";
+import { ItemView, setIcon, type ViewStateResult, type WorkspaceLeaf } from "obsidian";
 
+import type { JournalKind } from "../features/journal/journal-line";
+import { SCOPES, type JournalScope } from "../features/journal/scope";
 import { createPanel, createSectionHeader } from "./components";
 import { CAT_ICON_ID } from "./icon";
-import { createSprite } from "./pixel";
+import { createSprite, type Sprite } from "./pixel";
 import { SPRITES } from "./sprites";
 
 export const HUB_VIEW_TYPE = "vaultmate-hub";
 
-/** A block of the hub that a feature contributes (register it with `plugin.registerHubSection`). */
-export interface HubSection {
-	/** Unique; registering the same id again replaces the section. */
-	id: string;
-	/** Sections are shown in ascending order. */
-	order: number;
-	/** Header text, in sentence case. */
-	label: string;
-	/** Checked on every redraw, so turning a feature off hides its section without a reload. */
-	enabled: () => boolean;
-	/** Fills the empty `body`; it may be async. Add a panel with `createPanel(body)` when you need one. */
-	render: (body: HTMLElement) => void | Promise<void>;
+/** What the hub remembers with the workspace layout (not in data.json). */
+export interface HubState {
+	/** Id of the open page, or null for the landing page. */
+	page: string | null;
+	/** Journal page: decisions or predictions. */
+	kind: JournalKind;
+	/** Journal page: which notes it covers. */
+	scope: JournalScope;
 }
 
-/** Side panel that hosts the sections contributed by the features. */
+export interface HubPageContext {
+	/** The view's live state; change it, then call `save`. */
+	state: HubState;
+	/** Asks Obsidian to store the state with the workspace layout. */
+	save(): void;
+}
+
+/** A page of the hub that a feature contributes (register it with `plugin.registerHubPage`). */
+export interface HubPage {
+	/** Unique; registering the same id again replaces the page. */
+	id: string;
+	/** Tiles are shown in ascending order. */
+	order: number;
+	/** Tile label and page title, in sentence case. */
+	title: string;
+	sprite: Sprite;
+	/** Checked on every redraw, so turning a feature off removes its tile without a reload. */
+	enabled: () => boolean;
+	/** One line under the tile label; read on every redraw. */
+	summary: () => string;
+	/** Fills the empty `body` of the page; it may be async. */
+	render: (body: HTMLElement, ctx: HubPageContext) => void | Promise<void>;
+}
+
+/** Side panel: a landing page of tiles, one per enabled feature, and a page for each. */
 export class HubView extends ItemView {
-	public constructor(leaf: WorkspaceLeaf, private readonly getSections: () => HubSection[]) {
+	private state: HubState = { page: null, kind: "decision", scope: "vault" };
+
+	public constructor(leaf: WorkspaceLeaf, private readonly getPages: () => HubPage[]) {
 		super(leaf);
 	}
 
@@ -39,36 +63,84 @@ export class HubView extends ItemView {
 		return CAT_ICON_ID;
 	}
 
+	public getState(): Record<string, unknown> {
+		return { ...super.getState(), ...this.state };
+	}
+
+	public async setState(state: unknown, result: ViewStateResult): Promise<void> {
+		const saved = (state ?? {}) as Partial<HubState>;
+		this.state = {
+			page: typeof saved.page === "string" ? saved.page : null,
+			kind: saved.kind === "prediction" ? "prediction" : "decision",
+			scope: SCOPES.find((scope) => scope === saved.scope) ?? "vault",
+		};
+		this.render();
+		await super.setState(state, result);
+	}
+
 	protected onOpen(): Promise<void> {
 		this.render();
 		return Promise.resolve();
 	}
 
-	/** Redraws the whole hub from the current sections. */
-	public render(): void {
+	private go(page: string | null): void {
+		const from = this.state.page;
+		this.state.page = page;
+		this.app.workspace.requestSaveLayout();
+		this.render(page ?? from);
+	}
+
+	/**
+	 * Redraws the current page. After a navigation `focus` names where keyboard focus goes: the page
+	 * title when a page opened, the tile of the page left when going back.
+	 */
+	public render(focus: string | null = null): void {
 		const root = this.contentEl;
 		root.empty();
 		root.addClass("vaultmate", "vaultmate-hub");
 		root.createDiv({ cls: "vaultmate-pattern-band" }).setCssProps({ "--vaultmate-pattern": `url("${SPRITES.patternSeigaiha.src}")` });
 
-		const sections = this.getSections().filter((section) => section.enabled());
-		if (sections.length === 0) {
+		const pages = this.getPages().filter((page) => page.enabled());
+		const page = pages.find((candidate) => candidate.id === this.state.page);
+		if (page) this.renderPage(root, page, focus !== null);
+		else this.renderLanding(root, pages, focus);
+	}
+
+	private renderLanding(root: HTMLElement, pages: HubPage[], focusId: string | null): void {
+		root.createEl("h1", { cls: "vaultmate-hub-title", text: "VaultMate" });
+		if (pages.length === 0) {
 			this.renderEmpty(root);
 			return;
 		}
-		for (const section of sections) {
-			createSectionHeader(root, section.label);
-			void this.fill(section, root.createDiv({ cls: "vaultmate-hub-section" }));
+		const tiles = root.createDiv({ cls: "vaultmate-tiles" });
+		for (const page of pages) {
+			const tile = tiles.createEl("button", { cls: "vaultmate-tile", attr: { type: "button" } });
+			createSprite(tile, page.sprite, 48);
+			const text = tile.createDiv({ cls: "vaultmate-tile-text" });
+			text.createSpan({ cls: "vaultmate-tile-label", text: page.title });
+			text.createSpan({ cls: "vaultmate-muted", text: page.summary() });
+			tile.addEventListener("click", () => this.go(page.id));
+			if (page.id === focusId) tile.focus();
 		}
 	}
 
-	private async fill(section: HubSection, body: HTMLElement): Promise<void> {
+	private renderPage(root: HTMLElement, page: HubPage, focusTitle: boolean): void {
+		const bar = root.createDiv({ cls: "vaultmate-topbar" });
+		const back = bar.createEl("button", { cls: "vaultmate-back", attr: { type: "button", "aria-label": "Back to VaultMate" } });
+		setIcon(back, "arrow-left");
+		back.addEventListener("click", () => this.go(null));
+		const title = bar.createEl("h1", { cls: "vaultmate-hub-title", text: page.title, attr: { tabindex: "-1" } });
+		if (focusTitle) title.focus();
+		void this.fill(page, root.createDiv({ cls: "vaultmate-hub-section" }));
+	}
+
+	private async fill(page: HubPage, body: HTMLElement): Promise<void> {
 		try {
-			await section.render(body);
+			await page.render(body, { state: this.state, save: () => this.app.workspace.requestSaveLayout() });
 		} catch (error) {
-			console.error(`VaultMate: the "${section.id}" section failed`, error);
+			console.error(`VaultMate: the "${page.id}" page failed`, error);
 			body.empty();
-			body.createEl("p", { cls: "vaultmate-muted", text: "This section could not be shown." });
+			body.createEl("p", { cls: "vaultmate-muted", text: "This page could not be shown." });
 		}
 	}
 
@@ -77,6 +149,6 @@ export class HubView extends ItemView {
 		const panel = createPanel(root, "vaultmate-empty");
 		createSprite(panel, SPRITES.mascotTea, 96);
 		panel.createEl("p", { cls: "vaultmate-empty-title", text: "Nothing to review yet" });
-		panel.createEl("p", { cls: "vaultmate-muted", text: "Decisions, predictions, related notes and recommendations will appear here." });
+		panel.createEl("p", { cls: "vaultmate-muted", text: "Turn on a feature in the VaultMate settings." });
 	}
 }

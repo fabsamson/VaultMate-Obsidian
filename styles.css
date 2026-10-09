@@ -631,3 +631,102 @@ button.vaultmate-badge:focus-visible {
 	letter-spacing: 0.05em;
 	text-transform: uppercase;
 }
+
+/* Hub navigation: landing tiles, page top bar and the journal switcher. */
+.vaultmate-hub-title {
+	margin: var(--size-4-2) 0 var(--size-4-3);
+	color: var(--vaultmate-text);
+	font-size: var(--font-ui-large);
+	font-weight: 900;
+}
+
+.vaultmate-hub-title:focus-visible {
+	outline: 2px solid var(--vaultmate-seal);
+	outline-offset: 2px;
+}
+
+.vaultmate-tiles {
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-4-3);
+}
+
+.vaultmate-tile {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-3);
+	width: auto;
+	height: auto;
+	min-height: 64px;
+	margin: 0 2px 2px 0;
+	padding: var(--size-4-3);
+	border: 2px solid var(--vaultmate-border);
+	border-radius: 0;
+	background-color: var(--vaultmate-surface-raised);
+	box-shadow: 2px 2px 0 var(--vaultmate-shadow);
+	color: var(--vaultmate-text);
+	text-align: left;
+	cursor: pointer;
+}
+
+.vaultmate-tile:focus-visible,
+.vaultmate-back:focus-visible,
+.vaultmate-scope:focus-visible {
+	outline: 2px solid var(--vaultmate-seal);
+	outline-offset: 2px;
+}
+
+.vaultmate-tile-text {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.vaultmate-tile-label {
+	font-weight: 700;
+}
+
+.vaultmate-topbar {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-2);
+}
+
+.vaultmate-topbar .vaultmate-hub-title {
+	flex: 1;
+	min-width: 0;
+}
+
+.vaultmate-back {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	min-width: 40px;
+	height: 40px;
+	padding: 0;
+	border: 2px solid var(--vaultmate-border);
+	border-radius: 0;
+	background-color: var(--vaultmate-surface);
+	box-shadow: none;
+	color: var(--vaultmate-text);
+	cursor: pointer;
+}
+
+.vaultmate-switcher {
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-4-2);
+	margin-bottom: var(--size-4-3);
+}
+
+.vaultmate-switcher .vaultmate-muted {
+	margin: 0;
+}
+
+.vaultmate-scope {
+	width: 100%;
+	min-height: 40px;
+}

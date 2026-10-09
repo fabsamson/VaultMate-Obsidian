@@ -1,15 +1,12 @@
-// The hub's "Reviews" section: open decisions and predictions grouped by review date.
+// The "Reviews" block of the journal page: open entries grouped by review date.
 import { dueLabel, parseDate, startOfDay } from "../../core/dates";
 import { createPanel } from "../../ui/components";
-import type { HubSection } from "../../ui/hub-view";
 import { createSprite } from "../../ui/pixel";
 import { SPRITES } from "../../ui/sprites";
 import type { JournalItem } from "./journal-index";
 import { groupByDue, kindName } from "./journal-line";
 
 export interface ReviewsHost {
-	enabled(): boolean;
-	entries(): JournalItem[];
 	decisionTag(): string;
 	/** Opens the note at the entry's line. */
 	openItem(item: JournalItem): void;
@@ -23,8 +20,10 @@ function noteName(path: string): string {
 	return name.replace(/\.md$/i, "");
 }
 
-export function createReviewsSection(host: ReviewsHost): HubSection {
+/** Returns the function that draws the reviews of `items` (open entries of one kind) into a body. */
+export function createReviewsBlock(host: ReviewsHost): (body: HTMLElement, items: JournalItem[]) => void {
 	let showAllUpcoming = false;
+	let shownItems: JournalItem[] = [];
 
 	const renderRow = (list: HTMLElement, item: JournalItem, today: Date): void => {
 		const { entry } = item;
@@ -58,7 +57,7 @@ export function createReviewsSection(host: ReviewsHost): HubSection {
 
 	const renderBody = (body: HTMLElement): void => {
 		const today = startOfDay();
-		const groups = groupByDue(host.entries(), today);
+		const groups = groupByDue(shownItems, today);
 		if (groups.overdue.length + groups.week.length + groups.upcoming.length + groups.undated.length === 0) {
 			const panel = createPanel(body, "vaultmate-empty");
 			createSprite(panel, SPRITES.mascotSleep, 96);
@@ -72,14 +71,9 @@ export function createReviewsSection(host: ReviewsHost): HubSection {
 		renderGroup(body, "No review date", groups.undated, today);
 	};
 
-	return {
-		id: "journal-reviews",
-		order: 10,
-		label: "Reviews",
-		enabled: () => host.enabled(),
-		render: (body) => {
-			showAllUpcoming = false;
-			renderBody(body);
-		},
+	return (body, items) => {
+		showAllUpcoming = false;
+		shownItems = items;
+		renderBody(body);
 	};
 }

@@ -1,4 +1,4 @@
-// The decision journal feature: wires the index, capture, badge, review and hub section together.
+// The decision journal feature: wires the index, capture, badge, review and hub page together.
 import { debounce, MarkdownView, Notice, TFile, type Editor, type MarkdownFileInfo } from "obsidian";
 import type { EditorView } from "@codemirror/view";
 
@@ -23,8 +23,7 @@ import { NewEntryModal, ReviewModal, TrackModal, type ReviewInput } from "./jour
 import { getChildren, isEmptyLine, newEntryLines, replaceEmptyLineText, reviewItemText, usesTabs } from "./journal-note";
 import { writeEntryLine } from "./journal-write";
 import { createBadgeExtension } from "./line-badge";
-import { createReviewsSection } from "./reviews-section";
-import { createTrackRecordSection } from "./track-record-section";
+import { createJournalPage } from "./journal-page";
 
 function editorLines(editor: Editor): string[] {
 	return Array.from({ length: editor.lineCount() }, (_, index) => editor.getLine(index));
@@ -52,16 +51,17 @@ export class JournalFeature {
 		const refresh = debounce(() => plugin.refreshHubs(), 300, true);
 		this.index.onChange(refresh);
 
-		plugin.registerHubSection(
-			createReviewsSection({
+		plugin.registerHubPage(
+			createJournalPage({
 				enabled: () => this.enabled(),
 				entries: () => this.index.entries(),
 				decisionTag: () => this.tags().decisionTag,
+				activeNote: () => plugin.contextFile()?.path ?? null,
+				markdownPaths: () => plugin.app.vault.getMarkdownFiles().map((file) => file.path),
 				openItem: (item) => void this.openAtLine(item),
 				openReview: (item) => this.openReview(item),
 			}),
 		);
-		plugin.registerHubSection(createTrackRecordSection({ enabled: () => this.enabled(), entries: () => this.index.entries(), openItem: (item) => void this.openAtLine(item) }));
 		plugin.registerEditorSuggest(new CaptureSuggest(plugin.app, this));
 		plugin.registerEditorExtension(
 			createBadgeExtension({

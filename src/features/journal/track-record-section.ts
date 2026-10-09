@@ -1,15 +1,12 @@
-// The hub's "Track record" section: stamps, Brier score, calibration, decision matrix and lessons.
+// The "Track record" block of the journal page: stamps, Brier score, calibration, decision matrix and lessons.
 import { createHankoStamp, createPanel } from "../../ui/components";
-import type { HubSection } from "../../ui/hub-view";
 import { createSprite } from "../../ui/pixel";
 import { SPRITES } from "../../ui/sprites";
 import type { JournalItem } from "./journal-index";
-import { OUTCOMES, QUALITIES } from "./journal-line";
+import { OUTCOMES, QUALITIES, type JournalKind } from "./journal-line";
 import { computeTrackRecord, MIN_SCORED, type TrackRecord } from "./track-record";
 
 export interface TrackRecordHost {
-	enabled(): boolean;
-	entries(): JournalItem[];
 	/** Opens the note at the entry's line. */
 	openItem(item: JournalItem): void;
 }
@@ -25,11 +22,14 @@ function renderTitle(body: HTMLElement, text: string): void {
 	body.createDiv({ cls: "vaultmate-review-group-title", text, attr: { role: "heading", "aria-level": "3" } });
 }
 
-function renderStamps(body: HTMLElement, record: TrackRecord<JournalItem>): void {
+function renderStamps(body: HTMLElement, record: TrackRecord<JournalItem>, kind: JournalKind): void {
 	const row = body.createDiv({ cls: "vaultmate-stamp-row" });
-	createHankoStamp(row, { sprite: SPRITES.stampHit, label: count(record.predictions.hits, "hit") });
-	createHankoStamp(row, { sprite: SPRITES.stampMiss, label: count(record.predictions.misses, "miss", "misses") });
-	createHankoStamp(row, { sprite: SPRITES.stampReview, label: count(record.reviewsDone, "review") + " done" });
+	if (kind === "prediction") {
+		createHankoStamp(row, { sprite: SPRITES.stampHit, label: count(record.predictions.hits, "hit") });
+		createHankoStamp(row, { sprite: SPRITES.stampMiss, label: count(record.predictions.misses, "miss", "misses") });
+	} else {
+		createHankoStamp(row, { sprite: SPRITES.stampReview, label: count(record.reviewsDone, "review") + " done" });
+	}
 }
 
 function renderPredictions(body: HTMLElement, record: TrackRecord<JournalItem>): void {
@@ -79,8 +79,11 @@ function renderMatrix(body: HTMLElement, record: TrackRecord<JournalItem>): void
 	if (decisions.lucky > 0) panel.createEl("p", { cls: "vaultmate-muted", text: `Bad decision, better outcome: lucky (${decisions.lucky})` });
 }
 
-export function createTrackRecordSection(host: TrackRecordHost): HubSection {
+/** Returns the function that draws the track record of `items` (entries of one kind) into a body. */
+export function createTrackRecordBlock(host: TrackRecordHost): (body: HTMLElement, items: JournalItem[], kind: JournalKind) => void {
 	let showAllLessons = false;
+	let shownItems: JournalItem[] = [];
+	let shownKind: JournalKind = "decision";
 
 	const renderLessons = (body: HTMLElement, record: TrackRecord<JournalItem>): void => {
 		if (record.lessons.length === 0) return;
@@ -103,29 +106,25 @@ export function createTrackRecordSection(host: TrackRecordHost): HubSection {
 	};
 
 	const renderBody = (body: HTMLElement): void => {
-		const record = computeTrackRecord(host.entries());
+		const record = computeTrackRecord(shownItems);
 		const { predictions, decisions } = record;
 		if (record.reviewsDone + predictions.scored + decisions.closed + record.lessons.length === 0) {
 			const panel = createPanel(body, "vaultmate-empty");
 			createSprite(panel, SPRITES.mascotTea, 96);
 			panel.createEl("p", { cls: "vaultmate-empty-title", text: "No reviews yet" });
-			panel.createEl("p", { cls: "vaultmate-muted", text: `Your track record builds up as you resolve predictions and close decisions; ${MIN_SCORED} resolved predictions unlock calibration.` });
+			panel.createEl("p", { cls: "vaultmate-muted", text: shownKind === "prediction" ? `Your track record builds up as you resolve predictions; ${MIN_SCORED} resolved predictions unlock calibration.` : "Your track record builds up as you close decisions." });
 			return;
 		}
-		renderStamps(body, record);
-		renderPredictions(body, record);
-		renderMatrix(body, record);
+		renderStamps(body, record, shownKind);
+		if (shownKind === "prediction") renderPredictions(body, record);
+		else renderMatrix(body, record);
 		renderLessons(body, record);
 	};
 
-	return {
-		id: "journal-track-record",
-		order: 20,
-		label: "Track record",
-		enabled: () => host.enabled(),
-		render: (body) => {
-			showAllLessons = false;
-			renderBody(body);
-		},
+	return (body, items, kind) => {
+		showAllLessons = false;
+		shownItems = items;
+		shownKind = kind;
+		renderBody(body);
 	};
 }

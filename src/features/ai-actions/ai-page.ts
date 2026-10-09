@@ -1,24 +1,36 @@
-// The hub's "AI" section: the valid actions as compact cards.
-import type { HubSection } from "../../ui/hub-view";
+// The hub's "AI actions" page: the valid actions as compact cards.
+import type { HubPage } from "../../ui/hub-view";
 import { createPanel } from "../../ui/components";
+import { SPRITES } from "../../ui/sprites";
 import type { ActionDefinition, ActionEntry } from "./definition";
 import { createActionIcon } from "./run-modal";
 
-export interface AiSectionHost {
+export interface AiPageHost {
 	enabled(): boolean;
 	entries(): ActionEntry[];
 	folder(): string;
-	/** Path of the note an action started from the hub runs on, or null. */
-	contextPath(): string | null;
+	/** Name of the note an action started from the hub runs on, or null. */
+	contextName(): string | null;
+	/** What is missing before a call can be made, or null. */
+	configurationProblem(): string | null;
 	run(action: ActionDefinition): void;
 }
 
-export function createAiSection(host: AiSectionHost): HubSection {
+export function createAiPage(host: AiPageHost): HubPage {
 	return {
 		id: "ai-actions",
 		order: 30,
-		label: "AI",
+		title: "AI actions",
+		// Placeholder sprite: switch to module_questions.png once it is in assets.
+		sprite: SPRITES.moduleIdeas,
 		enabled: () => host.enabled(),
+		summary: () => {
+			if (host.configurationProblem()) return "Set up a provider in settings";
+			const count = host.entries().filter((entry) => entry.ok).length;
+			if (count === 0) return "No actions yet";
+			const name = host.contextName();
+			return `${count} action${count === 1 ? "" : "s"} · ${name ? `runs on ${name}` : "open a note to run"}`;
+		},
 		render: (body) => {
 			const entries = host.entries();
 			const valid = entries.flatMap((entry) => (entry.ok ? [entry.action] : []));
@@ -29,8 +41,8 @@ export function createAiSection(host: AiSectionHost): HubSection {
 				panel.createEl("p", { cls: "vaultmate-muted", text: `Create the default actions in the VaultMate settings, or add action files to ${host.folder()}.` });
 				return;
 			}
-			const path = host.contextPath();
-			body.createEl("p", { cls: "vaultmate-muted", text: path ? `Runs on ${path}. Nothing is sent before you confirm.` : "Open a note first." });
+			const name = host.contextName();
+			body.createEl("p", { cls: "vaultmate-muted", text: name ? `Runs on ${name}. Nothing is sent before you confirm.` : "Open a note first." });
 			for (const action of valid) {
 				const card = createPanel(body, "vaultmate-action-card");
 				createActionIcon(card, action.icon);

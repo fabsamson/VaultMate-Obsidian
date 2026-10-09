@@ -1,8 +1,9 @@
-// The AI actions feature: wires the catalogue, the hub section, the commands and the run window.
-import { debounce, MarkdownView, Notice, TFile, type Editor } from "obsidian";
+// The AI actions feature: wires the catalogue, the hub page, the commands and the run window.
+import { MarkdownView, Notice, type Editor, type TFile } from "obsidian";
 
+import { configurationProblem } from "../../core/ai/client";
 import type VaultMatePlugin from "../../main";
-import { createAiSection } from "./ai-section";
+import { createAiPage } from "./ai-page";
 import { ActionCatalogue } from "./catalogue";
 import { CatalogueModal } from "./catalogue-modal";
 import type { ActionDefinition } from "./definition";
@@ -32,12 +33,13 @@ export class AiActionsFeature {
 				return true;
 			},
 		});
-		plugin.registerHubSection(
-			createAiSection({
+		plugin.registerHubPage(
+			createAiPage({
 				enabled: () => this.enabled(),
 				entries: () => this.catalogue.entries(),
 				folder: () => this.catalogue.folder(),
-				contextPath: () => this.contextFile()?.path ?? null,
+				contextName: () => plugin.contextFile()?.basename ?? null,
+				configurationProblem: () => configurationProblem(plugin.app, plugin.settings.ai),
 				run: (action) => void this.run(action),
 			}),
 		);
@@ -46,8 +48,6 @@ export class AiActionsFeature {
 			this.catalogue.registerEvents();
 			void this.catalogue.reload();
 		});
-		// The section names the note it runs on, so redraw when another note opens.
-		plugin.registerEvent(plugin.app.workspace.on("file-open", debounce(() => plugin.refreshHubs(), 300, true)));
 	}
 
 	/** Call after a setting changed: the folder or the on/off switch may have changed. */
@@ -56,18 +56,6 @@ export class AiActionsFeature {
 	}
 
 	// ---- Running ------------------------------------------------------------------------------------
-
-	/** The active note, else the most recent Markdown note. */
-	private contextFile(): TFile | null {
-		const { workspace, vault } = this.plugin.app;
-		const active = workspace.getActiveViewOfType(MarkdownView)?.file ?? workspace.getActiveFile();
-		if (active?.extension === "md") return active;
-		for (const path of workspace.getLastOpenFiles()) {
-			const file = vault.getFileByPath(path);
-			if (file?.extension === "md") return file;
-		}
-		return null;
-	}
 
 	private editorOf(path: string): Editor | null {
 		for (const leaf of this.plugin.app.workspace.getLeavesOfType("markdown")) {
@@ -90,7 +78,7 @@ export class AiActionsFeature {
 	}
 
 	public async run(action: ActionDefinition): Promise<void> {
-		const file = this.contextFile();
+		const file = this.plugin.contextFile();
 		if (!file) {
 			new Notice("Open a note first.");
 			return;
