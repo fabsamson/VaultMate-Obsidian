@@ -47,6 +47,7 @@ describe("normalizeSettings", () => {
 			aiState: { confirmed: { "Prompts/AI/A.md": ["note", "properties"] }, notInterested: { movie: ["Heat"] } },
 			collections: { folder: "Media", typeProperty: "kind", ratingProperty: "score" },
 			location: { enabled: false, latitudeProperty: "lat", longitudeProperty: "lng", labelProperty: "where", androidApp: true },
+			context: { enabled: false, excludedFolders: ["Templates"], peopleProperties: ["who"] },
 		};
 		expect(normalizeSettings(saved)).toEqual(saved);
 	});

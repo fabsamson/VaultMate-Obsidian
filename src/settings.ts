@@ -1,9 +1,12 @@
 import { Notice, PluginSettingTab, SecretComponent, type Setting, type SettingDefinitionItem } from "obsidian";
 
 import { validateBaseUrl } from "./core/ai/endpoint";
-import { DEFAULT_SETTINGS, validateActionsFolder, validateDistinctCollectionProperties, validateDistinctProperties, validateDistinctTags, validatePropertyName, validateTag } from "./core/settings-model";
+import { DEFAULT_SETTINGS, validateActionsFolder, validateDistinctCollectionProperties, validateDistinctProperties, validateDistinctTags, validatePropertyList, validatePropertyName, validateTag, parseList, cleanFolderPath } from "./core/settings-model";
 import { createDefaultActions } from "./features/ai-actions/default-actions";
 import type VaultMatePlugin from "./main";
+
+/** Settings stored as a list but edited as comma-separated text. */
+const LIST_KEYS = new Set(["context.excludedFolders", "context.peopleProperties"]);
 
 /** Controls use `feature.name` keys (`journal.enabled`), which map to the nested settings object. */
 export class VaultMateSettingTab extends PluginSettingTab {
@@ -148,6 +151,27 @@ export class VaultMateSettingTab extends PluginSettingTab {
 					},
 				],
 			},
+			{
+				type: "group",
+				heading: "Related notes",
+				items: [
+					{
+						name: "Enable related notes",
+						desc: "Find notes worth reading next to the active note, with the reasons. Everything is computed on this device; nothing is sent anywhere.",
+						control: { type: "toggle", key: "context.enabled" },
+					},
+					{
+						name: "Excluded folders",
+						desc: "Notes in these folders are never suggested. Separate folders with commas, for example Templates, Scripts.",
+						control: { type: "text", key: "context.excludedFolders", placeholder: "Templates, Scripts" },
+					},
+					{
+						name: "People and place properties",
+						desc: "Notes with the same value in one of these properties are related. Separate property names with commas.",
+						control: { type: "text", key: "context.peopleProperties", placeholder: DEFAULT_SETTINGS.context.peopleProperties.join(", "), validate: validatePropertyList },
+					},
+				],
+			},
 		];
 	}
 
@@ -172,14 +196,15 @@ export class VaultMateSettingTab extends PluginSettingTab {
 
 	public getControlValue(key: string): unknown {
 		const [feature = "", name = ""] = key.split(".");
-		return this.featureSettings(feature)?.[name];
+		const value = this.featureSettings(feature)?.[name];
+		return LIST_KEYS.has(key) && Array.isArray(value) ? value.join(", ") : value;
 	}
 
 	public async setControlValue(key: string, value: unknown): Promise<void> {
 		const [feature = "", name = ""] = key.split(".");
 		const settings = this.featureSettings(feature);
 		if (!settings) return;
-		settings[name] = value;
+		settings[name] = LIST_KEYS.has(key) && typeof value === "string" ? parseList(value).map(key === "context.excludedFolders" ? cleanFolderPath : (item) => item).filter((item) => item !== "") : value;
 		await this.plugin.saveSettings();
 		this.plugin.onSettingsChanged();
 	}

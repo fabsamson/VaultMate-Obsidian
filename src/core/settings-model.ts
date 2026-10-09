@@ -52,6 +52,14 @@ export interface LocationSettings {
 	androidApp: boolean;
 }
 
+export interface ContextSettings {
+	enabled: boolean;
+	/** Folders whose notes are neither indexed nor suggested. */
+	excludedFolders: string[];
+	/** Properties whose values are people or places; notes sharing a value are related. */
+	peopleProperties: string[];
+}
+
 /** Nested per feature; a feature's settings live under its own key. */
 export interface VaultMateSettings {
 	journal: JournalSettings;
@@ -60,6 +68,7 @@ export interface VaultMateSettings {
 	aiState: AiState;
 	collections: CollectionsSettings;
 	location: LocationSettings;
+	context: ContextSettings;
 }
 
 export const DEFAULT_SETTINGS: VaultMateSettings = {
@@ -69,6 +78,7 @@ export const DEFAULT_SETTINGS: VaultMateSettings = {
 	aiState: { confirmed: {}, notInterested: {} },
 	collections: { folder: "", typeProperty: "type", ratingProperty: "rating" },
 	location: { enabled: true, latitudeProperty: "latitude", longitudeProperty: "longitude", labelProperty: "location", androidApp: false },
+	context: { enabled: true, excludedFolders: [], peopleProperties: ["author", "authors", "people"] },
 };
 
 const TAG_RE = /^[\p{L}\p{N}\p{M}_/-]+$/u;
@@ -120,6 +130,20 @@ export function validateDistinctProperties(names: readonly string[]): string | u
 	return new Set(lower).size === lower.length ? undefined : "Latitude, longitude and label need different property names.";
 }
 
+/** Items of a comma- or line-separated list as typed, trimmed, without empty items or duplicates. */
+export function parseList(text: string): string[] {
+	return [...new Set(text.split(/[,\n]/).map((item) => item.trim()).filter((item) => item !== ""))];
+}
+
+/** Error message for a comma-separated list of property names, or undefined (an empty list is valid). */
+export function validatePropertyList(text: string): string | undefined {
+	for (const name of parseList(text)) {
+		const error = validatePropertyName(name);
+		if (error) return `"${name}": ${error}`;
+	}
+	return undefined;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -168,7 +192,16 @@ export function normalizeSettings(value: unknown): VaultMateSettings {
 	const propertyName = (raw: unknown, fallback: string): string => (typeof raw === "string" && validatePropertyName(raw.trim()) === undefined ? raw.trim() : fallback);
 	let names = [propertyName(loc.latitudeProperty, locDefaults.latitudeProperty), propertyName(loc.longitudeProperty, locDefaults.longitudeProperty), propertyName(loc.labelProperty, locDefaults.labelProperty)];
 	if (validateDistinctProperties(names)) names = [locDefaults.latitudeProperty, locDefaults.longitudeProperty, locDefaults.labelProperty];
+	const ctx = isRecord(value) && isRecord(value.context) ? value.context : {};
+	const ctxDefaults = DEFAULT_SETTINGS.context;
+	const stringList = (raw: unknown, clean: (item: string) => string): string[] | undefined =>
+		Array.isArray(raw) ? [...new Set(raw.filter((item): item is string => typeof item === "string").map(clean).filter((item) => item !== ""))] : undefined;
 	return {
+		context: {
+			enabled: typeof ctx.enabled === "boolean" ? ctx.enabled : ctxDefaults.enabled,
+			excludedFolders: stringList(ctx.excludedFolders, cleanFolderPath) ?? [...ctxDefaults.excludedFolders],
+			peopleProperties: stringList(ctx.peopleProperties, (item) => item.trim())?.filter((item) => validatePropertyName(item) === undefined) ?? [...ctxDefaults.peopleProperties],
+		},
 		location: {
 			enabled: typeof loc.enabled === "boolean" ? loc.enabled : locDefaults.enabled,
 			latitudeProperty: names[0] ?? locDefaults.latitudeProperty,
