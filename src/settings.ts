@@ -1,7 +1,7 @@
 import { Notice, PluginSettingTab, SecretComponent, type Setting, type SettingDefinitionItem } from "obsidian";
 
 import { validateBaseUrl } from "./core/ai/endpoint";
-import { DEFAULT_SETTINGS, validateActionsFolder, validateDistinctProperties, validateDistinctTags, validatePropertyName, validateTag } from "./core/settings-model";
+import { DEFAULT_SETTINGS, validateActionsFolder, validateDistinctCollectionProperties, validateDistinctProperties, validateDistinctTags, validatePropertyName, validateTag } from "./core/settings-model";
 import { createDefaultActions } from "./features/ai-actions/default-actions";
 import type VaultMatePlugin from "./main";
 
@@ -12,7 +12,7 @@ export class VaultMateSettingTab extends PluginSettingTab {
 	}
 
 	public getSettingDefinitions(): SettingDefinitionItem[] {
-		const { journal, location } = this.plugin.settings;
+		const { journal, location, collections } = this.plugin.settings;
 		const propertyValidator = (index: 0 | 1 | 2) => (value: string): string | undefined => {
 			const names = [location.latitudeProperty, location.longitudeProperty, location.labelProperty];
 			names[index] = value;
@@ -83,6 +83,37 @@ export class VaultMateSettingTab extends PluginSettingTab {
 						name: "Create default actions",
 						desc: "Creates the Challenge this note action in the actions folder, without overwriting anything.",
 						render: (setting) => setting.addButton((button) => button.setButtonText("Create actions").onClick(() => void this.createActions())),
+					},
+				],
+			},
+			{
+				type: "group",
+				heading: "Collections",
+				items: [
+					{
+						name: "Collections folder",
+						desc: "Folder of your collection notes (movies, series, books...). Leave empty to look in the whole vault. Used by the Recommend me action.",
+						control: { type: "folder", key: "collections.folder", placeholder: "Whole vault" },
+					},
+					{
+						name: "Type property",
+						desc: "Property that tells what a note is, such as movie, series or book.",
+						control: {
+							type: "text",
+							key: "collections.typeProperty",
+							placeholder: DEFAULT_SETTINGS.collections.typeProperty,
+							validate: (value) => validatePropertyName(value) ?? validateDistinctCollectionProperties(value, collections.ratingProperty),
+						},
+					},
+					{
+						name: "Rating property",
+						desc: "Property that holds your rating from 0 to 10. 0 or empty means not rated.",
+						control: {
+							type: "text",
+							key: "collections.ratingProperty",
+							placeholder: DEFAULT_SETTINGS.collections.ratingProperty,
+							validate: (value) => validatePropertyName(value) ?? validateDistinctCollectionProperties(collections.typeProperty, value),
+						},
 					},
 				],
 			},

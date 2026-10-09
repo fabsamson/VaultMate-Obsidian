@@ -30,6 +30,16 @@ export interface AiSettings {
 export interface AiState {
 	/** Action file path -> sorted source list the user confirmed for it. */
 	confirmed: Confirmations;
+	/** Collection type (`movie`) -> titles the user does not want suggested again. */
+	notInterested: Record<string, string[]>;
+}
+
+/** Where the AI actions find the user's collection notes (`CollectionProperties`). */
+export interface CollectionsSettings {
+	/** Folder of the collection notes; empty = the whole vault. */
+	folder: string;
+	typeProperty: string;
+	ratingProperty: string;
 }
 
 export interface LocationSettings {
@@ -48,6 +58,7 @@ export interface VaultMateSettings {
 	journalState: JournalState;
 	ai: AiSettings;
 	aiState: AiState;
+	collections: CollectionsSettings;
 	location: LocationSettings;
 }
 
@@ -55,7 +66,8 @@ export const DEFAULT_SETTINGS: VaultMateSettings = {
 	journal: { enabled: true, decisionTag: "decision", predictionTag: "prediction" },
 	journalState: { lastNoticeDate: "" },
 	ai: { enabled: true, baseUrl: "https://api.openai.com/v1", model: "gpt-5.6-luna", apiKeySecret: "", actionsFolder: "VaultMate/AI actions" },
-	aiState: { confirmed: {} },
+	aiState: { confirmed: {}, notInterested: {} },
+	collections: { folder: "", typeProperty: "type", ratingProperty: "rating" },
 	location: { enabled: true, latitudeProperty: "latitude", longitudeProperty: "longitude", labelProperty: "location", androidApp: false },
 };
 
@@ -97,6 +109,11 @@ export function validatePropertyName(name: string): string | undefined {
 	return undefined;
 }
 
+/** Error message when the type and rating properties are the same (ignoring case), or undefined. */
+export function validateDistinctCollectionProperties(typeProperty: string, ratingProperty: string): string | undefined {
+	return typeProperty.toLowerCase() === ratingProperty.toLowerCase() ? "The type and the rating need different property names." : undefined;
+}
+
 /** Error message when the three property names are not all different (ignoring case), or undefined. */
 export function validateDistinctProperties(names: readonly string[]): string | undefined {
 	const lower = names.map((name) => name.toLowerCase());
@@ -133,6 +150,19 @@ export function normalizeSettings(value: unknown): VaultMateSettings {
 	for (const [path, sources] of Object.entries(confirmedRaw)) {
 		if (Array.isArray(sources) && sources.every((source) => typeof source === "string")) confirmed[path] = [...sources];
 	}
+	const notInterestedRaw = isRecord(value) && isRecord(value.aiState) && isRecord(value.aiState.notInterested) ? value.aiState.notInterested : {};
+	const notInterested: Record<string, string[]> = {};
+	for (const [type, titles] of Object.entries(notInterestedRaw)) {
+		if (Array.isArray(titles)) notInterested[type] = titles.filter((title): title is string => typeof title === "string");
+	}
+	const col = isRecord(value) && isRecord(value.collections) ? value.collections : {};
+	const colDefaults = DEFAULT_SETTINGS.collections;
+	let typeProperty = typeof col.typeProperty === "string" && validatePropertyName(col.typeProperty.trim()) === undefined ? col.typeProperty.trim() : colDefaults.typeProperty;
+	let ratingProperty = typeof col.ratingProperty === "string" && validatePropertyName(col.ratingProperty.trim()) === undefined ? col.ratingProperty.trim() : colDefaults.ratingProperty;
+	if (validateDistinctCollectionProperties(typeProperty, ratingProperty)) {
+		typeProperty = colDefaults.typeProperty;
+		ratingProperty = colDefaults.ratingProperty;
+	}
 	const loc = isRecord(value) && isRecord(value.location) ? value.location : {};
 	const locDefaults = DEFAULT_SETTINGS.location;
 	const propertyName = (raw: unknown, fallback: string): string => (typeof raw === "string" && validatePropertyName(raw.trim()) === undefined ? raw.trim() : fallback);
@@ -153,7 +183,8 @@ export function normalizeSettings(value: unknown): VaultMateSettings {
 			apiKeySecret: typeof ai.apiKeySecret === "string" ? ai.apiKeySecret : aiDefaults.apiKeySecret,
 			actionsFolder: typeof ai.actionsFolder === "string" && cleanFolderPath(ai.actionsFolder) !== "" ? cleanFolderPath(ai.actionsFolder) : aiDefaults.actionsFolder,
 		},
-		aiState: { confirmed },
+		aiState: { confirmed, notInterested },
+		collections: { folder: typeof col.folder === "string" ? cleanFolderPath(col.folder) : colDefaults.folder, typeProperty, ratingProperty },
 		journal: { enabled: typeof journal.enabled === "boolean" ? journal.enabled : defaults.enabled, decisionTag, predictionTag },
 		journalState: { lastNoticeDate },
 	};

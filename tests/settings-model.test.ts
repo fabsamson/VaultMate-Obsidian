@@ -44,7 +44,8 @@ describe("normalizeSettings", () => {
 			journal: { enabled: false, decisionTag: "choix", predictionTag: "pari" },
 			journalState: { lastNoticeDate: "2026-10-09" },
 			ai: { enabled: false, baseUrl: "http://localhost:1234/v1", model: "local", apiKeySecret: "kotoba-key", actionsFolder: "Prompts/AI" },
-			aiState: { confirmed: { "Prompts/AI/A.md": ["note", "properties"] } },
+			aiState: { confirmed: { "Prompts/AI/A.md": ["note", "properties"] }, notInterested: { movie: ["Heat"] } },
+			collections: { folder: "Media", typeProperty: "kind", ratingProperty: "score" },
 			location: { enabled: false, latitudeProperty: "lat", longitudeProperty: "lng", labelProperty: "where", androidApp: true },
 		};
 		expect(normalizeSettings(saved)).toEqual(saved);
@@ -76,7 +77,7 @@ describe("normalizeSettings", () => {
 describe("AI settings", () => {
 	it("has generic defaults", () => {
 		expect(DEFAULT_SETTINGS.ai).toEqual({ enabled: true, baseUrl: "https://api.openai.com/v1", model: "gpt-5.6-luna", apiKeySecret: "", actionsFolder: "VaultMate/AI actions" });
-		expect(DEFAULT_SETTINGS.aiState).toEqual({ confirmed: {} });
+		expect(DEFAULT_SETTINGS.aiState).toEqual({ confirmed: {}, notInterested: {} });
 	});
 
 	it("replaces an insecure or malformed base URL, an empty model and an empty folder by their default", () => {
@@ -101,3 +102,25 @@ describe("AI settings", () => {
 		expect(validateActionsFolder("VaultMate/AI actions")).toBeUndefined();
 	});
 });
+
+describe("collection settings", () => {
+	it("defaults to the whole vault, type and rating", () => {
+		expect(normalizeSettings(undefined).collections).toEqual({ folder: "", typeProperty: "type", ratingProperty: "rating" });
+	});
+
+	it("keeps valid values and cleans the folder", () => {
+		const { collections } = normalizeSettings({ collections: { folder: "/Media//Films/", typeProperty: "kind", ratingProperty: "score" } });
+		expect(collections).toEqual({ folder: "Media/Films", typeProperty: "kind", ratingProperty: "score" });
+	});
+
+	it("falls back when the properties are invalid or the same", () => {
+		expect(normalizeSettings({ collections: { typeProperty: "a b", ratingProperty: "" } }).collections).toMatchObject({ typeProperty: "type", ratingProperty: "rating" });
+		expect(normalizeSettings({ collections: { typeProperty: "Score", ratingProperty: "score" } }).collections).toMatchObject({ typeProperty: "type", ratingProperty: "rating" });
+	});
+
+	it("keeps the Not interested titles per type and drops anything else", () => {
+		const { aiState } = normalizeSettings({ aiState: { notInterested: { movie: ["Heat", 3, null], bad: "x" } } });
+		expect(aiState.notInterested).toEqual({ movie: ["Heat"] });
+	});
+});
+
