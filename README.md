@@ -64,9 +64,14 @@ Argue against the note's main claim. Return only questions. Ask {{count}} of the
 - **OpenStreetMap search:** the search uses [Nominatim](https://nominatim.org/), the public OpenStreetMap search service. A request is sent only when you press Enter or **Search**, never while you type, and at most one per second, as the [usage policy](https://operations.osmfoundation.org/policies/nominatim/) asks. The request carries only your search text, plus a rectangle of about 110 km around the last place you used on this device (to rank nearby results first; it does not restrict them). VaultMate identifies itself with a `User-Agent` header of the form `VaultMate-Obsidian/<version> (+https://github.com/fabsamson/VaultMate-Obsidian)`. Results are © OpenStreetMap contributors, under the [ODbL](https://www.openstreetmap.org/copyright).
 - **Show notes on a map:** create a Base (Bases core plugin), add a **Map** view, and set **Marker coordinates** to the formula `[latitude, longitude]` (use your own property names). This needs the Maps plugin that provides the Map view.
 
-## Planned features
+## Related notes
 
-- **Context finder:** see which notes are worth reading next to the active note, and why each one was picked. Computed locally.
+The **Related notes** page of the panel (or the **Show related notes** command) lists up to 8 notes worth reading next to the current note, each with up to 3 reasons in words. It does not repeat what Backlinks and Outgoing links already show: notes linked either way are left out.
+
+- **Reasons:** a note that names this note (title or alias) without a link, or that this note names; links to the same notes; notes that are often linked together with this one; rare shared tags; the same value in a people or place property (`author`, `people`); similar wording; a close date (a date in the file name, or the `date` or `created` property, never the file's creation time); and a nearby place (`latitude` and `longitude`). Titles that are dates, or a single common word, are not used to find mentions.
+- **Each card:** the note title (click to open it, Ctrl or Cmd click for a new tab), its folder, the reasons, **Insert link** (at the cursor, when the current note is open in an editor) and **Copy link**.
+- **Computed on your device:** the first search indexes the text of your notes, which takes a few seconds on a large vault; the page shows the progress and the time it took. The index is cached in the app's IndexedDB on each device (it is not synced) and kept current as notes change. Nothing is sent anywhere.
+- **Settings:** under Related notes, turn the feature off, exclude folders (their notes are never suggested), and choose the people and place properties.
 
 AI features run only when you ask for them, with the provider, model and prompts you choose.
 

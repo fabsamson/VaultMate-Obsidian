@@ -4,6 +4,10 @@ VaultMate does not collect telemetry, analytics, or accounts, and it has no serv
 
 Notes are read on your device to compute the plugin's views. VaultMate changes a note only when you run one of its commands, and only the note that command names.
 
+## Related notes
+
+The Related notes page is computed entirely on your device and sends nothing. To search quickly, VaultMate keeps an index of the words of your notes (word counts and each note's modification time, not the notes themselves) in the app's IndexedDB, on each device. It is not written to `data.json`, so it is not synced, and it is rebuilt if you clear the app's data.
+
 ## AI actions
 
 An AI action sends data to the AI provider you configure in the settings (base URL and model; an OpenAI-compatible Chat Completions service). VaultMate sends nothing at startup and nothing in the background.
