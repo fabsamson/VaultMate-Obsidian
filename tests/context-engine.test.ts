@@ -169,6 +169,14 @@ describe("findConnections", () => {
 		expect(result[0]?.reasons).toEqual([]);
 	});
 
+	it("does not take Japanese grammar fragments for distinctive terms", async () => {
+		const grammar = await connections("Active", { ...filler(10), Active: { text: "ものです ところが それは" }, Other: { text: "ものです ところが それは" } });
+		expect(grammar).toEqual([]);
+		const kanji = await connections("Active", { ...filler(10), Active: { text: "東京大学 図書館 ものです" }, Other: { text: "東京大学 図書館 ところが" } });
+		expect(paths(kanji)).toEqual(["Other"]);
+		expect(kanji[0]?.terms).toEqual(expect.arrayContaining(["大学"]));
+	});
+
 	it("does not count the vocabulary of the active note's own neighbourhood", async () => {
 		const result = await connections("Active", {
 			...filler(10),

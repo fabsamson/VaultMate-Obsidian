@@ -19,12 +19,15 @@ export interface TermMatch {
 	terms: string[];
 }
 
-/** Terms worth comparing: not a number, used by at least two notes and not by a large share of them. */
+/** Hiragana alone is mostly particles and verb endings; Han and katakana carry the meaning. */
+const ONLY_HIRAGANA = /^\p{Script=Hiragana}+$/u;
+
+/** Terms worth comparing: not a number, not Japanese grammar, used by at least two notes and not by a large share of them. */
 function usableTerm(text: TextIndex): (term: string) => boolean {
 	const maxNotes = Math.max(MIN_COMMON_NOTES, Math.ceil(text.size * COMMON_SHARE));
 	return (term) => {
 		const notes = text.documentFrequency(term);
-		return notes >= 2 && notes <= maxNotes && /\D/.test(term);
+		return notes >= 2 && notes <= maxNotes && /\D/.test(term) && !ONLY_HIRAGANA.test(term);
 	};
 }
 
