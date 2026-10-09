@@ -1,8 +1,8 @@
 // The ranking of the context finder. Pure: it takes the graph (`NoteMeta` per note) and the text index,
 // runs the eight signals for the active note and returns the best notes with their reasons.
+import { buildGraphContext } from "./graph";
 import type { NoteMeta } from "./note-meta";
 import {
-	buildGraphContext,
 	coCitation,
 	geoProximity,
 	rareTags,

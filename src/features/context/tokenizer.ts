@@ -35,20 +35,35 @@ export function hasCjk(text: string): boolean {
 	return CJK_RE.test(text);
 }
 
-/** Tokens of a text, in order, stopwords and one-letter words removed. */
-export function tokenize(text: string): string[] {
-	const tokens: string[] = [];
+/** Appends the tokens of a text to `tokens` and returns how many words it has (stopwords included, a Chinese or Japanese word taken as two characters). */
+function scan(text: string, tokens: string[]): number {
+	let words = 0;
 	for (const match of foldText(text).matchAll(TOKEN_RE)) {
 		const word = match[0];
 		if (CJK_RE.test(word)) {
 			const chars = Array.from(word);
+			words += Math.ceil(chars.length / 2);
 			if (chars.length === 1) tokens.push(word);
 			else for (let i = 0; i + 1 < chars.length; i++) tokens.push((chars[i] ?? "") + (chars[i + 1] ?? ""));
-		} else if (word.length >= 2 && word.length <= MAX_TOKEN_LENGTH && !STOPWORDS.has(word)) {
-			tokens.push(word);
+		} else {
+			words++;
+			if (word.length >= 2 && word.length <= MAX_TOKEN_LENGTH && !STOPWORDS.has(word)) tokens.push(word);
 		}
 	}
+	return words;
+}
+
+/** Tokens of a text, in order, stopwords and one-letter words removed. */
+export function tokenize(text: string): string[] {
+	const tokens: string[] = [];
+	scan(text, tokens);
 	return tokens;
+}
+
+/** The tokens of a text and its number of words, in one pass. */
+export function tokenizeCounting(text: string): { tokens: string[]; words: number } {
+	const tokens: string[] = [];
+	return { words: scan(text, tokens), tokens };
 }
 
 /**

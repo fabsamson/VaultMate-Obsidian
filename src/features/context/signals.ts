@@ -1,5 +1,6 @@
 // The eight signals of the context finder. Each one looks at the active note and returns, for the notes
 // it finds, a strength between 0 and 1 and the reason in words. `engine.ts` weights and adds them.
+import { rarity, type GraphContext } from "./graph";
 import { baseName, haversineKm, type NoteMeta } from "./note-meta";
 import type { TextIndex } from "./text-index";
 import { cleanText, hasCjk, tokenize } from "./tokenizer";
@@ -12,33 +13,8 @@ export interface Signal {
 
 export type Signals = Map<string, Signal>;
 
-/** The graph around the active note, computed once per query. */
-export interface GraphContext {
-	active: NoteMeta;
-	notes: ReadonlyMap<string, NoteMeta>;
-	/** Target path -> notes that link to it. */
-	backlinks: ReadonlyMap<string, ReadonlySet<string>>;
-}
-
-export function buildGraphContext(active: NoteMeta, notes: ReadonlyMap<string, NoteMeta>): GraphContext {
-	const backlinks = new Map<string, Set<string>>();
-	for (const note of notes.values()) {
-		for (const target of note.links) {
-			let from = backlinks.get(target);
-			if (!from) backlinks.set(target, (from = new Set()));
-			from.add(note.path);
-		}
-	}
-	return { active, notes, backlinks };
-}
-
 function titleOf(context: GraphContext, path: string): string {
 	return context.notes.get(path)?.title ?? baseName(path);
-}
-
-/** 1 for something only the active note and one other have, near 0 for something almost every note has. */
-function rarity(total: number, count: number): number {
-	return Math.log((total + 1) / (count + 1)) / Math.log(total + 1);
 }
 
 function add(signals: Signals, path: string, strength: number, text: string): void {

@@ -1,6 +1,6 @@
 // The text index of the context finder: term frequencies per note, an inverted index over them, and
 // BM25 scoring. Pure. The title counts TITLE_WEIGHT times, as if it were repeated in the text.
-import { cleanText, tokenize } from "./tokenizer";
+import { cleanText, tokenizeCounting } from "./tokenizer";
 
 const K1 = 1.2;
 const B = 0.75;
@@ -12,6 +12,8 @@ export interface DocText {
 	mtime: number;
 	/** Number of tokens of the body. */
 	length: number;
+	/** Number of words of prose in the body, links and code left out: a note with few has no content of its own. */
+	words: number;
 	terms: Map<string, number>;
 }
 
@@ -22,8 +24,8 @@ export function countTerms(tokens: readonly string[]): Map<string, number> {
 }
 
 export function makeDoc(markdown: string, mtime: number): DocText {
-	const tokens = tokenize(cleanText(markdown));
-	return { mtime, length: tokens.length, terms: countTerms(tokens) };
+	const { tokens, words } = tokenizeCounting(cleanText(markdown));
+	return { mtime, length: tokens.length, words, terms: countTerms(tokens) };
 }
 
 interface Entry {

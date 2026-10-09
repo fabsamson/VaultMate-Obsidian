@@ -12,7 +12,7 @@ import { makeDoc, TextIndex, type DocText } from "./text-index";
 import { tokenize } from "./tokenizer";
 
 /** Change it when the stored `DocText` or the tokenizer changes: the cache is then dropped. */
-const CACHE_VERSION = 1;
+const CACHE_VERSION = 2;
 /** Files read at once. */
 const READ_BATCH = 25;
 /** Work done before giving the interface a turn, ms. */
