@@ -20,7 +20,7 @@ import {
 	type JournalTags,
 } from "./journal-line";
 import { NewEntryModal, ReviewModal, TrackModal, type ReviewInput } from "./journal-modals";
-import { getChildren, isEmptyLine, newEntryLines, reviewItemText, usesTabs } from "./journal-note";
+import { getChildren, isEmptyLine, newEntryLines, replaceEmptyLineText, reviewItemText, usesTabs } from "./journal-note";
 import { writeEntryLine } from "./journal-write";
 import { createBadgeExtension } from "./line-badge";
 import { createReviewsSection } from "./reviews-section";
@@ -166,9 +166,10 @@ export class JournalFeature {
 				currentLine: current,
 				tabs: usesTabs(editorLines(editor)),
 			});
-			const text = lines.join("\n");
-			if (isEmptyLine(current)) editor.replaceRange(text, { line: lineNo, ch: 0 }, { line: lineNo, ch: current.length });
-			else editor.replaceRange(`\n${text}`, { line: lineNo, ch: current.length });
+			if (isEmptyLine(current)) {
+				const next = lineNo + 1 < editor.lineCount() ? editor.getLine(lineNo + 1) : null;
+				editor.replaceRange(replaceEmptyLineText(current, next, lines), { line: lineNo, ch: 0 }, { line: lineNo, ch: current.length });
+			} else editor.replaceRange(`\n${lines.join("\n")}`, { line: lineNo, ch: current.length });
 			new Notice(`${kind === "decision" ? "Decision" : "Prediction"} added.`);
 		}).open();
 	}

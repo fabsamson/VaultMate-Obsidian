@@ -145,3 +145,12 @@ export function newEntryLines(input: NewEntryInput): string[] {
 export function isEmptyLine(line: string): boolean {
 	return splitLine(line).content.trim() === "";
 }
+
+/**
+ * The text that replaces an empty current line with new entry lines. When that line separated two blocks,
+ * the entry keeps a blank line (the same empty line, quote markers included) before the next line.
+ */
+export function replaceEmptyLineText(current: string, next: string | null, lines: readonly string[]): string {
+	const separated = next !== null && !isEmptyLine(next);
+	return (separated ? [...lines, current.trimEnd()] : lines).join("\n");
+}

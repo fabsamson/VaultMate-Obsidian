@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { JournalTags } from "../src/features/journal/journal-line";
-import { getChildren, linePrefix, newEntryLines, planRewrite, reviewItemText, rewriteText, usesTabs } from "../src/features/journal/journal-note";
+import { getChildren, linePrefix, newEntryLines, planRewrite, replaceEmptyLineText, reviewItemText, rewriteText, usesTabs } from "../src/features/journal/journal-note";
 
 const TAGS: JournalTags = { decisionTag: "decision", predictionTag: "prediction" };
 
@@ -159,5 +159,19 @@ describe("newEntryLines", () => {
 		expect(newEntryLines({ ...base, confidence: null, extras: [], currentLine: "  > - [ ] earlier" })[0]).toBe("  > - [ ] Buy a desk #decision ➕ 2026-10-09 📅 2027-01-09");
 		expect(linePrefix("\t- item")).toBe("\t");
 		expect(linePrefix("plain")).toBe("");
+	});
+});
+
+describe("replaceEmptyLineText", () => {
+	const lines = ["- [ ] A #decision", "    - Why: x"];
+
+	it("keeps a blank line before a following block", () => {
+		expect(replaceEmptyLineText("", "> [!note] Callout", lines)).toBe("- [ ] A #decision\n    - Why: x\n");
+		expect(replaceEmptyLineText(">", "> text", lines)).toBe("- [ ] A #decision\n    - Why: x\n>");
+	});
+
+	it("adds nothing at the end of the note or before another blank line", () => {
+		expect(replaceEmptyLineText("", null, lines)).toBe("- [ ] A #decision\n    - Why: x");
+		expect(replaceEmptyLineText("", "", lines)).toBe("- [ ] A #decision\n    - Why: x");
 	});
 });
