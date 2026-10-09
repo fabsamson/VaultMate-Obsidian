@@ -5,10 +5,10 @@ import { excerpt, excerptParts } from "../src/features/context/excerpt";
 const marked = (found: ReturnType<typeof excerpt>): string[] => found.marks.map(([start, end]) => found.text.slice(start, end));
 
 describe("excerpt", () => {
-	it("cleans frontmatter, code, link targets and markup, and marks the terms", () => {
-		const note = ["---", "tags: [a]", "---", "# Title", "", "- [ ] Prepare the **checklist** before the [[Plan|sprint]] starts.", "```", "checklist in code", "```", "See [docs](https://x.example) and [[Hidden target]]."].join("\n");
+	it("cleans frontmatter, code, headings, embeds and markup, keeps link names, and marks the terms", () => {
+		const note = ["---", "tags: [a]", "---", "# Title", "", "- [ ] Prepare the **checklist** before the [[Plan|sprint]] starts.", "```", "checklist in code", "```", "## Next", "See [docs](https://x.example), [[Areas/Kitchen notes#Knives]] and ![[photo.png]]."].join("\n");
 		const found = excerpt(note, ["checklist", "sprint"]);
-		expect(found.text).toBe("Title Prepare the checklist before the sprint starts. See docs and.");
+		expect(found.text).toBe("Prepare the checklist before the sprint starts. See docs, Kitchen notes and.");
 		expect(marked(found)).toEqual(["checklist", "sprint"]);
 	});
 

@@ -19,11 +19,16 @@ interface Hit {
 	needle: string;
 }
 
-/** Prose of a note on one line: no frontmatter, code or link targets, no heading, list or emphasis marks. */
+/**
+ * Prose of a note on one line: no frontmatter, code or embeds, no headings (the card shows the title),
+ * no list or emphasis marks. A plain link keeps the name of its note, so the sentence still reads.
+ */
 function plainText(markdown: string): string {
-	return cleanText(markdown)
+	const named = markdown.replace(/(!?)\[\[([^\]|#]*)(?:#[^\]|]*)?\]\]/g, (link: string, embed: string, target: string) => (embed ? link : (target.split("/").pop() ?? target)));
+	return cleanText(named)
 		.split("\n")
-		.map((line) => line.replace(/^\s*(?:#{1,6}\s+|>\s*|[-*+]\s+(?:\[.\]\s+)?|\d+[.)]\s+)/, ""))
+		.filter((line) => !/^\s*#{1,6}\s/.test(line))
+		.map((line) => line.replace(/^\s*(?:>\s*|[-*+]\s+(?:\[.\]\s+)?|\d+[.)]\s+)/, ""))
 		.join(" ")
 		.replace(/[*~=]{2,}|\*/g, "")
 		.replace(/\s+/g, " ")
