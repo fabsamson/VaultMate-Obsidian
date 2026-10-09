@@ -43,7 +43,7 @@ function closingBrace(text: string, start: number): number {
 	return -1;
 }
 
-function jsonCandidates(text: string): unknown[] {
+export function jsonCandidates(text: string): unknown[] {
 	const found: unknown[] = [];
 	const tryParse = (source: string): void => {
 		try {
