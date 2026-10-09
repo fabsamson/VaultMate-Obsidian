@@ -81,7 +81,7 @@ export class VaultMateSettingTab extends PluginSettingTab {
 					},
 					{
 						name: "Create default actions",
-						desc: "Creates the Challenge this note action in the actions folder, without overwriting anything.",
+						desc: "Creates the Challenge this note and Recommend me actions in the actions folder, without overwriting anything.",
 						render: (setting) => setting.addButton((button) => button.setButtonText("Create actions").onClick(() => void this.createActions())),
 					},
 				],
