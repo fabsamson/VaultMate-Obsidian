@@ -2,7 +2,7 @@
 
 VaultMate is a personal companion plugin for Obsidian, and the in-Obsidian half of the VaultMate Android app. It shares the app's pixel-art, Japanese-inspired look.
 
-> **Status:** early development (0.1.0). The decision and prediction journal is available. The other features below are planned.
+> **Status:** early development (0.1.0). The decision and prediction journal and the AI actions are available. The other features below are planned.
 
 ## Decision journal
 
@@ -14,11 +14,48 @@ Write a decision or a prediction anywhere in a note as a task-style line, such a
 - **Review:** the **Review this line** command, the badge or the panel opens a form that shows what you wrote and expected. Close the entry with its outcome, or review again later. The review is written as a `Review <date>: …` sub-item under the line.
 - **Panel:** the Reviews section lists open entries as overdue, this week, upcoming, or without a review date. A notice tells you once a day when reviews are due.
 
+## AI actions
+
+An AI action is a Markdown file in your vault: a prompt, the data it may send, and the kind of answer you want. VaultMate runs it only when you click, shows exactly what will be sent first, and keeps only short questions from the answer. It never shows free-form AI text.
+
+- **Default action:** **Create default actions** in the settings writes *Challenge this note* to the actions folder (`VaultMate/AI actions` by default). It sends the current note and returns about five open questions that challenge it. Insert the ones you want under a `## Questions` heading, or copy them. To make them tasks that the VaultMate app lists as open questions, change the action's `line` to `- [ ] {{text}} #question`.
+- **Running an action:** run **Open AI actions** from the command palette, or use the **AI** section of the VaultMate panel, which runs on the most recent note. An action with `command: true` also gets its own command, `AI: <name>`, that you can add to the mobile toolbar.
+- **Nothing is sent without your click.** The run window shows the provider and model, each source with its size (and whether it was truncated), the note concerned and the total. The first time an action runs, and whenever its list of sources changes, you must tick *Send this to <provider>*. Then you click **Send**. **Ask again** is another explicit click and another call.
+- **Provider:** in the settings, under AI actions, set an OpenAI-compatible base URL (HTTPS, except `localhost` and `127.0.0.1`), a model, and an API key secret chosen from Obsidian's secret storage. The key is never saved in the plugin's settings. A local server needs no key.
+- **Questions only:** the answer must be JSON; VaultMate keeps questions of one sentence ending with a question mark, at most 160 characters, without duplicates or questions already in the note, and drops everything else.
+
+### Writing an action file
+
+```markdown
+---
+vaultmate-action: 1
+name: Devil's advocate
+description: Questions that argue against the note.
+icon: swords
+command: true
+sources:
+  - note
+  - properties
+output: questions
+count: 5
+insert:
+  heading: Questions
+  line: "- {{text}}"
+---
+Argue against the note's main claim. Return only questions. Ask {{count}} of them, one sentence each.
+```
+
+- `vaultmate-action: 1` and `name` are required. `description` and `icon` (a Lucide icon name, default `sparkles`) are optional.
+- `sources` lists what is sent: `note` (title and text, without properties, code blocks or link targets; 24,000 characters at most), `selection` (the selected text when you start the action; 8,000) and `properties` (the note's properties as `key: value` lines; 2,000).
+- `output` is `questions`. `count` is 1 to 10 (default 5) and replaces `{{count}}` in the prompt.
+- `insert` is optional. `heading: Questions` adds the lines at the end of that section, or creates `## Questions` at the end of the note; `at: cursor` adds them at the cursor. `line` must contain `{{text}}` (default `- {{text}}`). Without `insert`, the questions are only shown and can be copied.
+- The text below the properties is the prompt. VaultMate adds the answer format after it, so a prompt cannot break the parsing.
+- A file that is invalid, or that uses something not available yet, is listed in **Open AI actions** with the reason, and cannot be run.
+
 ## Planned features
 
-- **Challenge questions:** on request, an AI provider you configure reads the current note and returns a few open questions that challenge it. VaultMate shows questions only, never generated prose.
 - **Location:** add `latitude`, `longitude` and a place label to a note's properties by searching OpenStreetMap. On Android, the optional VaultMate app can supply the current position, because Obsidian has no access to device location.
-- **Collection recommendations:** on request, an AI provider suggests titles from a taste profile built from your own ratings.
+- **Collection recommendations:** on request, an AI provider suggests titles from a taste profile built from your own ratings, as another AI action.
 - **Context finder:** see which notes are worth reading next to the active note, and why each one was picked. Computed locally.
 
 AI features run only when you ask for them, with the provider, model and prompts you choose.
@@ -29,7 +66,7 @@ The plugin and the app share data only through Markdown notes and properties in 
 
 ## Privacy
 
-The plugin collects no telemetry and makes no network requests. See [PRIVACY.md](PRIVACY.md).
+The plugin collects no telemetry. Its only network request is an AI action you run, sent to the AI provider you configured, with the content you previewed. See [PRIVACY.md](PRIVACY.md).
 
 ## Support
 
