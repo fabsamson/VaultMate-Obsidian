@@ -7,12 +7,16 @@ import { openLocalCache, type LocalCache } from "../../core/local-cache";
 import type VaultMatePlugin from "../../main";
 import { findRelated, type RelatedNote } from "./engine";
 import { buildNoteMeta, isExcluded, type NoteMeta } from "./note-meta";
+import { mapLimit, yieldToEventLoop } from "./slicing";
 import { makeDoc, TextIndex, type DocText } from "./text-index";
 import { tokenize } from "./tokenizer";
 
 /** Change it when the stored `DocText` or the tokenizer changes: the cache is then dropped. */
 const CACHE_VERSION = 1;
-const SLICE_SIZE = 50;
+/** Files read at once. */
+const READ_BATCH = 25;
+/** Work done before giving the interface a turn, ms. */
+const SLICE_BUDGET_MS = 12;
 const REINDEX_DELAY_MS = 3000;
 
 /** Numbers to measure the cost of the finder (no logging: read them from the feature object). */
@@ -38,10 +42,6 @@ export interface BuildProgress {
 
 function vaultId(app: App): string {
 	return (app as unknown as { appId?: string }).appId ?? app.vault.getName();
-}
-
-function nextTurn(): Promise<void> {
-	return new Promise((resolve) => window.setTimeout(resolve, 0));
 }
 
 export class ContextIndex {
@@ -165,26 +165,32 @@ export class ContextIndex {
 		let indexed = 0;
 		let reused = 0;
 		let written: [string, DocText][] = [];
-		for (const [position, file] of files.entries()) {
-			const { mtime } = file.stat;
-			if (this.text.doc(file.path)?.mtime !== mtime) {
+		let sliceStart = performance.now();
+		for (let from = 0; from < files.length; from += READ_BATCH) {
+			const batch = files.slice(from, from + READ_BATCH);
+			// Only the notes that changed since the index or the cache saw them are read, a batch in parallel.
+			const changed = batch.filter((file) => this.text.doc(file.path)?.mtime !== file.stat.mtime);
+			const docs = await mapLimit(changed, READ_BATCH, async (file) => {
 				const known = cached.get(file.path);
-				let doc: DocText;
-				if (known && known.mtime === mtime) {
-					doc = known;
+				if (known && known.mtime === file.stat.mtime) return known;
+				return makeDoc(await this.app.vault.cachedRead(file), file.stat.mtime);
+			});
+			changed.forEach((file, position) => {
+				const doc = docs[position];
+				if (cached.get(file.path) === doc) {
 					reused++;
 				} else {
-					doc = makeDoc(await this.app.vault.cachedRead(file), mtime);
 					indexed++;
 					written.push([file.path, doc]);
 				}
 				this.text.put(file.path, doc, tokenize(file.basename));
-			}
-			if ((position + 1) % SLICE_SIZE === 0) {
+			});
+			if (performance.now() - sliceStart >= SLICE_BUDGET_MS) {
 				await this.cache?.putMany(written).catch(() => undefined);
 				written = [];
-				this.building = { done: position + 1, total: files.length };
-				await nextTurn();
+				this.building = { done: Math.min(from + READ_BATCH, files.length), total: files.length };
+				await yieldToEventLoop();
+				sliceStart = performance.now();
 			}
 		}
 		await this.cache?.putMany(written).catch(() => undefined);
