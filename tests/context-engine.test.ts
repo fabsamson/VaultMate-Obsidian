@@ -228,19 +228,19 @@ describe("findConnections", () => {
 
 	it("multiplies the relevance by a novelty that peaks three or four links away", async () => {
 		const text = "marmalade quince jelly preserve citrus";
-		const result = await connections("Active", {
+		const vault = (hopLinks: string[]): Record<string, Fixture> => ({
 			...filler(10),
 			Active: { text, links: ["Step"] },
 			Step: { text: "unrelated", links: ["Hop"] },
-			Hop: { text: "unrelated", links: ["Distant"] },
+			Hop: { text: "unrelated", links: hopLinks },
 			Distant: { text },
-			Isolated: { text },
 			Reader: { text: "unrelated", links: ["Distant"] },
-			Reader2: { text: "unrelated", links: ["Isolated"] },
-			Reader3: { text: "unrelated", links: ["Isolated"] },
+			Reader2: { text: "unrelated", links: ["Distant"] },
 		});
-		expect(paths(result)).toEqual(["Distant", "Isolated"]);
-		const [distant, isolated] = result;
+		// The same note with the same degree: no path to the active note in one vault, four links away in the other.
+		const [isolated] = await connections("Active", vault([]));
+		const [distant] = await connections("Active", vault(["Reader"]));
+		expect(isolated?.path).toBe("Distant.md");
 		expect((distant?.score ?? 0) / (isolated?.score ?? 1)).toBeCloseTo(1 / 0.85, 5);
 	});
 
@@ -290,7 +290,7 @@ describe("findConnections", () => {
 		expect(best?.score).toBeGreaterThan(MIN_SCORE);
 	});
 
-	it("does not offer three near-identical notes", async () => {
+	it("offers one of several near-identical notes, with the distinct one", async () => {
 		const text = "marmalade quince jelly preserve citrus orchard";
 		const result = await connections("Active", {
 			...filler(10),
@@ -300,8 +300,8 @@ describe("findConnections", () => {
 			"Twin three": { text },
 			Other: { text: "marmalade quince jelly sugar" },
 		});
-		expect(paths(result)).toHaveLength(4);
-		expect(paths(result).indexOf("Other")).toBeLessThan(2);
+		expect(paths(result)).toHaveLength(2);
+		expect(paths(result)).toContain("Other");
 	});
 
 	it("returns nothing for an unknown note", async () => {

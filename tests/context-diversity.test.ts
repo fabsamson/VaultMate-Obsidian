@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { LAMBDA, pickDiverse } from "../src/features/context/diversity";
+import { DUPLICATE_SIMILARITY, LAMBDA, pickDiverse } from "../src/features/context/diversity";
 import { areTied, buildGraphContext } from "../src/features/context/graph";
 import { buildNoteMeta, type NoteMeta } from "../src/features/context/note-meta";
 
@@ -23,9 +23,16 @@ describe("pickDiverse", () => {
 		expect(LAMBDA).toBeGreaterThan(0.5);
 	});
 
-	it("still takes the near-identical note when the others are much weaker", () => {
-		const picked = pickDiverse([candidate("a", 1), candidate("twin", 0.95), candidate("weak", 0.2)], twins, 2);
-		expect(picked.map((item) => item.path)).toEqual(["a", "twin"]);
+	it("penalises a similar note without dropping it when the similarity is moderate", () => {
+		const similar = (x: string, y: string): number => ([x, y].includes("a") && [x, y].includes("close") ? 0.5 : 0);
+		const picked = pickDiverse([candidate("a", 1), candidate("close", 0.95), candidate("weak", 0.2)], similar, 2);
+		expect(picked.map((item) => item.path)).toEqual(["a", "close"]);
+	});
+
+	it("never offers a note nearly identical to one already picked", () => {
+		const picked = pickDiverse([candidate("a", 1), candidate("twin", 0.95), candidate("weak", 0.2)], twins, 3);
+		expect(picked.map((item) => item.path)).toEqual(["a", "weak"]);
+		expect(DUPLICATE_SIMILARITY).toBeLessThan(1);
 	});
 });
 
