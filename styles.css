@@ -806,17 +806,97 @@ button.vaultmate-badge:focus-visible {
 	outline-offset: -2px;
 }
 
-.vaultmate-related-item {
-	margin-bottom: var(--size-4-3);
+/* Related notes page. */
+.vaultmate-related-status:empty {
+	display: none;
+}
+
+.vaultmate-related-list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-4-3);
+	margin: var(--size-4-2) 0 0;
+	padding: 0;
+	list-style: none;
 }
 
 .vaultmate-related-title {
+	display: block;
+	width: auto;
+	height: auto;
+	min-height: 40px;
+	padding: 0;
+	border: 0;
+	background: none;
+	box-shadow: none;
+	color: var(--vaultmate-text);
 	font-weight: 700;
+	text-align: left;
+	white-space: normal;
+	overflow-wrap: anywhere;
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+.vaultmate-related-title:focus-visible {
+	outline: 2px solid var(--vaultmate-seal);
+	outline-offset: 2px;
+}
+
+.vaultmate-related-folder {
+	margin: 0;
+	font-size: var(--font-ui-smaller);
+	overflow-wrap: anywhere;
 }
 
 .vaultmate-related-reasons {
-	margin: var(--size-4-1) 0 0;
-	padding-left: var(--size-4-5);
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-4-1);
+	margin: var(--size-4-2) 0 0;
+	padding: 0;
+	list-style: none;
 	color: var(--vaultmate-text-muted);
 	font-size: var(--font-ui-small);
+}
+
+.vaultmate-related-reasons > li {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--size-4-2);
+	overflow-wrap: anywhere;
+}
+
+.vaultmate-related-icon {
+	display: inline-flex;
+	flex: none;
+	margin-top: 2px;
+}
+
+.vaultmate-related-icon .svg-icon {
+	width: var(--icon-s);
+	height: var(--icon-s);
+}
+
+.vaultmate-related-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--size-4-2);
+	margin-top: var(--size-4-3);
+}
+
+.vaultmate-related-actions > .vaultmate-button {
+	width: auto;
+	height: auto;
+}
+
+.vaultmate-button[aria-disabled="true"] {
+	opacity: 0.5;
+	box-shadow: none;
+	cursor: not-allowed;
+}
+
+.vaultmate-related-footer {
+	margin-top: var(--size-4-4);
+	font-size: var(--font-ui-smaller);
 }

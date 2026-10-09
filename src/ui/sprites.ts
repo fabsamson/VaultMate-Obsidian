@@ -1,5 +1,6 @@
 import mascotSleep from "../../assets/sprites/mascot_sleep.png";
 import mascotTea from "../../assets/sprites/mascot_tea.png";
+import moduleContext from "../../assets/sprites/module_context.png";
 import moduleDecision from "../../assets/sprites/module_decision.png";
 import moduleLocation from "../../assets/sprites/module_location.png";
 import moduleQuestions from "../../assets/sprites/module_questions.png";
@@ -15,6 +16,7 @@ import type { Sprite } from "./pixel";
 export const SPRITES = {
 	mascotSleep: { src: mascotSleep, pixels: 48 },
 	mascotTea: { src: mascotTea, pixels: 48 },
+	moduleContext: { src: moduleContext, pixels: 24 },
 	moduleDecision: { src: moduleDecision, pixels: 24 },
 	moduleLocation: { src: moduleLocation, pixels: 24 },
 	moduleQuestions: { src: moduleQuestions, pixels: 24 },

@@ -83,6 +83,16 @@ export class HubView extends ItemView {
 		return Promise.resolve();
 	}
 
+	/** Whether the hub shows this page now. */
+	public showsPage(id: string): boolean {
+		return this.state.page === id;
+	}
+
+	/** Opens a page from code (a command). */
+	public showPage(id: string): void {
+		this.go(id);
+	}
+
 	private go(page: string | null): void {
 		const from = this.state.page;
 		this.state.page = page;

@@ -58,10 +58,10 @@ export default class VaultMatePlugin extends Plugin {
 		this.refreshHubs();
 	}
 
-	/** Redraws every open hub; call it when the data behind a page changed. */
-	public refreshHubs(): void {
+	/** Redraws every open hub, or only the hubs showing page `onlyPage`; call it when the data behind a page changed. */
+	public refreshHubs(onlyPage?: string): void {
 		for (const leaf of this.app.workspace.getLeavesOfType(HUB_VIEW_TYPE)) {
-			if (leaf.view instanceof HubView) leaf.view.render();
+			if (leaf.view instanceof HubView && (onlyPage === undefined || leaf.view.showsPage(onlyPage))) leaf.view.render();
 		}
 	}
 
@@ -81,13 +81,16 @@ export default class VaultMatePlugin extends Plugin {
 		return null;
 	}
 
-	public async openHub(): Promise<void> {
+	/** Opens the hub in the side panel, on the page `page` when given. */
+	public async openHub(page?: string): Promise<void> {
 		const { workspace } = this.app;
 		let leaf: WorkspaceLeaf | null = workspace.getLeavesOfType(HUB_VIEW_TYPE)[0] ?? null;
 		if (!leaf) {
 			leaf = workspace.getRightLeaf(false);
 			await leaf?.setViewState({ type: HUB_VIEW_TYPE, active: true });
 		}
-		if (leaf) await workspace.revealLeaf(leaf);
+		if (!leaf) return;
+		await workspace.revealLeaf(leaf);
+		if (page !== undefined && leaf.view instanceof HubView) leaf.view.showPage(page);
 	}
 }
