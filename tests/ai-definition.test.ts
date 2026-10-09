@@ -39,6 +39,7 @@ describe("parseAction", () => {
 			sources: ["note"],
 			output: "questions",
 			count: 5,
+			params: [],
 			insert: null,
 			prompt: "Ask 5 questions.",
 		});
@@ -58,7 +59,7 @@ describe("parseAction", () => {
 	});
 
 	it("ignores unknown keys, including later features", () => {
-		expect(ok({ ...valid, model: "x", params: { type: {} }, whatever: 1 }).name).toBe("Challenge");
+		expect(ok({ ...valid, model: "x", whatever: 1 }).name).toBe("Challenge");
 	});
 
 	it("rejects a missing or unsupported version", () => {
@@ -84,6 +85,25 @@ describe("parseAction", () => {
 		expect(message({ ...valid, output: "suggestions" })).toBe("Output suggestions is not available yet.");
 		expect(message({ ...valid, output: "poem" })).toContain('Unknown output "poem"');
 		expect(message({ ...valid, output: undefined })).toContain("output");
+	});
+
+	it("reads launch parameters and keeps {{name}} in the prompt for the run window", () => {
+		const action = ok({ ...valid, params: { type: { label: "Kind", choices: "collection-types" }, other: { choices: " collection-types " } } }, "Recommend {{count}} {{type}}.");
+		expect(action.params).toEqual([
+			{ name: "type", label: "Kind", choices: "collection-types" },
+			{ name: "other", label: "other", choices: "collection-types" },
+		]);
+		expect(action.prompt).toBe("Recommend 5 {{type}}.");
+		expect(ok({ ...valid, params: null }).params).toEqual([]);
+	});
+
+	it("rejects bad parameters with a clear message", () => {
+		expect(message({ ...valid, params: { type: { label: "Type", choices: "tags" } } })).toBe('Unknown choices "tags" for parameter type. Use collection-types.');
+		expect(message({ ...valid, params: { type: { label: "Type" } } })).toContain("Unknown choices");
+		expect(message({ ...valid, params: { type: "collection-types" } })).toBe("Parameter type needs a label and choices.");
+		expect(message({ ...valid, params: ["type"] })).toContain("params must list parameters");
+		expect(message({ ...valid, params: { count: { choices: "collection-types" } } })).toContain("cannot be the name");
+		expect(message({ ...valid, params: { "my type": { choices: "collection-types" } } })).toContain("cannot be the name");
 	});
 
 	it("rejects a bad count", () => {

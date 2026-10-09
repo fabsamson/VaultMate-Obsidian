@@ -9,6 +9,17 @@ export type SourceName = (typeof SOURCES)[number];
 const LATER_SOURCES = ["collection-profile", "linked-notes", "recent-notes", "tag", "decisions"];
 const LATER_OUTPUTS = ["suggestions", "items"];
 
+/** Where the choices of a launch parameter come from. */
+export const CHOICE_SOURCES = ["collection-types"] as const;
+export type ChoiceSource = (typeof CHOICE_SOURCES)[number];
+
+/** A value the run window asks for before the preview. `{{name}}` in the prompt becomes the chosen label. */
+export interface ParamDefinition {
+	name: string;
+	label: string;
+	choices: ChoiceSource;
+}
+
 export type InsertTarget = { type: "heading"; heading: string; line: string } | { type: "cursor"; line: string };
 
 export interface ActionDefinition {
@@ -21,9 +32,10 @@ export interface ActionDefinition {
 	sources: SourceName[];
 	output: "questions";
 	count: number;
+	params: ParamDefinition[];
 	/** null = show the result only. */
 	insert: InsertTarget | null;
-	/** The prompt, with `{{count}}` replaced. */
+	/** The prompt, with `{{count}}` replaced (the parameters are replaced when the action runs). */
 	prompt: string;
 }
 
@@ -65,6 +77,23 @@ function parseInsert(value: unknown): InsertTarget | string | null {
 	return "insert must have a heading or at: cursor.";
 }
 
+function parseParams(value: unknown): ParamDefinition[] | string {
+	if (value === undefined || value === null) return [];
+	if (!isRecord(value)) return "params must list parameters, each with a label and choices.";
+	const params: ParamDefinition[] = [];
+	for (const [name, raw] of Object.entries(value)) {
+		if (!/^[A-Za-z][A-Za-z0-9]*$/.test(name) || name === "count") return `"${name}" cannot be the name of a parameter.`;
+		if (!isRecord(raw)) return `Parameter ${name} needs a label and choices.`;
+		const choices = typeof raw.choices === "string" ? raw.choices.trim() : "";
+		if (!(CHOICE_SOURCES as readonly string[]).includes(choices)) {
+			return `Unknown choices "${choices}" for parameter ${name}. Use ${CHOICE_SOURCES.join(", ")}.`;
+		}
+		const label = typeof raw.label === "string" ? raw.label.trim() : "";
+		params.push({ name, label: label || name, choices: choices as ChoiceSource });
+	}
+	return params;
+}
+
 /**
  * Turns the parsed frontmatter and the body of an action file into an action, or into an invalid entry
  * that carries one clear message. `frontmatter` is whatever the YAML parser returned.
@@ -101,6 +130,9 @@ export function parseAction(path: string, frontmatter: unknown, body: string): A
 	const insert = parseInsert(frontmatter.insert);
 	if (typeof insert === "string") return fail(insert);
 
+	const params = parseParams(frontmatter.params);
+	if (typeof params === "string") return fail(params);
+
 	const prompt = body.replaceAll("{{count}}", String(count)).trim();
 	if (!prompt) return fail("The prompt is empty. Write it below the properties.");
 
@@ -115,6 +147,7 @@ export function parseAction(path: string, frontmatter: unknown, body: string): A
 			sources,
 			output: "questions",
 			count,
+			params,
 			insert,
 			prompt,
 		},

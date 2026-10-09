@@ -5,8 +5,9 @@ import { complete, configurationProblem } from "../../core/ai/client";
 import { baseUrlHost } from "../../core/ai/endpoint";
 import type VaultMatePlugin from "../../main";
 import { createPanel, createSectionHeader } from "../../ui/components";
+import { collectionTypes, type CollectionNote } from "./collection";
 import { isConfirmed, withConfirmation } from "./confirmation";
-import type { ActionDefinition } from "./definition";
+import type { ActionDefinition, ParamDefinition } from "./definition";
 import { insertQuestions } from "./insert-write";
 import { renderLine } from "./insertion";
 import { parseQuestions, type Question } from "./questions";
@@ -16,6 +17,8 @@ import type { SourceText } from "./sources";
 /** The note an action runs on, with what was read from it when the action started. */
 export interface RunContext extends SourceInput {
 	path: string;
+	/** The collection notes found when the action started. */
+	collection: CollectionNote[];
 }
 
 const SOURCE_LABELS = { note: "Note", selection: "Selection", properties: "Properties" } as const;
@@ -24,12 +27,14 @@ function formatCount(count: number): string {
 	return `${count.toLocaleString("en-US")} characters`;
 }
 
-type State = { type: "preview" } | { type: "loading" } | { type: "results"; questions: Question[] } | { type: "error"; message: string };
+type State = { type: "params" } | { type: "preview" } | { type: "loading" } | { type: "results"; questions: Question[] } | { type: "error"; message: string };
 
 export class RunModal extends Modal {
-	private readonly sources: SourceText[];
-	private readonly messages: RequestMessages;
-	private state: State = { type: "preview" };
+	private sources: SourceText[] = [];
+	private messages: RequestMessages = { system: "", user: "" };
+	/** Parameter name -> chosen value (a choice id), set in the params step. */
+	private values: Record<string, string> = {};
+	private state: State;
 	private closed = false;
 
 	public constructor(
@@ -40,8 +45,25 @@ export class RunModal extends Modal {
 	) {
 		super(app);
 		this.modalEl.addClass("vaultmate");
-		this.sources = collectSources(action, context);
-		this.messages = buildMessages(action, this.sources);
+		this.state = { type: action.params.length > 0 ? "params" : "preview" };
+		if (this.state.type === "preview") this.prepare();
+	}
+
+	/** Builds the sources and the messages for the chosen parameters: what the preview shows and what is sent. */
+	private prepare(): void {
+		const labels: Record<string, string> = {};
+		for (const param of this.action.params) labels[param.name] = this.chosenLabel(param);
+		this.sources = collectSources(this.action, this.context);
+		this.messages = buildMessages(this.action, this.sources, labels);
+	}
+
+	/** The only choice source today is the collection types. */
+	private choices(): Array<{ id: string; label: string; text: string }> {
+		return collectionTypes(this.context.collection).map((type) => ({ id: type.id, label: type.label, text: `${type.label} (${type.rated} rated)` }));
+	}
+
+	private chosenLabel(param: ParamDefinition): string {
+		return this.choices().find((choice) => choice.id === this.values[param.name])?.label ?? "";
 	}
 
 	public onOpen(): void {
@@ -63,6 +85,9 @@ export class RunModal extends Modal {
 		createSectionHeader(contentEl, action.name);
 		if (action.description) contentEl.createEl("p", { cls: "vaultmate-muted", text: action.description });
 		switch (this.state.type) {
+			case "params":
+				this.renderParams();
+				break;
 			case "preview":
 				this.renderPreview();
 				break;
@@ -84,6 +109,38 @@ export class RunModal extends Modal {
 		return button;
 	}
 
+	// ---- Parameters ---------------------------------------------------------------------------------
+
+	private renderParams(): void {
+		const { contentEl, action } = this;
+		const panel = createPanel(contentEl);
+		const selects: Array<{ name: string; select: HTMLSelectElement }> = [];
+		let empty = false;
+		for (const param of action.params) {
+			const choices = this.choices();
+			const line = panel.createDiv({ cls: "vaultmate-source-row" });
+			line.createSpan({ cls: "vaultmate-field-label", text: param.label });
+			if (choices.length === 0) {
+				empty = true;
+				line.createSpan({ text: "No collection found. Check the Collections settings." });
+				continue;
+			}
+			const select = line.createEl("select", { cls: "dropdown", attr: { "aria-label": param.label } });
+			for (const choice of choices) select.createEl("option", { text: choice.text, value: choice.id });
+			select.value = this.values[param.name] ?? choices[0]?.id ?? "";
+			selects.push({ name: param.name, select });
+		}
+		const actions = contentEl.createDiv({ cls: "vaultmate-actions" });
+		this.button(actions, "Cancel", false, () => this.close());
+		const next = this.button(actions, "Continue", true, () => {
+			for (const { name, select } of selects) this.values[name] = select.value;
+			this.prepare();
+			this.state = { type: "preview" };
+			this.render();
+		});
+		next.disabled = empty;
+	}
+
 	// ---- Preview ------------------------------------------------------------------------------------
 
 	private problem(): string | null {
@@ -102,6 +159,7 @@ export class RunModal extends Modal {
 			line.createSpan({ text: value });
 		};
 		row("Note", context.path);
+		for (const param of action.params) row(param.label, this.chosenLabel(param));
 		row("Sent to", `${this.host} · ${ai.model.trim()}`);
 		for (const source of sources) row(SOURCE_LABELS[source.name], `${formatCount(source.chars)}${source.truncated ? " (truncated)" : ""}`);
 		row("Total", formatCount(sources.reduce((sum, source) => sum + source.chars, 0)));
@@ -121,6 +179,12 @@ export class RunModal extends Modal {
 			label.createSpan({ text: `Send this to ${this.host}` });
 		}
 		const actions = contentEl.createDiv({ cls: "vaultmate-actions" });
+		if (action.params.length > 0) {
+			this.button(actions, "Back", false, () => {
+				this.state = { type: "params" };
+				this.render();
+			});
+		}
 		this.button(actions, "Cancel", false, () => this.close());
 		const send = this.button(actions, "Send", true, () => void this.send());
 		send.disabled = problem !== null || box !== null;

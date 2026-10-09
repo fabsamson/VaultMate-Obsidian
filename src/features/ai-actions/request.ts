@@ -10,10 +10,15 @@ export interface RequestMessages {
 	user: string;
 }
 
+/** The prompt with each `{{name}}` replaced by the label chosen for that parameter. */
+export function applyParams(prompt: string, labels: Record<string, string>): string {
+	return Object.entries(labels).reduce((text, [name, label]) => text.replaceAll(`{{${name}}}`, label), prompt);
+}
+
 /** System = the action's prompt, then the output contract (last, so the prompt cannot override it). User = labelled sources. */
-export function buildMessages(action: ActionDefinition, sources: SourceText[]): RequestMessages {
+export function buildMessages(action: ActionDefinition, sources: SourceText[], labels: Record<string, string> = {}): RequestMessages {
 	return {
-		system: `${action.prompt}\n\n${questionsContract(action.count)}`,
+		system: `${applyParams(action.prompt, labels)}\n\n${questionsContract(action.count)}`,
 		user: sources.map((source) => `### ${LABELS[source.name]}\n${source.text}`).join("\n\n"),
 	};
 }

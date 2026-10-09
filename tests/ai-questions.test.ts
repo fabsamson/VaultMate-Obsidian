@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { ActionDefinition } from "../src/features/ai-actions/definition";
 import { normalizeForCompare, parseQuestions, questionsContract } from "../src/features/ai-actions/questions";
-import { buildMessages, collectSources, sourceProblem } from "../src/features/ai-actions/request";
+import { applyParams, buildMessages, collectSources, sourceProblem } from "../src/features/ai-actions/request";
 import { noteSource, selectionSource } from "../src/features/ai-actions/sources";
 
 const parse = (answer: string, count = 5, noteText = ""): ReturnType<typeof parseQuestions> => parseQuestions(answer, { count, noteText });
@@ -150,6 +150,7 @@ describe("request messages", () => {
 		sources: ["note", "selection"],
 		output: "questions",
 		count: 3,
+		params: [],
 		insert: null,
 		prompt: "Ask 3 questions. Reply in prose please.",
 	};
@@ -163,6 +164,12 @@ describe("request messages", () => {
 		expect(system).toContain("assumption, evidence, consequence, alternative, connection, personal");
 	});
 
+	it("replaces {{name}} with the chosen label, before the contract", () => {
+		expect(applyParams("Pick {{type}}, then {{type}}.", { type: "Movies" })).toBe("Pick Movies, then Movies.");
+		const { system } = buildMessages({ ...action, prompt: "About {{type}}." }, [], { type: "Board games" });
+		expect(system.startsWith("About Board games.\n\n")).toBe(true);
+	});
+
 	it("labels each source in the user message", () => {
 		const { user } = buildMessages(action, [noteSource("Lyon", "Body"), selectionSource("picked")]);
 		expect(user).toBe("### Note\nTitle: Lyon\n\nBody\n\n### Selection\npicked");
@@ -171,7 +178,7 @@ describe("request messages", () => {
 
 describe("collectSources", () => {
 	const action = (sources: ActionDefinition["sources"]): ActionDefinition => ({
-		path: "a.md", name: "A", description: "", icon: "sparkles", command: false, sources, output: "questions", count: 5, insert: null, prompt: "P",
+		path: "a.md", name: "A", description: "", icon: "sparkles", command: false, sources, output: "questions", count: 5, params: [], insert: null, prompt: "P",
 	});
 	const input = { title: "Lyon", raw: "---\nstatus: open\n---\nBody [[Link]]", selection: " picked ", frontmatter: { status: "open" } };
 

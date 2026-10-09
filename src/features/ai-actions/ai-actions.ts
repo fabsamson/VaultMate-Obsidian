@@ -2,10 +2,12 @@
 import { MarkdownView, Notice, type Editor, type TFile } from "obsidian";
 
 import { configurationProblem } from "../../core/ai/client";
+import { cleanFolderPath } from "../../core/settings-model";
 import type VaultMatePlugin from "../../main";
 import { createAiPage } from "./ai-page";
 import { ActionCatalogue } from "./catalogue";
 import { CatalogueModal } from "./catalogue-modal";
+import { collectionNoteOf, inFolder, type CollectionNote } from "./collection";
 import type { ActionDefinition } from "./definition";
 import { RunModal, type RunContext } from "./run-modal";
 
@@ -64,8 +66,19 @@ export class AiActionsFeature {
 		return null;
 	}
 
+	/** The collection notes, from their frontmatter in the metadata cache (note bodies are never read). */
+	private readCollection(): CollectionNote[] {
+		const { vault, metadataCache } = this.plugin.app;
+		const { collections } = this.plugin.settings;
+		const folder = cleanFolderPath(collections.folder);
+		return vault.getMarkdownFiles().flatMap((file) => {
+			const note = inFolder(file.path, folder) ? collectionNoteOf(file.basename, metadataCache.getFileCache(file)?.frontmatter, collections) : null;
+			return note ? [note] : [];
+		});
+	}
+
 	/** Reads the note and the selection now: this is what the preview shows and what is sent. */
-	private async readContext(file: TFile): Promise<RunContext> {
+	private async readContext(file: TFile, action: ActionDefinition): Promise<RunContext> {
 		const { vault, metadataCache } = this.plugin.app;
 		const editor = this.editorOf(file.path);
 		return {
@@ -74,6 +87,7 @@ export class AiActionsFeature {
 			raw: editor ? editor.getValue() : await vault.read(file),
 			selection: editor ? editor.getSelection() : "",
 			frontmatter: metadataCache.getFileCache(file)?.frontmatter,
+			collection: action.params.length > 0 ? this.readCollection() : [],
 		};
 	}
 
@@ -83,6 +97,6 @@ export class AiActionsFeature {
 			new Notice("Open a note first.");
 			return;
 		}
-		new RunModal(this.plugin.app, this.plugin, action, await this.readContext(file)).open();
+		new RunModal(this.plugin.app, this.plugin, action, await this.readContext(file, action)).open();
 	}
 }
