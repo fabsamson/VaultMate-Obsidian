@@ -36,6 +36,14 @@ describe("local cache", () => {
 		expect((await second.getAll()).get("k")).toBe(7);
 	});
 
+	it("lets a newer version open while an older connection is still open", async () => {
+		const factory = new IDBFactory();
+		const old = await openLocalCache<number>("v", "t", 1, factory);
+		await old.putMany([["k", 7]]);
+		const next = await openLocalCache<number>("v", "t", 2, factory);
+		expect((await next.getAll()).size).toBe(0);
+	});
+
 	it("clears the store when the schema version changes, in either direction", async () => {
 		const factory = new IDBFactory();
 		const v2 = await openLocalCache<number>("v", "t", 2, factory);

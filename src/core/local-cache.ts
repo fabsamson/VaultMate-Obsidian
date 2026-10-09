@@ -42,7 +42,12 @@ function open(factory: IDBFactory, name: string, version: number): Promise<IDBDa
 			if (db.objectStoreNames.contains(STORE)) db.deleteObjectStore(STORE);
 			db.createObjectStore(STORE);
 		};
-		req.onsuccess = () => resolve(req.result);
+		req.onsuccess = () => {
+			// A newer schema (the plugin was updated and reloaded) needs this connection gone, or its open never completes.
+			const db = req.result;
+			db.onversionchange = () => db.close();
+			resolve(db);
+		};
 		req.onerror = () => reject(req.error ?? new Error("IndexedDB open failed"));
 		req.onblocked = () => reject(new Error("IndexedDB open blocked"));
 	});
