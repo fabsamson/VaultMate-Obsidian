@@ -32,12 +32,23 @@ export interface AiState {
 	confirmed: Confirmations;
 }
 
+export interface LocationSettings {
+	enabled: boolean;
+	/** Property names the location is written to. All different. */
+	latitudeProperty: string;
+	longitudeProperty: string;
+	labelProperty: string;
+	/** Ask the VaultMate Android app for the current position (off by default; the app is optional). */
+	androidApp: boolean;
+}
+
 /** Nested per feature; a feature's settings live under its own key. */
 export interface VaultMateSettings {
 	journal: JournalSettings;
 	journalState: JournalState;
 	ai: AiSettings;
 	aiState: AiState;
+	location: LocationSettings;
 }
 
 export const DEFAULT_SETTINGS: VaultMateSettings = {
@@ -45,6 +56,7 @@ export const DEFAULT_SETTINGS: VaultMateSettings = {
 	journalState: { lastNoticeDate: "" },
 	ai: { enabled: true, baseUrl: "https://api.openai.com/v1", model: "gpt-5.6-luna", apiKeySecret: "", actionsFolder: "VaultMate/AI actions" },
 	aiState: { confirmed: {} },
+	location: { enabled: true, latitudeProperty: "latitude", longitudeProperty: "longitude", labelProperty: "location", androidApp: false },
 };
 
 const TAG_RE = /^[\p{L}\p{N}\p{M}_/-]+$/u;
@@ -78,6 +90,19 @@ export function validateActionsFolder(path: string): string | undefined {
 	return cleanFolderPath(path) === "" ? "Enter a folder path." : undefined;
 }
 
+/** Error message for a property name as typed, or undefined when it is valid. */
+export function validatePropertyName(name: string): string | undefined {
+	if (name.trim() === "") return "Enter a property name.";
+	if (!/^[\p{L}\p{N}\p{M}_-]+$/u.test(name)) return "Use letters, numbers, underscores and hyphens only.";
+	return undefined;
+}
+
+/** Error message when the three property names are not all different (ignoring case), or undefined. */
+export function validateDistinctProperties(names: readonly string[]): string | undefined {
+	const lower = names.map((name) => name.toLowerCase());
+	return new Set(lower).size === lower.length ? undefined : "Latitude, longitude and label need different property names.";
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -108,7 +133,19 @@ export function normalizeSettings(value: unknown): VaultMateSettings {
 	for (const [path, sources] of Object.entries(confirmedRaw)) {
 		if (Array.isArray(sources) && sources.every((source) => typeof source === "string")) confirmed[path] = [...sources];
 	}
+	const loc = isRecord(value) && isRecord(value.location) ? value.location : {};
+	const locDefaults = DEFAULT_SETTINGS.location;
+	const propertyName = (raw: unknown, fallback: string): string => (typeof raw === "string" && validatePropertyName(raw.trim()) === undefined ? raw.trim() : fallback);
+	let names = [propertyName(loc.latitudeProperty, locDefaults.latitudeProperty), propertyName(loc.longitudeProperty, locDefaults.longitudeProperty), propertyName(loc.labelProperty, locDefaults.labelProperty)];
+	if (validateDistinctProperties(names)) names = [locDefaults.latitudeProperty, locDefaults.longitudeProperty, locDefaults.labelProperty];
 	return {
+		location: {
+			enabled: typeof loc.enabled === "boolean" ? loc.enabled : locDefaults.enabled,
+			latitudeProperty: names[0] ?? locDefaults.latitudeProperty,
+			longitudeProperty: names[1] ?? locDefaults.longitudeProperty,
+			labelProperty: names[2] ?? locDefaults.labelProperty,
+			androidApp: typeof loc.androidApp === "boolean" ? loc.androidApp : locDefaults.androidApp,
+		},
 		ai: {
 			enabled: typeof ai.enabled === "boolean" ? ai.enabled : aiDefaults.enabled,
 			baseUrl: typeof ai.baseUrl === "string" && validateBaseUrl(ai.baseUrl) === undefined ? ai.baseUrl.trim() : aiDefaults.baseUrl,
