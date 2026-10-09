@@ -2,7 +2,7 @@
 
 VaultMate is a personal companion plugin for Obsidian, and the in-Obsidian half of the VaultMate Android app. It shares the app's pixel-art, Japanese-inspired look.
 
-> **Status:** early development (0.1.0). The decision and prediction journal and the AI actions are available. The other features below are planned.
+> **Status:** early development (0.1.0). The decision and prediction journal, the AI actions and the place search are available. The other features below are planned.
 
 ## Decision journal
 
@@ -52,9 +52,16 @@ Argue against the note's main claim. Return only questions. Ask {{count}} of the
 - The text below the properties is the prompt. VaultMate adds the answer format after it, so a prompt cannot break the parsing.
 - A file that is invalid, or that uses something not available yet, is listed in **Open AI actions** with the reason, and cannot be run.
 
+## Location
+
+**Search a place** adds a place to the active note's properties. Type a name, an address or a city, press Enter (or **Search**), pick a result, edit the label if you like, and **Add to note**. The same commands and buttons are on the **Places** page of the panel, which also shows the current note's place with a link to OpenStreetMap.
+
+- **Properties:** `latitude` and `longitude` (numbers, 5 decimals) and `location` (the label). The three names can be changed in the settings, under Location. Only these three properties are written, and only through Obsidian's property API. If the note already has a different value in one of them, VaultMate shows the old and new values and asks before replacing it. The same values again change nothing.
+- **OpenStreetMap search:** the search uses [Nominatim](https://nominatim.org/), the public OpenStreetMap search service. A request is sent only when you press Enter or **Search**, never while you type, and at most one per second, as the [usage policy](https://operations.osmfoundation.org/policies/nominatim/) asks. The request carries only your search text, plus a rectangle of about 110 km around the last place you used on this device (to rank nearby results first; it does not restrict them). VaultMate identifies itself with a `User-Agent` header of the form `VaultMate-Obsidian/<version> (+https://github.com/fabsamson/VaultMate-Obsidian)`. Results are © OpenStreetMap contributors, under the [ODbL](https://www.openstreetmap.org/copyright).
+- **Show notes on a map:** create a Base (Bases core plugin), add a **Map** view, and set **Marker coordinates** to the formula `[latitude, longitude]` (use your own property names). This needs the Maps plugin that provides the Map view.
+
 ## Planned features
 
-- **Location:** add `latitude`, `longitude` and a place label to a note's properties by searching OpenStreetMap. On Android, the optional VaultMate app can supply the current position, because Obsidian has no access to device location.
 - **Collection recommendations:** on request, an AI provider suggests titles from a taste profile built from your own ratings, as another AI action.
 - **Context finder:** see which notes are worth reading next to the active note, and why each one was picked. Computed locally.
 
@@ -64,9 +71,26 @@ AI features run only when you ask for them, with the provider, model and prompts
 
 The plugin and the app share data only through Markdown notes and properties in your vault. Review reminders are [Tasks](https://publish.obsidian.md/tasks/)-style lines with a due date, so the app's task widgets show them on the right day.
 
+### Current position
+
+Obsidian cannot read the device's location, so on Android the optional VaultMate app can supply it. Turn on **Use the VaultMate Android app for the current position** in the settings (off by default; it needs the VaultMate app). The command **Add current location** (and the button on the Places page) then asks the app for the position and writes it with the same checks as the place search. **Test the Android app link** checks that values survive the trip between Obsidian and the app.
+
+### Link contract
+
+For the app's developers. All values are percent-encoded UTF-8 in the query string, one parameter per value (never a `lat,lng` pair); both sides decode them.
+
+1. **Request** (Obsidian to app): `vaultmate://location?nonce=<nonce>`. The nonce is 32 lowercase hex characters (128 random bits), valid for 2 minutes and for one answer.
+2. **Answer** (app to Obsidian): `obsidian://vaultmate-location?nonce=<nonce>&lat=<lat>&lng=<lng>&accuracy=<metres>&label=<text>`, with the same nonce.
+   - `lat`, `lng`: plain decimals with a dot, up to 10 decimals, no comma, no `+`, no exponent, no unit: `45.76404`, `-3.5`. Range -90 to 90 and -180 to 180.
+   - `accuracy`: optional, metres, non-negative decimal.
+   - `label`: optional text (a neighbourhood or a city), at most 120 characters.
+   - On failure, send `error=<short message>` instead of the position (for example a refused permission). The nonce is used up either way.
+3. **Echo test:** `vaultmate://echo?nonce=<nonce>&lat=45.76404&lng=4.83566&label=Caf%C3%A9%20%26%20Co%20%2F%20Lyon` must be answered with `obsidian://vaultmate-echo?nonce=<nonce>&lat=<lat>&lng=<lng>&label=<label>` carrying the decoded values unchanged (`Café & Co / Lyon`, re-encoded). Obsidian compares them exactly and reports which parameter changed.
+4. A nonce is accepted once, only on the device that created it, and less than 2 minutes after its creation. Anything else is refused and nothing is written.
+
 ## Privacy
 
-The plugin collects no telemetry. Its only network request is an AI action you run, sent to the AI provider you configured, with the content you previewed. See [PRIVACY.md](PRIVACY.md).
+The plugin collects no telemetry. Its network requests are the AI actions you run (sent to the AI provider you configured, with the content you previewed) and the place searches you start (sent to OpenStreetMap Nominatim, with your search text only). See [PRIVACY.md](PRIVACY.md).
 
 ## Support
 
