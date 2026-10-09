@@ -1,6 +1,7 @@
 import { addIcon, Plugin, type WorkspaceLeaf } from "obsidian";
 
 import { normalizeSettings, type VaultMateSettings } from "./core/settings-model";
+import { AiActionsFeature } from "./features/ai-actions/ai-actions";
 import { JournalFeature } from "./features/journal/journal";
 import { VaultMateSettingTab } from "./settings";
 import { HUB_VIEW_TYPE, HubView, type HubSection } from "./ui/hub-view";
@@ -9,6 +10,7 @@ import { CAT_ICON_ID, CAT_ICON_SVG } from "./ui/icon";
 export default class VaultMatePlugin extends Plugin {
 	public settings: VaultMateSettings = normalizeSettings(undefined);
 	private readonly journal = new JournalFeature(this);
+	private readonly aiActions = new AiActionsFeature(this);
 	private readonly hubSections = new Map<string, HubSection>();
 
 	public async onload(): Promise<void> {
@@ -24,6 +26,7 @@ export default class VaultMatePlugin extends Plugin {
 			callback: () => void this.openHub(),
 		});
 		this.journal.register();
+		this.aiActions.register();
 	}
 
 	public async saveSettings(): Promise<void> {
@@ -36,6 +39,7 @@ export default class VaultMatePlugin extends Plugin {
 	 */
 	public onSettingsChanged(): void {
 		this.journal.onSettingsChanged();
+		this.aiActions.onSettingsChanged();
 		this.refreshHubs();
 	}
 

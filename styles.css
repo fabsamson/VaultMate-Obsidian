@@ -516,3 +516,124 @@ button.vaultmate-badge:focus-visible {
 .vaultmate-matrix-zero {
 	color: var(--vaultmate-text-muted);
 }
+
+/* AI actions: catalogue, hub cards and the run window. */
+.vaultmate-action-card {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-3);
+	margin-bottom: var(--size-4-3);
+}
+
+.vaultmate-action-card > .vaultmate-button {
+	flex: none;
+	width: auto;
+	height: auto;
+}
+
+.vaultmate-action-item {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-3);
+}
+
+.vaultmate-action-item.is-invalid .vaultmate-action-name {
+	color: var(--text-muted);
+}
+
+.vaultmate-action-icon {
+	display: inline-flex;
+	flex: none;
+	color: var(--vaultmate-primary);
+}
+
+.vaultmate-action-item .vaultmate-action-icon {
+	color: var(--text-accent);
+}
+
+.vaultmate-action-text {
+	flex: 1;
+	min-width: 0;
+}
+
+.vaultmate-action-name {
+	font-weight: 700;
+}
+
+.vaultmate-source-row {
+	display: flex;
+	justify-content: space-between;
+	gap: var(--size-4-4);
+	padding: var(--size-4-1) 0;
+	border-bottom: 1px solid var(--vaultmate-rule);
+	overflow-wrap: anywhere;
+}
+
+.vaultmate-details {
+	margin-top: var(--size-4-3);
+	color: var(--vaultmate-text-muted);
+	font-size: var(--font-ui-small);
+}
+
+.vaultmate-pre {
+	max-height: 240px;
+	margin: var(--size-4-2) 0 0;
+	padding: var(--size-4-2);
+	overflow: auto;
+	border: 1px solid var(--vaultmate-rule);
+	background-color: var(--vaultmate-surface-raised);
+	color: var(--vaultmate-text);
+	font-size: var(--font-ui-smaller);
+	white-space: pre-wrap;
+}
+
+.vaultmate-confirm {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-2);
+	margin-top: var(--size-4-3);
+	font-weight: 700;
+}
+
+.vaultmate-error {
+	margin: var(--size-4-3) 0 0;
+	color: var(--vaultmate-seal);
+	font-weight: 700;
+}
+
+.vaultmate-question {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--size-4-3);
+	padding: var(--size-4-2) 0;
+	border-bottom: 1px solid var(--vaultmate-rule);
+	cursor: pointer;
+}
+
+.vaultmate-question:last-child {
+	border-bottom: none;
+}
+
+.vaultmate-question-body {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--size-4-1);
+	min-width: 0;
+}
+
+.vaultmate-question-text {
+	overflow-wrap: anywhere;
+}
+
+.vaultmate-chip {
+	padding: 0 var(--size-4-2);
+	border: 1px solid var(--vaultmate-rule);
+	background-color: var(--vaultmate-surface);
+	color: var(--vaultmate-primary);
+	font-size: var(--font-ui-smaller);
+	font-weight: 700;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}

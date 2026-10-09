@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { ActionDefinition } from "../src/features/ai-actions/definition";
 import { normalizeForCompare, parseQuestions, questionsContract } from "../src/features/ai-actions/questions";
-import { buildMessages } from "../src/features/ai-actions/request";
+import { buildMessages, collectSources, sourceProblem } from "../src/features/ai-actions/request";
 import { noteSource, selectionSource } from "../src/features/ai-actions/sources";
 
 const parse = (answer: string, count = 5, noteText = ""): ReturnType<typeof parseQuestions> => parseQuestions(answer, { count, noteText });
@@ -166,5 +166,24 @@ describe("request messages", () => {
 	it("labels each source in the user message", () => {
 		const { user } = buildMessages(action, [noteSource("Lyon", "Body"), selectionSource("picked")]);
 		expect(user).toBe("### Note\nTitle: Lyon\n\nBody\n\n### Selection\npicked");
+	});
+});
+
+describe("collectSources", () => {
+	const action = (sources: ActionDefinition["sources"]): ActionDefinition => ({
+		path: "a.md", name: "A", description: "", icon: "sparkles", command: false, sources, output: "questions", count: 5, insert: null, prompt: "P",
+	});
+	const input = { title: "Lyon", raw: "---\nstatus: open\n---\nBody [[Link]]", selection: " picked ", frontmatter: { status: "open" } };
+
+	it("reads each source in the action's order", () => {
+		const sources = collectSources(action(["properties", "note", "selection"]), input);
+		expect(sources.map((source) => source.name)).toEqual(["properties", "note", "selection"]);
+		expect(sources.map((source) => source.text)).toEqual(["status: open", "Title: Lyon\n\nBody Link", "picked"]);
+	});
+
+	it("reports an empty selection", () => {
+		expect(sourceProblem(collectSources(action(["selection"]), { ...input, selection: "  " }))).toBe("Select some text first.");
+		expect(sourceProblem(collectSources(action(["selection", "note"]), input))).toBeNull();
+		expect(sourceProblem(collectSources(action(["note"]), { ...input, selection: "" }))).toBeNull();
 	});
 });
