@@ -2,8 +2,6 @@
 // the glue reads the MetadataCache and hands the raw values to `buildNoteMeta`.
 import { foldText } from "./tokenizer";
 
-const DAY_MS = 86_400_000;
-
 export interface PropertyValue {
 	/** Property name as the user configured it (`author`). */
 	property: string;
@@ -23,8 +21,6 @@ export interface NoteMeta {
 	/** Lowercase tags without `#`. */
 	tags: string[];
 	people: PropertyValue[];
-	/** Calendar day as a whole number (days since 1970-01-01), or null. */
-	day: number | null;
 	geo: { lat: number; lon: number } | null;
 }
 
@@ -50,20 +46,6 @@ export function baseName(path: string): string {
 /** Whether a path is inside one of the folders (or is that folder). */
 export function isExcluded(path: string, folders: readonly string[]): boolean {
 	return folders.some((folder) => folder !== "" && (path === folder || path.startsWith(`${folder}/`)));
-}
-
-/** Day number of a calendar date, or null when the day does not exist. */
-export function dayNumber(year: number, month: number, day: number): number | null {
-	const time = Date.UTC(year, month - 1, day);
-	const date = new Date(time);
-	if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return null;
-	return Math.round(time / DAY_MS);
-}
-
-/** Day number of a leading `YYYY-MM-DD` in a text (a daily note name, a date property), or null. */
-export function dayFromText(text: string): number | null {
-	const match = /^(\d{4})-(\d{2})-(\d{2})(?!\d)/.exec(text.trim());
-	return match ? dayNumber(Number(match[1]), Number(match[2]), Number(match[3])) : null;
 }
 
 function lookup(frontmatter: Record<string, unknown> | undefined, name: string): unknown {
@@ -104,8 +86,6 @@ export function buildNoteMeta(input: MetaInput, options: MetaOptions): NoteMeta 
 			if (label !== "") people.push({ property, key: foldText(label), label });
 		}
 	}
-	const day =
-		dayFromText(title) ?? textValues(lookup(frontmatter, "date")).map(dayFromText).find((d) => d !== null) ?? textValues(lookup(frontmatter, "created")).map(dayFromText).find((d) => d !== null) ?? null;
 	const lat = parseCoordinate(lookup(frontmatter, options.latitudeProperty), 90);
 	const lon = parseCoordinate(lookup(frontmatter, options.longitudeProperty), 180);
 	return {
@@ -115,7 +95,6 @@ export function buildNoteMeta(input: MetaInput, options: MetaOptions): NoteMeta 
 		links: [...new Set(input.links)].filter((link) => link !== input.path),
 		tags: [...new Set(input.tags.map((tag) => tag.replace(/^#/, "").toLowerCase()).filter((tag) => tag !== ""))],
 		people,
-		day,
 		geo: lat !== null && lon !== null ? { lat, lon } : null,
 	};
 }

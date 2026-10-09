@@ -65,3 +65,26 @@ export function eligibleNotes(context: GraphContext, ownWords: (path: string) =>
 	for (const path of notes.keys()) if (!excluded.has(path) && ownWords(path) >= MIN_OWN_WORDS) eligible.add(path);
 	return eligible;
 }
+
+/** Links in either direction, as a graph walk would follow them. */
+function neighbours(context: GraphContext, path: string): Iterable<string> {
+	return [...(context.notes.get(path)?.links ?? []), ...(context.backlinks.get(path) ?? [])];
+}
+
+/** Undirected link distance from the active note (breadth-first), for the notes within `maxDepth` links. */
+export function graphDistances(context: GraphContext, maxDepth: number): Map<string, number> {
+	const distances = new Map<string, number>([[context.active.path, 0]]);
+	let frontier = [context.active.path];
+	for (let depth = 1; depth <= maxDepth && frontier.length > 0; depth++) {
+		const next: string[] = [];
+		for (const path of frontier) {
+			for (const other of neighbours(context, path)) {
+				if (distances.has(other) || !context.notes.has(other)) continue;
+				distances.set(other, depth);
+				next.push(other);
+			}
+		}
+		frontier = next;
+	}
+	return distances;
+}

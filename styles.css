@@ -852,6 +852,12 @@ button.vaultmate-badge:focus-visible {
 	overflow-wrap: anywhere;
 }
 
+.vaultmate-related-about {
+	margin: var(--size-4-2) 0 0;
+	font-size: var(--font-ui-small);
+	overflow-wrap: anywhere;
+}
+
 .vaultmate-related-reasons {
 	display: flex;
 	flex-direction: column;

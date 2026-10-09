@@ -27,9 +27,9 @@ describe("connections corpus", () => {
 		for (const note of vault.notes.values()) {
 			const raw = [...(vault.texts.get(note.path)?.matchAll(/\[\[([^\]|#]+)/g) ?? [])].map((match) => match[1]);
 			expect(note.links.length, `${note.path} has unresolved links`).toBe(new Set(raw).size);
-			const words = vault.text.doc(note.path)?.length ?? 0;
+			const words = vault.text.doc(note.path)?.words ?? 0;
 			const isIndex = /index|^Inbox$|^20/.test(note.title);
-			if (!isIndex) expect(words, note.title).toBeGreaterThan(40);
+			if (!isIndex) expect(words, note.title).toBeGreaterThanOrEqual(60);
 			expect(words, note.title).toBeLessThan(300);
 		}
 	});

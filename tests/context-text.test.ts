@@ -53,50 +53,39 @@ describe("cleanText", () => {
 describe("TextIndex", () => {
 	function build(notes: Record<string, string>): TextIndex {
 		const index = new TextIndex();
-		for (const [path, text] of Object.entries(notes)) index.put(path, makeDoc(text, 1), tokenize(path.replace(/\.md$/, "")));
+		for (const [path, text] of Object.entries(notes)) index.put(path, makeDoc(text, 1), tokenize(path.replace(/.md$/, "")));
 		return index;
 	}
 
-	it("ranks the note that matches the query terms first", () => {
-		const index = build({
-			"a.md": "sourdough bread flour water starter",
-			"b.md": "bread and butter",
-			"c.md": "quantum physics lecture notes",
-		});
-		const scores = index.search(new Map([["bread", 1], ["sourdough", 1]]));
-		expect(scores.get("a.md")).toBeGreaterThan(scores.get("b.md") ?? 0);
-		expect(scores.has("c.md")).toBe(false);
-	});
-
-	it("weights the title more than the body", () => {
+	it("counts the title three times as much as the body", () => {
 		const index = new TextIndex();
-		index.put("x.md", makeDoc("filler words here", 1), ["gardening"]);
-		index.put("y.md", makeDoc("gardening filler words", 1), ["other"]);
-		index.put("z.md", makeDoc("unrelated text entirely", 1), ["zzz"]);
-		const scores = index.search(new Map([["gardening", 1]]));
-		expect(scores.get("x.md")).toBeGreaterThan(scores.get("y.md") ?? 0);
+		index.put("x.md", makeDoc("filler words here gardening", 1), ["gardening"]);
+		expect(index.count("x.md", "gardening")).toBe(4);
+		expect(index.count("x.md", "filler")).toBe(1);
+		expect(index.count("x.md", "missing")).toBe(0);
+		expect(index.termsOf("x.md").sort()).toEqual(["filler", "gardening", "here", "words"]);
 	});
 
-	it("gives rare terms a higher idf and describes a note by its distinctive terms", () => {
+	it("gives rare terms a higher idf and knows which notes have a term", () => {
 		const index = build({
 			"a.md": "common common common rareword",
 			"b.md": "common stuff",
 			"c.md": "common things",
 		});
 		expect(index.idf("rareword")).toBeGreaterThan(index.idf("common"));
-		expect(index.topTerms("a.md", 1)[0]?.[0]).toBe("rareword");
+		expect(index.documentFrequency("common")).toBe(3);
+		expect([...index.pathsWith("rareword")]).toEqual(["a.md"]);
 	});
 
 	it("updates incrementally on put and remove", () => {
 		const index = build({ "a.md": "alpha beta", "b.md": "beta gamma" });
 		expect(index.size).toBe(2);
 		index.put("a.md", makeDoc("delta", 2), ["a"]);
-		expect(index.search(new Map([["alpha", 1]])).size).toBe(0);
-		expect(index.search(new Map([["delta", 1]])).has("a.md")).toBe(true);
+		expect(index.documentFrequency("alpha")).toBe(0);
+		expect(index.pathsWith("delta").has("a.md")).toBe(true);
 		index.remove("b.md");
 		expect(index.size).toBe(1);
 		expect(index.bodyPaths("gamma")).toEqual([]);
-		expect(index.sharedTerms("a.md", ["delta", "zeta"], 3)).toEqual(["delta"]);
 	});
 
 	it("lists only body matches in bodyPaths, not title-only matches", () => {

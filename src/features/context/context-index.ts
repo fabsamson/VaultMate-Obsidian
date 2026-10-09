@@ -5,7 +5,7 @@ import { debounce, getAllTags, normalizePath, TFile, type App, type TAbstractFil
 
 import { openLocalCache, type LocalCache } from "../../core/local-cache";
 import type VaultMatePlugin from "../../main";
-import { findRelated, type RelatedNote } from "./engine";
+import { findConnections, type Connection } from "./engine";
 import { buildNoteMeta, isExcluded, type NoteMeta } from "./note-meta";
 import { mapLimit, yieldToEventLoop } from "./slicing";
 import { makeDoc, TextIndex, type DocText } from "./text-index";
@@ -29,7 +29,7 @@ export interface ContextStats {
 	notesReused: number;
 	/** Duration of the last build, ms. */
 	buildMs: number;
-	/** Duration of the last `related` call, ms (index freshness checks included). */
+	/** Duration of the last `connections` call, ms (index freshness checks included). */
 	lastQueryMs: number;
 	/** Part of the last query spent reading the MetadataCache into `NoteMeta`, ms. */
 	lastMetaMs: number;
@@ -224,7 +224,7 @@ export class ContextIndex {
 		return notes;
 	}
 
-	public async related(file: TFile, limit: number): Promise<RelatedNote[]> {
+	public async connections(file: TFile, limit: number): Promise<Connection[]> {
 		const started = performance.now();
 		await this.ensure();
 		await this.flush();
@@ -233,7 +233,7 @@ export class ContextIndex {
 		const notes = this.snapshot(file);
 		this.stats.lastMetaMs = performance.now() - metaStarted;
 		const { vault } = this.app;
-		const found = await findRelated({
+		const found = await findConnections({
 			active: file.path,
 			notes,
 			text: this.text,

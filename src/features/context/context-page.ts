@@ -1,4 +1,4 @@
-// The hub's "Related notes" page: the notes most worth reading next to the context note, and why.
+// The hub's "Related notes" page: the notes not connected yet with the context note whose ideas could work with it, and why.
 import { setIcon, setTooltip, type TFile } from "obsidian";
 
 import { createPanel } from "../../ui/components";
@@ -6,8 +6,8 @@ import type { HubPage } from "../../ui/hub-view";
 import { createSprite } from "../../ui/pixel";
 import { SPRITES } from "../../ui/sprites";
 import type { BuildProgress, ContextStats } from "./context-index";
-import { indexingLine, noteFolder, noteTitle, REASON_ICONS, relatedSummary, statsLine } from "./context-labels";
-import type { RelatedNote } from "./engine";
+import { aboutLine, indexingLine, noteFolder, noteTitle, REASON_ICONS, relatedSummary, statsLine } from "./context-labels";
+import type { Connection } from "./engine";
 
 export const CONTEXT_PAGE_ID = "related";
 
@@ -19,9 +19,9 @@ export interface ContextPageHost {
 	file(): TFile | null;
 	/** Progress of the first index build, or null. */
 	building(): BuildProgress | null;
-	/** Related notes found for the context note last time, or null when not computed yet. */
+	/** Connections found for the context note last time, or null when not computed yet. */
 	lastCount(file: TFile): number | null;
-	related(file: TFile): Promise<RelatedNote[]>;
+	connections(file: TFile): Promise<Connection[]>;
 	stats(): ContextStats;
 	/** Opens the note; a Ctrl or Cmd click opens it in a new tab. */
 	open(path: string, event: MouseEvent): void;
@@ -48,18 +48,18 @@ export function createContextPage(host: ContextPageHost): HubPage {
 				body.createEl("p", { cls: "vaultmate-muted", text: "Open a note first." });
 				return;
 			}
-			body.createEl("p", { cls: "vaultmate-muted", text: `Notes related to ${file.basename}` });
+			body.createEl("p", { cls: "vaultmate-muted", text: `New connections for ${file.basename}` });
 			const status = body.createDiv({ cls: "vaultmate-related-status", attr: { role: "status" } });
 			const results = body.createDiv();
 
-			const search = host.related(file);
+			const search = host.connections(file);
 			const showProgress = (): void => {
 				const progress = host.building();
 				status.setText(progress ? indexingLine(progress) : "");
 			};
 			showProgress();
 			const timer = body.win.setInterval(() => (body.isConnected ? showProgress() : body.win.clearInterval(timer)), PROGRESS_POLL_MS);
-			let notes: RelatedNote[];
+			let notes: Connection[];
 			try {
 				notes = await search;
 			} finally {
@@ -78,10 +78,10 @@ export function createContextPage(host: ContextPageHost): HubPage {
 function renderEmpty(parent: HTMLElement, file: TFile): void {
 	const panel = createPanel(parent, "vaultmate-empty");
 	createSprite(panel, SPRITES.mascotSleep, 96);
-	panel.createEl("p", { cls: "vaultmate-empty-title", text: `No related notes found for ${file.basename}.` });
+	panel.createEl("p", { cls: "vaultmate-empty-title", text: `No new connection found for ${file.basename} yet.` });
 }
 
-function renderCards(parent: HTMLElement, host: ContextPageHost, file: TFile, notes: RelatedNote[]): void {
+function renderCards(parent: HTMLElement, host: ContextPageHost, file: TFile, notes: Connection[]): void {
 	const canInsert = host.canInsert(file);
 	const list = parent.createEl("ul", { cls: "vaultmate-related-list" });
 	for (const note of notes) {
@@ -92,6 +92,7 @@ function renderCards(parent: HTMLElement, host: ContextPageHost, file: TFile, no
 		const folder = noteFolder(note.path);
 		if (folder) card.createEl("p", { cls: "vaultmate-muted vaultmate-related-folder", text: folder });
 
+		if (note.terms.length > 0) card.createEl("p", { cls: "vaultmate-related-about", text: aboutLine(note.terms) });
 		const reasons = card.createEl("ul", { cls: "vaultmate-related-reasons" });
 		for (const reason of note.reasons) {
 			const item = reasons.createEl("li");

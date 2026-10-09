@@ -1,6 +1,6 @@
-// The related notes feature (the context finder): the engine, the index, the hub page and its command.
+// The related notes feature (the connections finder): the engine, the index, the hub page and its command.
 //
-// For other code: `plugin.context.related(file, limit)` returns `RelatedNote[]`, `plugin.context.building`
+// For other code: `plugin.context.connections(file, limit)` returns `Connection[]`, `plugin.context.building`
 // is the build progress while the first query indexes the vault, and `plugin.context.stats` has the
 // numbers for measuring (see `ContextStats`).
 import { debounce, Keymap, MarkdownView, Notice, type Editor, type TFile } from "obsidian";
@@ -8,19 +8,17 @@ import { debounce, Keymap, MarkdownView, Notice, type Editor, type TFile } from 
 import type VaultMatePlugin from "../../main";
 import { ContextIndex, type BuildProgress, type ContextStats } from "./context-index";
 import { CONTEXT_PAGE_ID, createContextPage } from "./context-page";
-import type { RelatedNote } from "./engine";
+import { DEFAULT_LIMIT, type Connection } from "./engine";
 
-export type { RelatedNote, RelatedReason, ReasonKind } from "./engine";
+export type { Connection, ConnectionReason, ReasonKind } from "./engine";
 export type { BuildProgress, ContextStats } from "./context-index";
 
-/** Default number of notes `related` returns. */
-export const DEFAULT_RELATED_LIMIT = 8;
 /** Wait after the context note changed before redrawing the page. */
 const REFRESH_DELAY_MS = 2000;
 
 export class ContextFeature {
 	private readonly index: ContextIndex;
-	/** How many notes the last query found, for the tile of the hub. */
+	/** How many connections the last query found, for the tile of the hub. */
 	private last: { path: string; count: number } | null = null;
 
 	public constructor(private readonly plugin: VaultMatePlugin) {
@@ -31,7 +29,7 @@ export class ContextFeature {
 		return this.plugin.settings.context.enabled;
 	}
 
-	/** Progress of the index build, or null when idle. The first `related` call builds the index. */
+	/** Progress of the index build, or null when idle. The first `connections` call builds the index. */
 	public get building(): BuildProgress | null {
 		return this.index.building;
 	}
@@ -42,13 +40,14 @@ export class ContextFeature {
 	}
 
 	/**
-	 * The notes most worth reading next to `file`, best first, each with its reasons. Empty when the
-	 * feature is off or the file is not a Markdown note. The first call builds the text index
+	 * The notes not connected with `file` yet whose ideas could work with it (at most three), best first,
+	 * each with its shared terms and reasons. Empty when nothing new was found, the feature is off or the
+	 * file is not a Markdown note. The first call builds the text index
 	 * (see `building`); later calls take a fraction of a second.
 	 */
-	public async related(file: TFile, limit = DEFAULT_RELATED_LIMIT): Promise<RelatedNote[]> {
+	public async connections(file: TFile, limit = DEFAULT_LIMIT): Promise<Connection[]> {
 		if (!this.enabled() || file.extension !== "md") return [];
-		const found = await this.index.related(file, limit);
+		const found = await this.index.connections(file, limit);
 		this.last = { path: file.path, count: found.length };
 		return found;
 	}
@@ -73,7 +72,7 @@ export class ContextFeature {
 				file: () => plugin.contextFile(),
 				building: () => this.building,
 				lastCount: (file) => (this.last?.path === file.path ? this.last.count : null),
-				related: (file) => this.related(file),
+				connections: (file) => this.connections(file),
 				stats: () => this.stats,
 				open: (path, event) => {
 					const target = plugin.app.vault.getFileByPath(path);

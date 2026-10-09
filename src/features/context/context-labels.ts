@@ -5,12 +5,7 @@ import type { ReasonKind } from "./engine";
 /** Lucide icon of each kind of reason; the reason text always carries the meaning. */
 export const REASON_ICONS: Record<ReasonKind, string> = {
 	mention: "at-sign",
-	links: "link",
-	cocitation: "git-merge",
-	tags: "tag",
 	property: "user",
-	wording: "text",
-	time: "calendar",
 	place: "map-pin",
 };
 
@@ -22,7 +17,7 @@ export interface SummaryInput {
 	/** Name of the context note, or null. */
 	name: string | null;
 	building: BuildProgress | null;
-	/** Number of related notes found for the context note, or null when not computed yet. */
+	/** Number of connections found for the context note, or null when not computed yet. */
 	count: number | null;
 }
 
@@ -31,8 +26,15 @@ export function relatedSummary(input: SummaryInput): string {
 	if (!input.name) return "Open a note first";
 	if (input.building) return `Indexing… ${input.building.done} of ${input.building.total}`;
 	if (input.count === null) return `Notes related to ${input.name}`;
-	if (input.count === 0) return `No related notes for ${input.name}`;
-	return `${input.count} ${input.count === 1 ? "note" : "notes"} for ${input.name}`;
+	if (input.count === 0) return `No new connection for ${input.name}`;
+	return `${input.count} new ${input.count === 1 ? "connection" : "connections"} for ${input.name}`;
+}
+
+/** "Both are about checklist, preparation and interruptions". */
+export function aboutLine(terms: readonly string[]): string {
+	const [last, ...others] = [...terms].reverse();
+	if (last === undefined) return "";
+	return `Both are about ${others.length === 0 ? last : `${others.reverse().join(", ")} and ${last}`}`;
 }
 
 /** "Indexed 301 notes in 0.4 s · computed on this device". */

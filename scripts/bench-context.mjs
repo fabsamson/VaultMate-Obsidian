@@ -1,6 +1,6 @@
-// Dev-only benchmark of the context finder's pure engine on a synthetic corpus (nothing is shipped).
+// Dev-only benchmark of the connections finder's pure engine on a synthetic corpus (nothing is shipped).
 // Usage: node scripts/bench-context.mjs [notes=2000] [queries=30]
-// It measures a cold index build (clean, tokenize, count, index) and queries (signals and ranking),
+// It measures a cold index build (clean, tokenize, count, index) and queries (eligibility, signals, scoring and selection),
 // without Obsidian: the graph is generated in memory, so the MetadataCache reads are not included.
 import { build } from "esbuild";
 import process from "node:process";
@@ -10,7 +10,7 @@ const queriesCount = Number(process.argv[3] ?? 30);
 
 const bundle = await build({
 	stdin: {
-		contents: `export { findRelated } from "./src/features/context/engine";
+		contents: `export { findConnections } from "./src/features/context/engine";
 export { buildNoteMeta } from "./src/features/context/note-meta";
 export { makeDoc, TextIndex } from "./src/features/context/text-index";
 export { tokenize } from "./src/features/context/tokenizer";`,
@@ -24,7 +24,7 @@ export { tokenize } from "./src/features/context/tokenizer";`,
 	logLevel: "error",
 });
 const code = bundle.outputFiles[0]?.text ?? "";
-const { findRelated, buildNoteMeta, makeDoc, TextIndex, tokenize } = await import(`data:text/javascript;base64,${Buffer.from(code).toString("base64")}`);
+const { findConnections, buildNoteMeta, makeDoc, TextIndex, tokenize } = await import(`data:text/javascript;base64,${Buffer.from(code).toString("base64")}`);
 
 // Deterministic random numbers.
 let seed = 12345;
@@ -90,7 +90,7 @@ let results = 0;
 for (let q = 0; q < queriesCount; q++) {
 	const active = paths[Math.floor(random() * paths.length)];
 	const start = now();
-	const found = await findRelated({ active, notes: metas, text, readText, limit: 8 });
+	const found = await findConnections({ active, notes: metas, text, readText, limit: 3 });
 	times.push(now() - start);
 	results += found.length;
 }
