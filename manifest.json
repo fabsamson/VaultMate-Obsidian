@@ -1,9 +1,9 @@
 {
   "id": "vaultmate",
   "name": "VaultMate",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "minAppVersion": "1.13.0",
-  "description": "Track decisions and predictions with reviews and a track record, ask an AI provider for questions that challenge a note, and add places to notes. Pairs with the optional VaultMate Android app.",
+  "description": "Track decisions and predictions with reviews and a track record, run AI actions that challenge a note or recommend titles from your collections, add places to notes, and find new connections. Pairs with the optional VaultMate Android app.",
   "author": "Fabian Samson",
   "authorUrl": "https://github.com/fabsamson",
   "fundingUrl": "https://buymeacoffee.com/gibbonolive9442",
