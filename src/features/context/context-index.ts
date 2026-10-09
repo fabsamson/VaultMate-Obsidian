@@ -210,7 +210,6 @@ export class ContextIndex {
 						links: Object.keys(metadataCache.resolvedLinks[file.path] ?? {}).filter((path) => path.endsWith(".md")),
 						tags: cache ? (getAllTags(cache) ?? []) : [],
 						frontmatter: cache?.frontmatter,
-						ctime: file.stat.ctime,
 					},
 					options,
 				),

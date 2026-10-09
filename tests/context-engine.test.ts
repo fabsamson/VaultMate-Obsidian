@@ -7,14 +7,12 @@ import { makeDoc, TextIndex } from "../src/features/context/text-index";
 import { tokenize } from "../src/features/context/tokenizer";
 
 const OPTIONS: MetaOptions = { peopleProperties: ["author", "people"], latitudeProperty: "latitude", longitudeProperty: "longitude" };
-const CTIME = Date.UTC(2020, 0, 1);
 
 interface Fixture {
 	text?: string;
 	links?: string[];
 	tags?: string[];
 	frontmatter?: Record<string, unknown>;
-	ctime?: number;
 }
 
 /** A tiny vault: `Name` -> note. Filler notes make the statistics meaningful. */
@@ -22,11 +20,9 @@ async function related(active: string, vault: Record<string, Fixture>, extra: { 
 	const notes = new Map<string, NoteMeta>();
 	const texts = new Map<string, string>();
 	const text = new TextIndex();
-	let spread = 0;
 	for (const [name, note] of Object.entries(vault)) {
 		const path = `${name}.md`;
-		// Different creation days by default, so that time proximity does not interfere.
-		const meta = buildNoteMeta({ path, links: (note.links ?? []).map((link) => `${link}.md`), tags: note.tags ?? [], frontmatter: note.frontmatter, ctime: note.ctime ?? CTIME + 30 * 86_400_000 * spread++ }, OPTIONS);
+		const meta = buildNoteMeta({ path, links: (note.links ?? []).map((link) => `${link}.md`), tags: note.tags ?? [], frontmatter: note.frontmatter }, OPTIONS);
 		notes.set(path, meta);
 		texts.set(path, note.text ?? "");
 		text.put(path, makeDoc(note.text ?? "", 1), tokenize(name));
@@ -45,21 +41,21 @@ function reasonsOf(result: RelatedNote[], name: string): string[] {
 }
 
 describe("note-meta", () => {
-	it("reads dates from the name, then date, created and the creation time", () => {
+	it("reads dates from the name, then date and created, never the creation time", () => {
 		expect(dayFromText("2026-10-08")).toBe(dayNumber(2026, 10, 8));
 		expect(dayFromText("2026-10-08 Standup")).toBe(dayNumber(2026, 10, 8));
 		expect(dayFromText("2026-13-01")).toBeNull();
 		expect(dayFromText("20261008")).toBeNull();
-		const day = (frontmatter: Record<string, unknown> | undefined, path = "n.md") => buildNoteMeta({ path, links: [], tags: [], frontmatter, ctime: CTIME }, OPTIONS).day;
+		const day = (frontmatter: Record<string, unknown> | undefined, path = "n.md") => buildNoteMeta({ path, links: [], tags: [], frontmatter }, OPTIONS).day;
 		expect(day(undefined, "2026-10-08.md")).toBe(dayNumber(2026, 10, 8));
 		expect(day({ date: "2026-05-02" })).toBe(dayNumber(2026, 5, 2));
 		expect(day({ created: "2026-05-03T10:00" })).toBe(dayNumber(2026, 5, 3));
-		expect(day({})).not.toBeNull();
+		expect(day({})).toBeNull();
 	});
 
 	it("reads aliases, people values with wikilinks and coordinates", () => {
 		const meta = buildNoteMeta(
-			{ path: "dir/Note.md", links: ["a.md", "a.md", "dir/Note.md"], tags: ["#Idea", "idea"], frontmatter: { Aliases: "Foo, Bar", author: ["[[Jane Doe|Jane]]", "John"], latitude: "45,76", longitude: 4.83 }, ctime: CTIME },
+			{ path: "dir/Note.md", links: ["a.md", "a.md", "dir/Note.md"], tags: ["#Idea", "idea"], frontmatter: { Aliases: "Foo, Bar", author: ["[[Jane Doe|Jane]]", "John"], latitude: "45,76", longitude: 4.83 } },
 			OPTIONS,
 		);
 		expect(meta.title).toBe("Note");
@@ -68,7 +64,7 @@ describe("note-meta", () => {
 		expect(meta.links).toEqual(["a.md"]);
 		expect(meta.tags).toEqual(["idea"]);
 		expect(meta.geo).toEqual({ lat: 45.76, lon: 4.83 });
-		expect(buildNoteMeta({ path: "x.md", links: [], tags: [], frontmatter: { latitude: 120, longitude: 1 }, ctime: 0 }, OPTIONS).geo).toBeNull();
+		expect(buildNoteMeta({ path: "x.md", links: [], tags: [], frontmatter: { latitude: 120, longitude: 1 } }, OPTIONS).geo).toBeNull();
 	});
 
 	it("excludes folders and measures distances", () => {
@@ -208,6 +204,21 @@ describe("findRelated", () => {
 			"2026-10-10": { tags: ["trip"] },
 		});
 		expect(reasonsOf(withTag, "2026-10-10")).toEqual(expect.arrayContaining(["Written the same week"]));
+	});
+
+	it("ignores notes without an explicit date, however close their files are", async () => {
+		const result = await related("Alpha", {
+			...filler(10),
+			Alpha: { tags: ["trip"] },
+			Beta: { tags: ["trip"] },
+		});
+		expect(reasonsOf(result, "Beta").join()).not.toContain("same week");
+		const dated = await related("Alpha", {
+			...filler(10),
+			Alpha: { tags: ["trip"], frontmatter: { date: "2026-10-08" } },
+			Beta: { tags: ["trip"], frontmatter: { created: "2026-10-09T08:00" } },
+		});
+		expect(reasonsOf(dated, "Beta")).toContain("Written the same week");
 	});
 
 	it("finds nearby places, strongest under one kilometre", async () => {

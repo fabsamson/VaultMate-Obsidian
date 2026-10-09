@@ -60,14 +60,14 @@ const metas = new Map();
 for (const note of corpus) {
 	const path = `${note.title}.md`;
 	const tags = Array.from({ length: Math.floor(random() * 4) }, () => `#${tagPool[zipf(tagPool.length)]}`);
-	const frontmatter = {};
+	const frontmatter = { date: new Date(Date.UTC(2024, 0, 1) + Math.floor(random() * 700) * day).toISOString().slice(0, 10) };
 	if (random() < 0.3) frontmatter.author = pick(people);
 	if (random() < 0.1) {
 		frontmatter.latitude = 45.7 + random() * 0.3;
 		frontmatter.longitude = 4.8 + random() * 0.3;
 	}
 	texts.set(path, `---\ntags: [x]\n---\n# ${note.title}\n\n${note.words.join(" ")}\n\n\`\`\`\ncode block ignored\n\`\`\`\n${note.links.map((link) => `[[${link.replace(/\.md$/, "")}]]`).join(" ")}\n`);
-	metas.set(path, buildNoteMeta({ path, links: note.links.filter((link) => link !== path), tags, frontmatter, ctime: Date.UTC(2024, 0, 1) + Math.floor(random() * 700) * day }, { peopleProperties: ["author"], latitudeProperty: "latitude", longitudeProperty: "longitude" }));
+	metas.set(path, buildNoteMeta({ path, links: note.links.filter((link) => link !== path), tags, frontmatter }, { peopleProperties: ["author"], latitudeProperty: "latitude", longitudeProperty: "longitude" }));
 }
 
 const now = () => performance.now();

@@ -34,8 +34,6 @@ export interface MetaInput {
 	/** Tags as the metadata cache reports them, with or without `#`. */
 	tags: readonly string[];
 	frontmatter: Record<string, unknown> | undefined;
-	/** File creation time, ms since epoch. */
-	ctime: number;
 }
 
 export interface MetaOptions {
@@ -66,12 +64,6 @@ export function dayNumber(year: number, month: number, day: number): number | nu
 export function dayFromText(text: string): number | null {
 	const match = /^(\d{4})-(\d{2})-(\d{2})(?!\d)/.exec(text.trim());
 	return match ? dayNumber(Number(match[1]), Number(match[2]), Number(match[3])) : null;
-}
-
-/** Local calendar day of a timestamp. */
-export function dayFromTimestamp(ms: number): number {
-	const date = new Date(ms);
-	return Math.round(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / DAY_MS);
 }
 
 function lookup(frontmatter: Record<string, unknown> | undefined, name: string): unknown {
@@ -113,7 +105,7 @@ export function buildNoteMeta(input: MetaInput, options: MetaOptions): NoteMeta 
 		}
 	}
 	const day =
-		dayFromText(title) ?? textValues(lookup(frontmatter, "date")).map(dayFromText).find((d) => d !== null) ?? textValues(lookup(frontmatter, "created")).map(dayFromText).find((d) => d !== null) ?? dayFromTimestamp(input.ctime);
+		dayFromText(title) ?? textValues(lookup(frontmatter, "date")).map(dayFromText).find((d) => d !== null) ?? textValues(lookup(frontmatter, "created")).map(dayFromText).find((d) => d !== null) ?? null;
 	const lat = parseCoordinate(lookup(frontmatter, options.latitudeProperty), 90);
 	const lon = parseCoordinate(lookup(frontmatter, options.longitudeProperty), 180);
 	return {
