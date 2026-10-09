@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { collectionNoteOf, collectionTypes, inFolder, parseRating, ratingLabel, typeLabel, type CollectionNote, type CollectionProperties } from "../src/features/ai-actions/collection";
+import { collectionNoteOf, collectionTypes, entryChoices, inFolder, parseRating, ratingLabel, typeLabel, type CollectionNote, type CollectionProperties } from "../src/features/ai-actions/collection";
 
 const PROPS: CollectionProperties = { folder: "", typeProperty: "type", ratingProperty: "rating" };
 
 function note(type: string, rating: number | null, title = `${type} ${rating}`): CollectionNote {
-	return { title, type, year: null, rating, genres: [], creators: [] };
+	return { path: `${title}.md`, title, type, year: null, rating, genres: [], creators: [] };
 }
 
 describe("parseRating", () => {
@@ -32,7 +32,11 @@ describe("ratingLabel", () => {
 describe("collectionNoteOf", () => {
 	it("reads a Media DB movie note", () => {
 		const frontmatter = { type: "movie", title: "Heat", year: "1995", genres: ["Crime", "Drama"], director: ["Michael Mann"], actors: ["Al Pacino"], rating: 9 };
-		expect(collectionNoteOf("Heat - (1995)", frontmatter, PROPS)).toEqual({ title: "Heat", type: "movie", year: "1995", rating: 9, genres: ["Crime", "Drama"], creators: ["Michael Mann"] });
+		expect(collectionNoteOf("Heat - (1995)", frontmatter, PROPS)).toEqual({ path: "Heat - (1995)", title: "Heat", type: "movie", year: "1995", rating: 9, genres: ["Crime", "Drama"], creators: ["Michael Mann"] });
+	});
+
+	it("takes the file name from a vault path", () => {
+		expect(collectionNoteOf("Films/Psycho-Pass - (2012).md", { type: "series" }, PROPS)).toMatchObject({ path: "Films/Psycho-Pass - (2012).md", title: "Psycho-Pass" });
 	});
 
 	it("falls back to the file name for the title, without a trailing year", () => {
@@ -88,5 +92,24 @@ describe("collectionTypes", () => {
 	it("breaks ties by label and handles an empty list", () => {
 		expect(collectionTypes([note("movie", 1), note("book", 1)]).map((type) => type.id)).toEqual(["book", "movie"]);
 		expect(collectionTypes([])).toEqual([]);
+	});
+});
+
+describe("entryChoices", () => {
+	const entry = (title: string, rating: number | null, extra: Partial<CollectionNote> = {}): CollectionNote => ({ ...note("movie", rating, title), path: `Films/${title}.md`, ...extra });
+
+	it("lists the entries of the type, rated or not, best first then by title", () => {
+		const notes = [entry("Dune", 7), entry("Cats", null), entry("Alien", 7.5, { year: "1979" }), entry("Heat", 9), entry("Brazil", null), { ...entry("Frieren", 10), type: "manga" }];
+		expect(entryChoices(notes, "movie")).toEqual([
+			{ id: "Films/Heat.md", label: "Heat · 9/10" },
+			{ id: "Films/Alien.md", label: "Alien (1979) · 7.5/10" },
+			{ id: "Films/Dune.md", label: "Dune · 7/10" },
+			{ id: "Films/Brazil.md", label: "Brazil · not rated" },
+			{ id: "Films/Cats.md", label: "Cats · not rated" },
+		]);
+	});
+
+	it("is empty for a type without notes", () => {
+		expect(entryChoices([entry("Heat", 9)], "book")).toEqual([]);
 	});
 });

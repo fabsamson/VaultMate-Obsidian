@@ -5,7 +5,7 @@ import { complete, configurationProblem } from "../../core/ai/client";
 import { baseUrlHost } from "../../core/ai/endpoint";
 import type VaultMatePlugin from "../../main";
 import { createPanel, createSectionHeader } from "../../ui/components";
-import { collectionTypes, normalizeTitle } from "./collection";
+import { collectionTypes, entryChoices, normalizeTitle } from "./collection";
 import { collectionProfile, type RatedTitle } from "./collection-profile";
 import { isConfirmed, withConfirmation } from "./confirmation";
 import type { ActionDefinition, ParamDefinition } from "./definition";
@@ -23,6 +23,8 @@ export interface RunContext extends SourceInput {
 }
 
 const SOURCE_LABELS = { note: "Note", selection: "Selection", properties: "Properties", "collection-profile": "Collection profile" } as const;
+
+const ALL_RATINGS = "All my ratings";
 
 function formatCount(count: number): string {
 	return `${count.toLocaleString("en-US")} characters`;
@@ -65,13 +67,16 @@ export class RunModal extends Modal {
 		this.messages = buildMessages(this.action, this.sources, labels);
 	}
 
-	/** The only choice source today is the collection types. */
-	private choices(): Array<{ id: string; label: string; text: string }> {
-		return collectionTypes(this.context.collection).map((type) => ({ id: type.id, label: type.label, text: `${type.label} (${type.rated} rated)` }));
+	/** The options of a parameter. The entries depend on the type chosen in the `type` parameter. */
+	private choices(param: ParamDefinition, type: string): Array<{ id: string; label: string; text: string }> {
+		if (param.choices === "collection-entries") {
+			return [{ id: "", label: ALL_RATINGS, text: ALL_RATINGS }, ...entryChoices(this.context.collection, type).map((entry) => ({ ...entry, text: entry.label }))];
+		}
+		return collectionTypes(this.context.collection).map((item) => ({ id: item.id, label: item.label, text: `${item.label} (${item.rated} rated)` }));
 	}
 
 	private chosenLabel(param: ParamDefinition): string {
-		return this.choices().find((choice) => choice.id === this.values[param.name])?.label ?? "";
+		return this.choices(param, this.values.type ?? "").find((choice) => choice.id === this.values[param.name])?.label ?? "";
 	}
 
 	public onOpen(): void {
@@ -125,26 +130,39 @@ export class RunModal extends Modal {
 	private renderParams(): void {
 		const { contentEl, action } = this;
 		const panel = createPanel(contentEl);
-		const selects: Array<{ name: string; select: HTMLSelectElement }> = [];
+		const selects: Array<{ param: ParamDefinition; select: HTMLSelectElement }> = [];
+		const typeOf = (): string => selects.find(({ param }) => param.name === "type")?.select.value ?? "";
+		/** Fills a select with the options of its parameter: `keep` if still there, else the context note's entry, else the first option. */
+		const fill = (param: ParamDefinition, select: HTMLSelectElement, keep: string | undefined): void => {
+			const choices = this.choices(param, typeOf());
+			select.empty();
+			for (const choice of choices) select.createEl("option", { text: choice.text, value: choice.id });
+			const contextEntry = param.choices === "collection-entries" ? this.plugin.contextFile()?.path : undefined;
+			const wanted = [keep, contextEntry].find((id) => id !== undefined && choices.some((choice) => choice.id === id));
+			select.value = wanted ?? choices[0]?.id ?? "";
+		};
 		let empty = false;
 		for (const param of action.params) {
-			const choices = this.choices();
 			const line = panel.createDiv({ cls: "vaultmate-source-row" });
 			line.createSpan({ cls: "vaultmate-field-label", text: param.label });
-			if (choices.length === 0) {
-				empty = true;
-				line.createSpan({ text: "No collection found. Check the Collections settings." });
-				continue;
-			}
 			const select = line.createEl("select", { cls: "dropdown", attr: { "aria-label": param.label } });
-			for (const choice of choices) select.createEl("option", { text: choice.text, value: choice.id });
-			select.value = this.values[param.name] ?? choices[0]?.id ?? "";
-			selects.push({ name: param.name, select });
+			selects.push({ param, select });
+			fill(param, select, this.values[param.name]);
+			if (select.options.length === 0) {
+				empty = true;
+				select.remove();
+				line.createSpan({ text: "No collection found. Check the Collections settings." });
+			}
 		}
+		// The entries depend on the type: when it changes, they are listed again.
+		const typeSelect = selects.find(({ param }) => param.name === "type")?.select;
+		typeSelect?.addEventListener("change", () => {
+			for (const { param, select } of selects) if (param.choices === "collection-entries") fill(param, select, undefined);
+		});
 		const actions = contentEl.createDiv({ cls: "vaultmate-actions" });
 		this.button(actions, "Cancel", false, () => this.close());
 		const next = this.button(actions, "Continue", true, () => {
-			for (const { name, select } of selects) this.values[name] = select.value;
+			for (const { param, select } of selects) this.values[param.name] = select.value;
 			this.prepare();
 			this.state = { type: "preview" };
 			this.render();

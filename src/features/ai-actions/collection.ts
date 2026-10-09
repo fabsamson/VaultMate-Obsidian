@@ -11,6 +11,8 @@ export interface CollectionProperties {
 }
 
 export interface CollectionNote {
+	/** Vault path of the note: what identifies an entry. */
+	path: string;
 	title: string;
 	/** Lower-case value of the type property. */
 	type: string;
@@ -74,15 +76,16 @@ function textList(value: unknown): string[] {
  * The collection note behind a file, or null when the type property is missing or empty. The title is the
  * `title` property, else the file name (without a trailing "(year)").
  */
-export function collectionNoteOf(fileName: string, frontmatter: Record<string, unknown> | undefined, properties: CollectionProperties): CollectionNote | null {
+export function collectionNoteOf(path: string, frontmatter: Record<string, unknown> | undefined, properties: CollectionProperties): CollectionNote | null {
 	if (!frontmatter) return null;
 	const type = textList(frontmatter[properties.typeProperty])[0]?.toLowerCase();
 	if (!type) return null;
+	const fileName = (path.split("/").pop() ?? path).replace(/\.md$/i, "");
 	const title = textList(frontmatter.title).join(", ") || fileName.replace(/\s*-?\s*\(\d{4}\)\s*$/, "").trim();
 	if (!title) return null;
 	const year = /\d{4}/.exec(textList(frontmatter.year).join(" "))?.[0] ?? null;
 	const creators = CREATOR_PROPERTIES.map((name) => textList(frontmatter[name])).find((names) => names.length > 0) ?? [];
-	return { title, type, year, rating: parseRating(frontmatter[properties.ratingProperty]), genres: textList(frontmatter.genres), creators };
+	return { path, title, type, year, rating: parseRating(frontmatter[properties.ratingProperty]), genres: textList(frontmatter.genres), creators };
 }
 
 /** Whether a file path is inside the collections folder (an empty folder is the whole vault). */
@@ -116,4 +119,19 @@ export function normalizeTitle(title: string): string {
 		.replace(/\s*\(\d{4}\)$/, "");
 	const withoutArticle = base.replace(/^(?:the|le|la|les)\s+/, "").replace(/^l['\u2019]\s*/, "");
 	return (withoutArticle || base).replace(/[^\p{L}\p{N}\p{M}]+/gu, "");
+}
+
+export interface EntryChoice {
+	/** The note's path. */
+	id: string;
+	/** "Heat (1995) · 9/10" or "Heat (1995) · not rated". */
+	label: string;
+}
+
+/** Every entry of a type, rated or not: highest rating first, then title. */
+export function entryChoices(notes: readonly CollectionNote[], type: string): EntryChoice[] {
+	return notes
+		.filter((note) => note.type === type)
+		.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0) || a.title.localeCompare(b.title))
+		.map((note) => ({ id: note.path, label: `${note.year ? `${note.title} (${note.year})` : note.title} · ${note.rating === null ? "not rated" : ratingLabel(note.rating)}` }));
 }

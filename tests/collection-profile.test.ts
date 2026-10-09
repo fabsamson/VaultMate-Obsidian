@@ -5,7 +5,7 @@ import { collectionProfile } from "../src/features/ai-actions/collection-profile
 import { SOURCE_CAPS } from "../src/features/ai-actions/sources";
 
 function movie(title: string, rating: number | null, extra: Partial<CollectionNote> = {}): CollectionNote {
-	return { title, type: "movie", year: null, rating, genres: [], creators: [], ...extra };
+	return { path: `${title}.md`, title, type: "movie", year: null, rating, genres: [], creators: [], ...extra };
 }
 
 describe("normalizeTitle", () => {

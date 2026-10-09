@@ -72,7 +72,7 @@ export class AiActionsFeature {
 		const { collections } = this.plugin.settings;
 		const folder = cleanFolderPath(collections.folder);
 		return vault.getMarkdownFiles().flatMap((file) => {
-			const note = inFolder(file.path, folder) ? collectionNoteOf(file.basename, metadataCache.getFileCache(file)?.frontmatter, collections) : null;
+			const note = inFolder(file.path, folder) ? collectionNoteOf(file.path, metadataCache.getFileCache(file)?.frontmatter, collections) : null;
 			return note ? [note] : [];
 		});
 	}

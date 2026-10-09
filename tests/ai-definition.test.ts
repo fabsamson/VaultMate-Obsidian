@@ -98,12 +98,24 @@ describe("parseAction", () => {
 	});
 
 	it("rejects bad parameters with a clear message", () => {
-		expect(message({ ...valid, params: { type: { label: "Type", choices: "tags" } } })).toBe('Unknown choices "tags" for parameter type. Use collection-types.');
+		expect(message({ ...valid, params: { type: { label: "Type", choices: "tags" } } })).toBe('Unknown choices "tags" for parameter type. Use collection-types, collection-entries.');
 		expect(message({ ...valid, params: { type: { label: "Type" } } })).toContain("Unknown choices");
 		expect(message({ ...valid, params: { type: "collection-types" } })).toBe("Parameter type needs a label and choices.");
 		expect(message({ ...valid, params: ["type"] })).toContain("params must list parameters");
 		expect(message({ ...valid, params: { count: { choices: "collection-types" } } })).toContain("cannot be the name");
 		expect(message({ ...valid, params: { "my type": { choices: "collection-types" } } })).toContain("cannot be the name");
+	});
+
+	it("accepts collection-entries only after the type parameter", () => {
+		const type = { label: "Type", choices: "collection-types" };
+		const entry = { label: "Based on", choices: "collection-entries" };
+		expect(ok({ ...valid, params: { type, entry } }).params).toEqual([
+			{ name: "type", label: "Type", choices: "collection-types" },
+			{ name: "entry", label: "Based on", choices: "collection-entries" },
+		]);
+		expect(message({ ...valid, params: { entry } })).toBe("Parameter entry (collection-entries) needs the type parameter, with choices: collection-types, declared before it.");
+		expect(message({ ...valid, params: { entry, type } })).toContain("declared before it");
+		expect(message({ ...valid, params: { kind: type, entry } })).toContain("needs the type parameter");
 	});
 
 	it("accepts collection-profile with a type parameter and requires that parameter", () => {

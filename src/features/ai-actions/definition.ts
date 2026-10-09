@@ -10,7 +10,7 @@ const LATER_SOURCES = ["linked-notes", "recent-notes", "tag", "decisions"];
 const LATER_OUTPUTS = ["items"];
 
 /** Where the choices of a launch parameter come from. */
-export const CHOICE_SOURCES = ["collection-types"] as const;
+export const CHOICE_SOURCES = ["collection-types", "collection-entries"] as const;
 export type ChoiceSource = (typeof CHOICE_SOURCES)[number];
 
 /** A value the run window asks for before the preview. `{{name}}` in the prompt becomes the chosen label. */
@@ -87,6 +87,9 @@ function parseParams(value: unknown): ParamDefinition[] | string {
 		const choices = typeof raw.choices === "string" ? raw.choices.trim() : "";
 		if (!(CHOICE_SOURCES as readonly string[]).includes(choices)) {
 			return `Unknown choices "${choices}" for parameter ${name}. Use ${CHOICE_SOURCES.join(", ")}.`;
+		}
+		if (choices === "collection-entries" && !params.some((param) => param.name === "type" && param.choices === "collection-types")) {
+			return `Parameter ${name} (collection-entries) needs the type parameter, with choices: collection-types, declared before it.`;
 		}
 		const label = typeof raw.label === "string" ? raw.label.trim() : "";
 		params.push({ name, label: label || name, choices: choices as ChoiceSource });
