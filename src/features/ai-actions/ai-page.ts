@@ -21,8 +21,7 @@ export function createAiPage(host: AiPageHost): HubPage {
 		id: "ai-actions",
 		order: 30,
 		title: "AI actions",
-		// Placeholder sprite: switch to module_questions.png once it is in assets.
-		sprite: SPRITES.moduleIdeas,
+		sprite: SPRITES.moduleQuestions,
 		enabled: () => host.enabled(),
 		summary: () => {
 			if (host.configurationProblem()) return "Set up a provider in settings";
