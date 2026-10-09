@@ -1,7 +1,7 @@
 import { Notice, PluginSettingTab, SecretComponent, type Setting, type SettingDefinitionItem } from "obsidian";
 
 import { validateBaseUrl } from "./core/ai/endpoint";
-import { DEFAULT_SETTINGS, validateActionsFolder, validateDistinctTags, validateTag } from "./core/settings-model";
+import { DEFAULT_SETTINGS, validateActionsFolder, validateDistinctProperties, validateDistinctTags, validatePropertyName, validateTag } from "./core/settings-model";
 import { createDefaultActions } from "./features/ai-actions/default-actions";
 import type VaultMatePlugin from "./main";
 
@@ -12,7 +12,12 @@ export class VaultMateSettingTab extends PluginSettingTab {
 	}
 
 	public getSettingDefinitions(): SettingDefinitionItem[] {
-		const { journal } = this.plugin.settings;
+		const { journal, location } = this.plugin.settings;
+		const propertyValidator = (index: 0 | 1 | 2) => (value: string): string | undefined => {
+			const names = [location.latitudeProperty, location.longitudeProperty, location.labelProperty];
+			names[index] = value;
+			return validatePropertyName(value) ?? validateDistinctProperties(names);
+		};
 		return [
 			{
 				type: "group",
@@ -78,6 +83,37 @@ export class VaultMateSettingTab extends PluginSettingTab {
 						name: "Create default actions",
 						desc: "Creates the Challenge this note action in the actions folder, without overwriting anything.",
 						render: (setting) => setting.addButton((button) => button.setButtonText("Create actions").onClick(() => void this.createActions())),
+					},
+				],
+			},
+			{
+				type: "group",
+				heading: "Location",
+				items: [
+					{
+						name: "Enable location",
+						desc: "Add a place to a note's properties by searching OpenStreetMap. A search is sent only when you press Search.",
+						control: { type: "toggle", key: "location.enabled" },
+					},
+					{
+						name: "Latitude property",
+						desc: "Property that receives the latitude, as a number.",
+						control: { type: "text", key: "location.latitudeProperty", placeholder: DEFAULT_SETTINGS.location.latitudeProperty, validate: propertyValidator(0) },
+					},
+					{
+						name: "Longitude property",
+						desc: "Property that receives the longitude, as a number.",
+						control: { type: "text", key: "location.longitudeProperty", placeholder: DEFAULT_SETTINGS.location.longitudeProperty, validate: propertyValidator(1) },
+					},
+					{
+						name: "Place label property",
+						desc: "Property that receives the name of the place, as text.",
+						control: { type: "text", key: "location.labelProperty", placeholder: DEFAULT_SETTINGS.location.labelProperty, validate: propertyValidator(2) },
+					},
+					{
+						name: "Use the VaultMate Android app for the current position",
+						desc: "On Android, adds a command that asks the VaultMate app for your current position. It needs the VaultMate app, which is optional; leave this off without it.",
+						control: { type: "toggle", key: "location.androidApp" },
 					},
 				],
 			},

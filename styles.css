@@ -724,3 +724,43 @@ button.vaultmate-badge:focus-visible {
 	width: 100%;
 	min-height: 40px;
 }
+
+/* Location: search row and result list. */
+.vaultmate-search-row {
+	display: flex;
+	gap: var(--size-4-2);
+	align-items: center;
+}
+
+.vaultmate-places {
+	display: flex;
+	flex-direction: column;
+	max-height: 40vh;
+	margin-top: var(--size-4-3);
+	overflow-y: auto;
+}
+
+.vaultmate-place {
+	display: block;
+	width: 100%;
+	height: auto;
+	padding: var(--size-4-2);
+	border: none;
+	border-bottom: 1px solid var(--vaultmate-rule);
+	border-radius: 0;
+	background: none;
+	box-shadow: none;
+	color: var(--vaultmate-text);
+	text-align: left;
+	cursor: pointer;
+	overflow-wrap: anywhere;
+}
+
+.vaultmate-place.is-selected {
+	background-color: var(--vaultmate-rule);
+}
+
+.vaultmate-place:focus-visible {
+	outline: 2px solid var(--vaultmate-seal);
+	outline-offset: -2px;
+}
