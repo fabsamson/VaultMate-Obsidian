@@ -60,6 +60,8 @@ export interface EngineInput {
 	/** Reads a note's Markdown. */
 	readText: (path: string) => Promise<string>;
 	limit?: number;
+	/** Notes the user marked "Not useful" for the active note: left out before the selection, so the next best can take the slot. */
+	hidden?: (path: string) => boolean;
 }
 
 export function noveltyOf(context: GraphContext, path: string, distances: ReadonlyMap<string, number>): number {
@@ -104,6 +106,7 @@ export async function findConnections(input: EngineInput): Promise<Connection[]>
 	const distances = graphDistances(context, MAX_DISTANCE);
 	const found: Connection[] = [];
 	for (const path of new Set([...reasons.keys(), ...matches.keys()])) {
+		if (input.hidden?.(path)) continue;
 		const list = reasons.get(path) ?? [];
 		const match = matches.get(path);
 		const relevance = list.reduce((sum, reason) => sum + reason.weight, 0) + (match ? WEIGHTS.terms * Math.min(1, match.similarity / TERMS_FULL_SIMILARITY) : 0);

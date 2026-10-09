@@ -24,7 +24,7 @@ function padding(name: string): string {
 }
 
 /** A tiny vault: `Name` -> note. Filler notes make the statistics meaningful. */
-async function connections(active: string, vault: Record<string, Fixture>, extra: { limit?: number } = {}): Promise<Connection[]> {
+async function connections(active: string, vault: Record<string, Fixture>, extra: { limit?: number; hidden?: (path: string) => boolean } = {}): Promise<Connection[]> {
 	const notes = new Map<string, NoteMeta>();
 	const texts = new Map<string, string>();
 	const text = new TextIndex();
@@ -36,7 +36,7 @@ async function connections(active: string, vault: Record<string, Fixture>, extra
 		texts.set(path, body);
 		text.put(path, makeDoc(body, 1), tokenize(name));
 	}
-	return findConnections({ active: `${active}.md`, notes, text, readText: (path) => Promise.resolve(texts.get(path) ?? ""), limit: extra.limit ?? 8 });
+	return findConnections({ active: `${active}.md`, notes, text, readText: (path) => Promise.resolve(texts.get(path) ?? ""), limit: extra.limit ?? 8, hidden: extra.hidden });
 }
 
 function filler(count: number, prefix = "Filler"): Record<string, Fixture> {
@@ -329,6 +329,17 @@ describe("findConnections", () => {
 		});
 		expect(paths(result)).toHaveLength(2);
 		expect(paths(result)).toContain("Other");
+	});
+
+	it("leaves out the hidden notes before the selection, so the next best takes the slot", async () => {
+		const vault: Record<string, Fixture> = {
+			...filler(10),
+			Active: { text: "marmalade quince jelly preserve citrus orchard" },
+			Best: { text: "marmalade quince jelly preserve citrus orchard" },
+			Next: { text: "marmalade quince jelly sugar" },
+		};
+		expect(paths(await connections("Active", vault, { limit: 1 }))).toEqual(["Best"]);
+		expect(paths(await connections("Active", vault, { limit: 1, hidden: (path) => path === "Best.md" }))).toEqual(["Next"]);
 	});
 
 	it("returns nothing for an unknown note", async () => {
