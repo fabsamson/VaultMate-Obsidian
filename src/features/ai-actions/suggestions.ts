@@ -127,7 +127,8 @@ export function parseSuggestions(answer: string, options: SuggestionOptions): Su
 export function becauseLine(suggestion: Suggestion, rated: readonly RatedTitle[]): string | null {
 	const first = suggestion.because[0];
 	const found = first === undefined ? undefined : rated.find((item) => item.title === first);
-	return found && found.rating !== null ? `Because you rated ${found.title} ${ratingLabel(found.rating)}` : null;
+	if (!found) return null;
+	return found.rating === null ? `Close to ${found.title}` : `Because you rated ${found.title} ${ratingLabel(found.rating)}`;
 }
 
 /** A web search for the suggestion, opened in the user's browser. */

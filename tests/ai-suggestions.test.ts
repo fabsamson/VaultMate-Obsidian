@@ -130,6 +130,10 @@ describe("becauseLine", () => {
 		expect(becauseLine(suggestion(["Heat"]), [{ title: "Heat", rating: 7.5 }])).toBe("Because you rated Heat 7.5/10");
 	});
 
+	it("says Close to for a title that is not rated", () => {
+		expect(becauseLine(suggestion(["Cats"]), [{ title: "Cats", rating: null }])).toBe("Close to Cats");
+	});
+
 	it("is omitted without a reason", () => {
 		expect(becauseLine(suggestion([]), rated)).toBeNull();
 		expect(becauseLine(suggestion(["Gone"]), rated)).toBeNull();
