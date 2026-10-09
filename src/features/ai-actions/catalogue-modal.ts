@@ -21,10 +21,13 @@ export class CatalogueModal extends SuggestModal<ActionEntry> {
 
 	public getSuggestions(query: string): ActionEntry[] {
 		const needle = query.trim().toLowerCase();
-		return this.entries.filter((entry) => {
-			const text = entry.ok ? `${entry.action.name} ${entry.action.description}` : `${entry.name} ${entry.message}`;
-			return text.toLowerCase().includes(needle);
-		});
+		// Runnable actions first; invalid ones stay listed, below, with their message.
+		return this.entries
+			.filter((entry) => {
+				const text = entry.ok ? `${entry.action.name} ${entry.action.description}` : `${entry.name} ${entry.message}`;
+				return text.toLowerCase().includes(needle);
+			})
+			.sort((a, b) => Number(b.ok) - Number(a.ok));
 	}
 
 	public renderSuggestion(entry: ActionEntry, el: HTMLElement): void {
