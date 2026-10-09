@@ -8,6 +8,8 @@ Map of the work notes.
 - [[Website relaunch]]
 - [[Sprint preparation]]
 - [[Scope cutting]]
+- [[Backlog pruning]]
+- [[Roadmap pruning]]
 - [[Release planning]]
 - [[Stand-up rhythm]]
 - [[Demo day rehearsal]]

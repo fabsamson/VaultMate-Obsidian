@@ -40,7 +40,7 @@ export const TERMS_FULL_SIMILARITY = 0.3;
 /** Below this relevance the notes have too little in common, whatever their novelty. */
 export const MIN_RELEVANCE = 1;
 /** Notes scoring less are not worth showing. */
-export const MIN_SCORE = 1.6;
+export const MIN_SCORE = 1.65;
 export const DEFAULT_LIMIT = 3;
 
 /** Novelty: best at 3 or 4 links away, where indirect common ground exists but no link. */
