@@ -1,7 +1,17 @@
 // The location feature: place search, the properties it writes, the hub page and the commands.
-import { MarkdownView, Notice, getLanguage, type TFile } from "obsidian";
+import { MarkdownView, Notice, Platform, getLanguage, type ObsidianProtocolData, type TFile } from "obsidian";
 
 import type VaultMatePlugin from "../../main";
+import {
+	addPending,
+	checkEcho,
+	echoRequestUrl,
+	locationRequestUrl,
+	nonceFromBytes,
+	parseLocationCallback,
+	parsePending,
+	type RequestKind,
+} from "./android-link";
 import { confirmReplace, SearchModal } from "./location-modals";
 import { createLocationPage, type CurrentLocation } from "./location-page";
 import { planLocation, readCoordinates, roundCoordinate, type Place, type PropertyNames } from "./location-properties";
@@ -9,6 +19,9 @@ import { simpleLanguage, userAgent, type LatLng } from "./nominatim";
 
 /** Per device and vault (never in data.json): the last position used, to rank search results. */
 const LAST_POSITION_KEY = "vaultmate-location-last";
+
+/** Per device and vault: requests sent to the VaultMate app and not answered yet. */
+const PENDING_KEY = "vaultmate-location-pending";
 
 export class LocationFeature {
 	public constructor(private readonly plugin: VaultMatePlugin) {}
@@ -36,23 +49,54 @@ export class LocationFeature {
 				return true;
 			},
 		});
+		plugin.addCommand({
+			id: "add-current-location",
+			name: "Add current location",
+			icon: "locate-fixed",
+			checkCallback: (checking) => {
+				const file = plugin.app.workspace.getActiveViewOfType(MarkdownView)?.file;
+				if (!file || !this.canAddCurrent()) return false;
+				if (!checking) this.requestCurrent(file);
+				return true;
+			},
+		});
+		plugin.addCommand({
+			id: "test-app-link",
+			name: "Test the Android app link",
+			icon: "link",
+			checkCallback: (checking) => {
+				if (!this.enabled() || !plugin.settings.location.androidApp) return false;
+				if (!checking) this.sendRequest("echo", "");
+				return true;
+			},
+		});
+		plugin.registerObsidianProtocolHandler("vaultmate-location", (params) => void this.onLocationCallback(params));
+		plugin.registerObsidianProtocolHandler("vaultmate-echo", (params) => this.onEchoCallback(params));
 		plugin.registerHubPage(
 			createLocationPage({
 				enabled: () => this.enabled(),
 				contextName: () => plugin.contextFile()?.basename ?? null,
 				current: () => this.currentLocation(plugin.contextFile()),
-				canAddCurrent: () => false,
+				canAddCurrent: () => this.canAddCurrent(),
 				search: () => {
 					const file = plugin.contextFile();
 					if (file) this.openSearch(file);
 				},
-				addCurrent: () => undefined,
+				addCurrent: () => {
+					const file = plugin.contextFile();
+					if (file) this.requestCurrent(file);
+				},
 			}),
 		);
 		// The page shows the properties of a note: redraw when they change.
 		plugin.registerEvent(plugin.app.metadataCache.on("changed", (file) => {
 			if (file.path === plugin.contextFile()?.path) plugin.refreshHubs();
 		}));
+	}
+
+	/** The option is on and this is Obsidian on Android, the only place the app can answer. */
+	private canAddCurrent(): boolean {
+		return this.enabled() && this.plugin.settings.location.androidApp && Platform.isAndroidApp;
 	}
 
 	private currentLocation(file: TFile | null): CurrentLocation | null {
@@ -119,5 +163,52 @@ export class LocationFeature {
 		new Notice(`Location added: ${where}${accuracy === undefined ? "" : ` (±${Math.round(accuracy)} m)`}`);
 		this.plugin.refreshHubs();
 		return true;
+	}
+
+	// ---- VaultMate Android app ----------------------------------------------------------------------
+
+	private requestCurrent(file: TFile): void {
+		this.sendRequest("location", file.path);
+	}
+
+	/** Remembers the request, then opens the app's link. Obsidian may be suspended until the app answers. */
+	private sendRequest(kind: RequestKind, path: string): void {
+		const { app } = this.plugin;
+		const nonce = nonceFromBytes(crypto.getRandomValues(new Uint8Array(16)));
+		const now = Date.now();
+		const list = addPending(parsePending(app.loadLocalStorage(PENDING_KEY)), { nonce, kind, path, createdAt: now }, now);
+		app.saveLocalStorage(PENDING_KEY, list);
+		activeWindow.open(kind === "echo" ? echoRequestUrl(nonce) : locationRequestUrl(nonce));
+	}
+
+	private async onLocationCallback(params: ObsidianProtocolData): Promise<void> {
+		const { app } = this.plugin;
+		if (!this.canAddCurrentSetting()) {
+			new Notice("The VaultMate app link is turned off in the VaultMate settings.");
+			return;
+		}
+		const result = parseLocationCallback(params, parsePending(app.loadLocalStorage(PENDING_KEY)), Date.now());
+		app.saveLocalStorage(PENDING_KEY, result.rest);
+		if (!result.ok) {
+			new Notice(result.message);
+			return;
+		}
+		const file = app.vault.getFileByPath(result.request.path);
+		if (!file) {
+			new Notice(`The note ${result.request.path} no longer exists. Nothing was written.`);
+			return;
+		}
+		await this.applyPlace(file, result.place, result.accuracy);
+	}
+
+	private onEchoCallback(params: ObsidianProtocolData): void {
+		const { app } = this.plugin;
+		const result = checkEcho(params, parsePending(app.loadLocalStorage(PENDING_KEY)), Date.now());
+		app.saveLocalStorage(PENDING_KEY, result.rest);
+		new Notice(result.ok ? "Link test passed" : result.message, result.ok ? undefined : 10000);
+	}
+
+	private canAddCurrentSetting(): boolean {
+		return this.enabled() && this.plugin.settings.location.androidApp;
 	}
 }

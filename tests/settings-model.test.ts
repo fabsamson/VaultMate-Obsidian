@@ -45,6 +45,7 @@ describe("normalizeSettings", () => {
 			journalState: { lastNoticeDate: "2026-10-09" },
 			ai: { enabled: false, baseUrl: "http://localhost:1234/v1", model: "local", apiKeySecret: "kotoba-key", actionsFolder: "Prompts/AI" },
 			aiState: { confirmed: { "Prompts/AI/A.md": ["note", "properties"] } },
+			location: { enabled: false, latitudeProperty: "lat", longitudeProperty: "lng", labelProperty: "where", androidApp: true },
 		};
 		expect(normalizeSettings(saved)).toEqual(saved);
 	});
