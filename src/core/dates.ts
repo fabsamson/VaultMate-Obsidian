@@ -57,14 +57,15 @@ function plural(count: number, unit: string): string {
 	return `${count} ${unit}${count === 1 ? "" : "s"}`;
 }
 
-/** A positive number of days as "5 days", "3 months" or "1 year". */
+/** A positive number of days as "5 days", "3 weeks", "3 months" or "1 year". */
 function spanLabel(days: number): string {
-	if (days <= 60) return plural(days, "day");
-	const months = Math.round(days / 30.4375);
-	return months < 12 ? plural(months, "month") : plural(Math.round(days / 365.25), "year");
+	if (days < 14) return plural(days, "day");
+	if (days < 28) return plural(Math.floor(days / 7), "week");
+	if (days < 365) return plural(Math.max(1, Math.round(days / 30.4375)), "month");
+	return plural(Math.max(1, Math.floor(days / 365.25)), "year");
 }
 
-/** Compact relative label of a due date: "today", "tomorrow", "in 5 days", "in 3 months", "3 days overdue". */
+/** Compact relative label of a due date: "today", "tomorrow", "in 5 days", "in 2 weeks", "in 3 months", "3 days overdue". */
 export function dueLabel(due: Date, today: Date): string {
 	const days = daysBetween(today, due);
 	if (days === 0) return "today";

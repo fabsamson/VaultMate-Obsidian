@@ -107,9 +107,23 @@ describe("labels", () => {
 		expect(label("2026-10-10")).toBe("tomorrow");
 	});
 
-	it("counts days up to two months", () => {
+	it("counts days below two weeks", () => {
 		expect(label("2026-10-14")).toBe("in 5 days");
-		expect(label("2026-11-08")).toBe("in 30 days");
+		expect(label("2026-10-22")).toBe("in 13 days");
+	});
+
+	it("counts weeks from 14 to 27 days, rounded down", () => {
+		expect(label("2026-10-23")).toBe("in 2 weeks");
+		expect(label("2026-10-29")).toBe("in 2 weeks");
+		expect(label("2026-10-30")).toBe("in 3 weeks");
+		expect(label("2026-11-05")).toBe("in 3 weeks");
+	});
+
+	it("rounds to whole months from 28 days, at least 1", () => {
+		expect(label("2026-11-06")).toBe("in 1 month");
+		expect(label("2026-11-09")).toBe("in 1 month");
+		expect(label("2026-12-09")).toBe("in 2 months");
+		expect(label("2027-01-09")).toBe("in 3 months");
 	});
 
 	it("switches to months and years for far dates", () => {
@@ -122,11 +136,13 @@ describe("labels", () => {
 	it("labels what is overdue", () => {
 		expect(label("2026-10-08")).toBe("1 day overdue");
 		expect(label("2026-10-06")).toBe("3 days overdue");
+		expect(label("2026-09-18")).toBe("3 weeks overdue");
 		expect(label("2026-06-09")).toBe("4 months overdue");
+		expect(label("2025-10-09")).toBe("1 year overdue");
 	});
 
 	it("gives each interval a stable label from today", () => {
-		const expected: Record<ReviewInterval, string> = { "1w": "in 7 days", "1m": "in 31 days", "3m": "in 3 months", "6m": "in 6 months", "1y": "in 1 year" };
+		const expected: Record<ReviewInterval, string> = { "1w": "in 7 days", "1m": "in 1 month", "3m": "in 3 months", "6m": "in 6 months", "1y": "in 1 year" };
 		for (const interval of REVIEW_INTERVALS) {
 			expect(dueLabel(addInterval(today, interval), today)).toBe(expected[interval]);
 		}
