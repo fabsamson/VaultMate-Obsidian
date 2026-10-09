@@ -1,6 +1,6 @@
 // The decision and prediction line model (plan §2). Pure: no Obsidian import, so Vitest tests it.
 //
-//   - [ ] Move to Lyon #decision [confidence:: 70%] ➕ 2026-10-08 📅 2027-01-08
+//   - [ ] Move to Lyon #decision [confidence: 70%] ➕ 2026-10-08 📅 2027-01-08
 //
 // A journal entry is a task line (it has a checkbox) whose body carries the decision or prediction tag.
 // Every transform takes a line and returns the new line text; characters it does not need to change
@@ -149,7 +149,7 @@ export interface ConvertOptions {
 	today: string;
 	/** Review date, `YYYY-MM-DD`. */
 	due: string;
-	/** Written as `[confidence:: NN%]` when not null; an existing field is kept otherwise. */
+	/** Written as `[confidence: NN%]` when not null; an existing field is kept otherwise. */
 	confidence: number | null;
 }
 

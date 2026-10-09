@@ -28,7 +28,7 @@ function entry(line: string) {
 
 describe("parseJournalLine", () => {
 	it("reads an open decision", () => {
-		expect(entry("- [ ] Switch the team to a four-day week #decision [confidence:: 60%] ➕ 2026-08-25 📅 2026-09-25")).toEqual({
+		expect(entry("- [ ] Switch the team to a four-day week #decision [confidence: 60%] ➕ 2026-08-25 📅 2026-09-25")).toEqual({
 			kind: "decision",
 			status: "open",
 			statement: "Switch the team to a four-day week",
@@ -43,12 +43,12 @@ describe("parseJournalLine", () => {
 	});
 
 	it("reads a closed decision", () => {
-		const parsed = entry("- [x] Move to Lyon #decision [confidence:: 70%] [outcome:: better] [quality:: good] ➕ 2026-10-08 📅 2027-01-08 ✅ 2027-01-08");
+		const parsed = entry("- [x] Move to Lyon #decision [confidence: 70%] [outcome: better] [quality: good] ➕ 2026-10-08 📅 2027-01-08 ✅ 2027-01-08");
 		expect(parsed).toMatchObject({ status: "done", outcome: "better", quality: "good", done: "2027-01-08", due: "2027-01-08" });
 	});
 
 	it("reads predictions and their result", () => {
-		const parsed = entry("- [x] The release needs no hotfix #prediction [confidence:: 80%] [result:: partly] ➕ 2026-09-01 📅 2026-09-08 ✅ 2026-09-08");
+		const parsed = entry("- [x] The release needs no hotfix #prediction [confidence: 80%] [result: partly] ➕ 2026-09-01 📅 2026-09-08 ✅ 2026-09-08");
 		expect(parsed).toMatchObject({ kind: "prediction", status: "done", confidence: 80, result: "partly" });
 	});
 
@@ -70,7 +70,7 @@ describe("parseJournalLine", () => {
 		expect(parseConfidence("high")).toBeNull();
 		expect(parseConfidence("")).toBeNull();
 		expect(parseConfidence(null)).toBeNull();
-		expect(entry("- [ ] x #decision [confidence:: lots]").confidence).toBeNull();
+		expect(entry("- [ ] x #decision [confidence: lots]").confidence).toBeNull();
 	});
 
 	it("reads a percentage typed in a form", () => {
@@ -81,7 +81,7 @@ describe("parseJournalLine", () => {
 	});
 
 	it("ignores outcome values that are not allowed, and fields of the other kind", () => {
-		const parsed = entry("- [x] x #decision [outcome:: great] [quality:: GOOD] [result:: yes]");
+		const parsed = entry("- [x] x #decision [outcome: great] [quality: GOOD] [result: yes]");
 		expect(parsed.outcome).toBeNull();
 		expect(parsed.quality).toBe("good");
 		expect(parsed.result).toBeNull();
@@ -98,21 +98,21 @@ describe("parseJournalLine", () => {
 	});
 
 	it("handles callouts, numbered lists, star markers and tabs", () => {
-		expect(entry("> 1. [ ] Pick the venue #decision [confidence:: 70%] ➕ 2026-10-07 📅 2026-10-30").statement).toBe("Pick the venue");
+		expect(entry("> 1. [ ] Pick the venue #decision [confidence: 70%] ➕ 2026-10-07 📅 2026-10-30").statement).toBe("Pick the venue");
 		expect(entry("* [ ] Star marker decision #decision ➕ 2026-10-08 📅 2026-12-08").due).toBe("2026-12-08");
-		expect(entry("\t- [ ] Tab-indented decision #decision [confidence:: 65%] ➕ 2026-10-08 📅 2026-11-08").confidence).toBe(65);
+		expect(entry("\t- [ ] Tab-indented decision #decision [confidence: 65%] ➕ 2026-10-08 📅 2026-11-08").confidence).toBe(65);
 	});
 
 	it("handles Japanese, French and variation selectors", () => {
-		const jp = entry("- [ ] 新しいノートアプリに移行する #decision [confidence:: 60%] ➕ 2026-10-06 📅 2027-01-06");
+		const jp = entry("- [ ] 新しいノートアプリに移行する #decision [confidence: 60%] ➕ 2026-10-06 📅 2027-01-06");
 		expect(jp.statement).toBe("新しいノートアプリに移行する");
-		expect(entry("- [ ] Décider du menu du dîner de Noël #decision [confidence:: 75%] ➕ 2026-10-09 📅 2026-12-01").statement).toBe("Décider du menu du dîner de Noël");
-		const vs = entry(`- [ ] Decide on the garden shed #decision [confidence:: 60%] ➕${FE0F} 2026-10-01 📅${FE0F} 2026-11-01`);
+		expect(entry("- [ ] Décider du menu du dîner de Noël #decision [confidence: 75%] ➕ 2026-10-09 📅 2026-12-01").statement).toBe("Décider du menu du dîner de Noël");
+		const vs = entry(`- [ ] Decide on the garden shed #decision [confidence: 60%] ➕${FE0F} 2026-10-01 📅${FE0F} 2026-11-01`);
 		expect(vs).toMatchObject({ created: "2026-10-01", due: "2026-11-01" });
 	});
 
 	it("keeps priority, recurrence and block id out of the statement", () => {
-		const parsed = entry("- [ ] Review the household budget #decision [confidence:: 70%] ⏫ 🔁 every month ➕ 2026-09-09 📅 2026-10-09 ^budget-review");
+		const parsed = entry("- [ ] Review the household budget #decision [confidence: 70%] ⏫ 🔁 every month ➕ 2026-09-09 📅 2026-10-09 ^budget-review");
 		expect(parsed).toMatchObject({ statement: "Review the household budget", due: "2026-10-09", created: "2026-09-09" });
 	});
 
@@ -175,7 +175,7 @@ describe("convertToEntry", () => {
 	it("converts a prose line", () => {
 		expect(convertToEntry("Decision: switch the notes backup", OPTIONS)).toBe("- [ ] Switch the notes backup #decision ➕ 2026-10-09 📅 2027-01-09");
 		expect(convertToEntry("Prédiction : il pleuvra demain", { ...OPTIONS, kind: "prediction", confidence: 70 })).toBe(
-			"- [ ] Il pleuvra demain #prediction [confidence:: 70%] ➕ 2026-10-09 📅 2027-01-09",
+			"- [ ] Il pleuvra demain #prediction [confidence: 70%] ➕ 2026-10-09 📅 2027-01-09",
 		);
 		expect(convertToEntry("Decision：move the standup", OPTIONS)).toBe("- [ ] Move the standup #decision ➕ 2026-10-09 📅 2027-01-09");
 	});
@@ -198,22 +198,22 @@ describe("convertToEntry", () => {
 	it("converts a tagged line, with or without a trailing space", () => {
 		expect(convertToEntry("Move to Lyon #decision ", OPTIONS)).toBe("- [ ] Move to Lyon #decision ➕ 2026-10-09 📅 2027-01-09");
 		expect(convertToEntry("- [ ] Move to Lyon #decision", { ...OPTIONS, confidence: 70 })).toBe(
-			"- [ ] Move to Lyon #decision [confidence:: 70%] ➕ 2026-10-09 📅 2027-01-09",
+			"- [ ] Move to Lyon #decision [confidence: 70%] ➕ 2026-10-09 📅 2027-01-09",
 		);
 	});
 
 	it("adds the tag to a line that has none, before existing fields", () => {
-		expect(convertToEntry("Buy a desk [confidence:: 60%]", OPTIONS)).toBe("- [ ] Buy a desk #decision [confidence:: 60%] ➕ 2026-10-09 📅 2027-01-09");
+		expect(convertToEntry("Buy a desk [confidence: 60%]", OPTIONS)).toBe("- [ ] Buy a desk #decision [confidence: 60%] ➕ 2026-10-09 📅 2027-01-09");
 	});
 
 	it("keeps an existing created date and confidence, and other signifiers", () => {
-		expect(convertToEntry("- [ ] Pay #decision [confidence:: 60%] ⏫ ➕ 2026-10-01 ^pay", OPTIONS)).toBe(
-			"- [ ] Pay #decision [confidence:: 60%] ⏫ ➕ 2026-10-01 📅 2027-01-09 ^pay",
+		expect(convertToEntry("- [ ] Pay #decision [confidence: 60%] ⏫ ➕ 2026-10-01 ^pay", OPTIONS)).toBe(
+			"- [ ] Pay #decision [confidence: 60%] ⏫ ➕ 2026-10-01 📅 2027-01-09 ^pay",
 		);
 	});
 
 	it("replaces the confidence only when one is given", () => {
-		expect(convertToEntry("- [ ] x #decision [confidence:: 60%]", { ...OPTIONS, confidence: 80 })).toContain("[confidence:: 80%]");
+		expect(convertToEntry("- [ ] x #decision [confidence: 60%]", { ...OPTIONS, confidence: 80 })).toContain("[confidence: 80%]");
 	});
 
 	it("leaves two spaces before the tag for an empty statement and finds the cursor spot", () => {
@@ -232,42 +232,42 @@ describe("convertToEntry", () => {
 });
 
 describe("closeEntry and reviewAgain", () => {
-	const OPEN = "- [ ] Move to Lyon #decision [confidence:: 70%] ➕ 2026-10-08 📅 2027-01-08";
+	const OPEN = "- [ ] Move to Lyon #decision [confidence: 70%] ➕ 2026-10-08 📅 2027-01-08";
 
 	it("closes a decision", () => {
 		expect(closeEntry(OPEN, { kind: "decision", outcome: "better", quality: "good", today: "2027-01-08" })).toBe(
-			"- [x] Move to Lyon #decision [confidence:: 70%] [outcome:: better] [quality:: good] ➕ 2026-10-08 📅 2027-01-08 ✅ 2027-01-08",
+			"- [x] Move to Lyon #decision [confidence: 70%] [outcome: better] [quality: good] ➕ 2026-10-08 📅 2027-01-08 ✅ 2027-01-08",
 		);
 	});
 
 	it("closes a prediction", () => {
-		expect(closeEntry("- [ ] It rains #prediction [confidence:: 80%] ➕ 2026-10-01 📅 2026-10-08", { kind: "prediction", result: "no", today: "2026-10-09" })).toBe(
-			"- [x] It rains #prediction [confidence:: 80%] [result:: no] ➕ 2026-10-01 📅 2026-10-08 ✅ 2026-10-09",
+		expect(closeEntry("- [ ] It rains #prediction [confidence: 80%] ➕ 2026-10-01 📅 2026-10-08", { kind: "prediction", result: "no", today: "2026-10-09" })).toBe(
+			"- [x] It rains #prediction [confidence: 80%] [result: no] ➕ 2026-10-01 📅 2026-10-08 ✅ 2026-10-09",
 		);
 	});
 
 	it("keeps priority, recurrence and block id when closing", () => {
-		const line = "- [ ] Review the budget #decision [confidence:: 70%] ⏫ 🔁 every month ➕ 2026-09-09 📅 2026-10-09 ^budget-review";
+		const line = "- [ ] Review the budget #decision [confidence: 70%] ⏫ 🔁 every month ➕ 2026-09-09 📅 2026-10-09 ^budget-review";
 		expect(closeEntry(line, { kind: "decision", outcome: "worse", quality: "bad", today: "2026-10-09" })).toBe(
-			"- [x] Review the budget #decision [confidence:: 70%] [outcome:: worse] [quality:: bad] ⏫ 🔁 every month ➕ 2026-09-09 📅 2026-10-09 ✅ 2026-10-09 ^budget-review",
+			"- [x] Review the budget #decision [confidence: 70%] [outcome: worse] [quality: bad] ⏫ 🔁 every month ➕ 2026-09-09 📅 2026-10-09 ✅ 2026-10-09 ^budget-review",
 		);
 	});
 
 	it("closes a task in a callout and replaces existing outcome fields", () => {
-		const line = "> - [ ] Hire #decision [outcome:: worse] ➕ 2026-10-05 📅 2026-11-05";
+		const line = "> - [ ] Hire #decision [outcome: worse] ➕ 2026-10-05 📅 2026-11-05";
 		expect(closeEntry(line, { kind: "decision", outcome: "better", quality: "unsure", today: "2026-11-05" })).toBe(
-			"> - [x] Hire #decision [outcome:: better] [quality:: unsure] ➕ 2026-10-05 📅 2026-11-05 ✅ 2026-11-05",
+			"> - [x] Hire #decision [outcome: better] [quality: unsure] ➕ 2026-10-05 📅 2026-11-05 ✅ 2026-11-05",
 		);
 	});
 
 	it("closes a tagged task without dates", () => {
 		expect(closeEntry("- [ ] Choose a plan #decision", { kind: "decision", outcome: "better", quality: "good", today: "2026-10-09" })).toBe(
-			"- [x] Choose a plan #decision [outcome:: better] [quality:: good] ✅ 2026-10-09",
+			"- [x] Choose a plan #decision [outcome: better] [quality: good] ✅ 2026-10-09",
 		);
 	});
 
 	it("reviews again: the box stays open and the date moves", () => {
-		expect(reviewAgain(OPEN, "2027-04-08")).toBe("- [ ] Move to Lyon #decision [confidence:: 70%] ➕ 2026-10-08 📅 2027-04-08");
+		expect(reviewAgain(OPEN, "2027-04-08")).toBe("- [ ] Move to Lyon #decision [confidence: 70%] ➕ 2026-10-08 📅 2027-04-08");
 		expect(reviewAgain("- [ ] x #decision ⏫ 📅 2026-10-09 ^id", "2027-01-09")).toBe("- [ ] x #decision ⏫ 📅 2027-01-09 ^id");
 		expect(reviewAgain(`- [ ] x #decision 📅${FE0F} 2026-10-09`, "2027-01-09")).toBe(`- [ ] x #decision 📅${FE0F} 2027-01-09`);
 	});
@@ -311,20 +311,20 @@ describe("badgeFor", () => {
 	});
 
 	it("describes closed decisions", () => {
-		expect(badge("- [x] x #decision [outcome:: better] [quality:: good] 📅 2026-10-06 ✅ 2026-10-06")).toEqual({
+		expect(badge("- [x] x #decision [outcome: better] [quality: good] 📅 2026-10-06 ✅ 2026-10-06")).toEqual({
 			text: "⚖ Decision · reviewed: better, good decision",
 			action: "none",
 			kind: "decision",
 		});
-		expect(badge("- [x] x #decision [outcome:: as-expected] [quality:: unsure]").text).toBe("⚖ Decision · reviewed: as expected, unsure decision");
+		expect(badge("- [x] x #decision [outcome: as-expected] [quality: unsure]").text).toBe("⚖ Decision · reviewed: as expected, unsure decision");
 		expect(badge("- [x] x #decision").text).toBe("⚖ Decision · reviewed");
 		expect(badge("- [-] x #decision 📅 2026-10-06").text).toBe("⚖ Decision · cancelled");
 	});
 
 	it("describes predictions", () => {
-		expect(badge("- [ ] x #prediction [confidence:: 70%] 📅 2026-12-09").text).toBe("◔ Prediction · 70% · review in 2 months");
+		expect(badge("- [ ] x #prediction [confidence: 70%] 📅 2026-12-09").text).toBe("◔ Prediction · 70% · review in 2 months");
 		expect(badge("- [ ] x #prediction 📅 2026-12-09").text).toBe("◔ Prediction · add a probability");
-		expect(badge("- [x] x #prediction [confidence:: 70%] [result:: yes]").text).toBe("◔ Prediction · 70% · resolved: yes");
+		expect(badge("- [x] x #prediction [confidence: 70%] [result: yes]").text).toBe("◔ Prediction · 70% · resolved: yes");
 	});
 
 	it("offers to track prose and plain lines", () => {

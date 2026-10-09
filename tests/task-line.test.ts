@@ -28,8 +28,8 @@ const FIXTURES = [
 	"Prédiction：il pleuvra demain",
 	"## Heading #decision",
 	"- plain item",
-	"- [ ] Move to Lyon #decision [confidence:: 70%] ➕ 2026-10-08 📅 2027-01-08",
-	"- [x] Move to Lyon #decision [outcome:: better] ➕ 2026-10-08 📅 2027-01-08 ✅ 2027-01-08",
+	"- [ ] Move to Lyon #decision [confidence: 70%] ➕ 2026-10-08 📅 2027-01-08",
+	"- [x] Move to Lyon #decision [outcome: better] ➕ 2026-10-08 📅 2027-01-08 ✅ 2027-01-08",
 	"- [-] Cancelled idea #decision",
 	"- [/] Custom status",
 	"* [ ] star marker",
@@ -47,7 +47,7 @@ const FIXTURES = [
 	"- [ ]",
 	"- ",
 	"-",
-	"- [ ] 引っ越すかどうか #decision [confidence:: 60%] ➕ 2026-10-08 📅 2027-01-08",
+	"- [ ] 引っ越すかどうか #decision [confidence: 60%] ➕ 2026-10-08 📅 2027-01-08",
 	"- [ ] ＃全角 テスト：決める #decision",
 	"- [ ] Réunion à Zürich #décision 📅 2026-10-12",
 	"- [ ] Repeat 🔁 every week on Monday 📅 2026-10-12",
@@ -169,64 +169,64 @@ describe("tags", () => {
 	it("adds a tag after the description and before fields and emojis", () => {
 		expect(ensureTag("Move to Lyon", "decision")).toBe("Move to Lyon #decision");
 		expect(ensureTag("Move to Lyon #housing", "decision")).toBe("Move to Lyon #housing #decision");
-		expect(ensureTag("Move [confidence:: 70%]", "decision")).toBe("Move #decision [confidence:: 70%]");
+		expect(ensureTag("Move [confidence: 70%]", "decision")).toBe("Move #decision [confidence: 70%]");
 		expect(ensureTag("Move 📅 2027-01-08", "decision")).toBe("Move #decision 📅 2027-01-08");
-		expect(ensureTag("Move [confidence:: 70%] ➕ 2026-10-08 📅 2027-01-08", "#decision")).toBe("Move #decision [confidence:: 70%] ➕ 2026-10-08 📅 2027-01-08");
+		expect(ensureTag("Move [confidence: 70%] ➕ 2026-10-08 📅 2027-01-08", "#decision")).toBe("Move #decision [confidence: 70%] ➕ 2026-10-08 📅 2027-01-08");
 		expect(ensureTag("Move 📅 2027-01-08 ^abc", "decision")).toBe("Move #decision 📅 2027-01-08 ^abc");
 		expect(ensureTag("", "decision")).toBe("#decision");
 		expect(ensureTag("引っ越す", "decision")).toBe("引っ越す #decision");
 	});
 
 	it("leaves a body that already has the tag alone", () => {
-		const body = "Move #Decision [confidence:: 70%]";
+		const body = "Move #Decision [confidence: 70%]";
 		expect(ensureTag(body, "decision")).toBe(body);
 	});
 });
 
 describe("inline fields", () => {
-	const body = "Move #decision [confidence:: 70%] [outcome:: better] ➕ 2026-10-08 📅 2027-01-08";
+	const body = "Move #decision [confidence: 70%] [outcome: better] ➕ 2026-10-08 📅 2027-01-08";
 
 	it("reads fields", () => {
 		expect(getInlineField(body, "confidence")).toBe("70%");
 		expect(getInlineField(body, "Outcome")).toBe("better");
 		expect(getInlineField(body, "quality")).toBeNull();
-		expect(getInlineField("Move [source:: https://x.test/a?b=1]", "source")).toBe("https://x.test/a?b=1");
-		expect(getInlineField("Move [note::  très bien ]", "note")).toBe("très bien");
-		expect(getInlineField("Move [note:: 決める]", "note")).toBe("決める");
+		expect(getInlineField("Move [source: https://x.test/a?b=1]", "source")).toBe("https://x.test/a?b=1");
+		expect(getInlineField("Move [note: très bien ]", "note")).toBe("très bien");
+		expect(getInlineField("Move [note: 決める]", "note")).toBe("決める");
 	});
 
 	it("ignores fields in code and the checkbox-like brackets", () => {
-		expect(getInlineField("Use `[confidence:: 70%]` syntax", "confidence")).toBeNull();
+		expect(getInlineField("Use `[confidence: 70%]` syntax", "confidence")).toBeNull();
 		expect(getInlineField("Move [x] and [a b]", "x")).toBeNull();
 	});
 
 	it("replaces a field in place", () => {
-		expect(setInlineField(body, "confidence", "80%")).toBe("Move #decision [confidence:: 80%] [outcome:: better] ➕ 2026-10-08 📅 2027-01-08");
+		expect(setInlineField(body, "confidence", "80%")).toBe("Move #decision [confidence: 80%] [outcome: better] ➕ 2026-10-08 📅 2027-01-08");
 	});
 
 	it("adds a field after the existing fields and before the emojis", () => {
-		expect(setInlineField(body, "quality", "good")).toBe("Move #decision [confidence:: 70%] [outcome:: better] [quality:: good] ➕ 2026-10-08 📅 2027-01-08");
-		expect(setInlineField("Move #decision ➕ 2026-10-08 📅 2027-01-08", "confidence", "70%")).toBe("Move #decision [confidence:: 70%] ➕ 2026-10-08 📅 2027-01-08");
-		expect(setInlineField("Move #decision", "confidence", "70%")).toBe("Move #decision [confidence:: 70%]");
-		expect(setInlineField("Move 📅 2027-01-08 ^abc", "confidence", "70%")).toBe("Move [confidence:: 70%] 📅 2027-01-08 ^abc");
-		expect(setInlineField("", "confidence", "70%")).toBe("[confidence:: 70%]");
+		expect(setInlineField(body, "quality", "good")).toBe("Move #decision [confidence: 70%] [outcome: better] [quality: good] ➕ 2026-10-08 📅 2027-01-08");
+		expect(setInlineField("Move #decision ➕ 2026-10-08 📅 2027-01-08", "confidence", "70%")).toBe("Move #decision [confidence: 70%] ➕ 2026-10-08 📅 2027-01-08");
+		expect(setInlineField("Move #decision", "confidence", "70%")).toBe("Move #decision [confidence: 70%]");
+		expect(setInlineField("Move 📅 2027-01-08 ^abc", "confidence", "70%")).toBe("Move [confidence: 70%] 📅 2027-01-08 ^abc");
+		expect(setInlineField("", "confidence", "70%")).toBe("[confidence: 70%]");
 	});
 
 	it("keeps priorities and recurrence untouched when adding a field", () => {
-		expect(setInlineField("Move #decision ⏫ 🔁 every week 📅 2027-01-08", "confidence", "70%")).toBe("Move #decision [confidence:: 70%] ⏫ 🔁 every week 📅 2027-01-08");
+		expect(setInlineField("Move #decision ⏫ 🔁 every week 📅 2027-01-08", "confidence", "70%")).toBe("Move #decision [confidence: 70%] ⏫ 🔁 every week 📅 2027-01-08");
 	});
 
 	it("removes a field", () => {
-		expect(removeInlineField(body, "outcome")).toBe("Move #decision [confidence:: 70%] ➕ 2026-10-08 📅 2027-01-08");
-		expect(removeInlineField(body, "confidence")).toBe("Move #decision [outcome:: better] ➕ 2026-10-08 📅 2027-01-08");
-		expect(removeInlineField("Move [confidence:: 70%]", "confidence")).toBe("Move");
-		expect(removeInlineField("Move [confidence:: 70%] 📅 2027-01-08", "confidence")).toBe("Move 📅 2027-01-08");
+		expect(removeInlineField(body, "outcome")).toBe("Move #decision [confidence: 70%] ➕ 2026-10-08 📅 2027-01-08");
+		expect(removeInlineField(body, "confidence")).toBe("Move #decision [outcome: better] ➕ 2026-10-08 📅 2027-01-08");
+		expect(removeInlineField("Move [confidence: 70%]", "confidence")).toBe("Move");
+		expect(removeInlineField("Move [confidence: 70%] 📅 2027-01-08", "confidence")).toBe("Move 📅 2027-01-08");
 		expect(removeInlineField(body, "missing")).toBe(body);
 	});
 });
 
 describe("Tasks emoji dates", () => {
-	const body = "Move #decision [confidence:: 70%] ➕ 2026-10-08 📅 2027-01-08";
+	const body = "Move #decision [confidence: 70%] ➕ 2026-10-08 📅 2027-01-08";
 
 	it("reads dates", () => {
 		expect(getTaskDate(body, "created")).toBe("2026-10-08");
@@ -250,7 +250,7 @@ describe("Tasks emoji dates", () => {
 	});
 
 	it("replaces a date in place, keeping the variation selector", () => {
-		expect(setTaskDate(body, "due", "2027-04-08")).toBe("Move #decision [confidence:: 70%] ➕ 2026-10-08 📅 2027-04-08");
+		expect(setTaskDate(body, "due", "2027-04-08")).toBe("Move #decision [confidence: 70%] ➕ 2026-10-08 📅 2027-04-08");
 		expect(setTaskDate(`Move 📅${VS} 2027-01-08 ^abc`, "due", "2027-04-08")).toBe(`Move 📅${VS} 2027-04-08 ^abc`);
 	});
 
@@ -280,8 +280,8 @@ describe("Tasks emoji dates", () => {
 	});
 
 	it("removes a date", () => {
-		expect(removeTaskDate(body, "due")).toBe("Move #decision [confidence:: 70%] ➕ 2026-10-08");
-		expect(removeTaskDate(body, "created")).toBe("Move #decision [confidence:: 70%] 📅 2027-01-08");
+		expect(removeTaskDate(body, "due")).toBe("Move #decision [confidence: 70%] ➕ 2026-10-08");
+		expect(removeTaskDate(body, "created")).toBe("Move #decision [confidence: 70%] 📅 2027-01-08");
 		expect(removeTaskDate("Move ➕ 2026-10-08 📅 2027-01-08 ✅ 2027-01-09", "due")).toBe("Move ➕ 2026-10-08 ✅ 2027-01-09");
 		expect(removeTaskDate("Move 📅 2027-01-08", "due")).toBe("Move");
 		expect(removeTaskDate("Move 📅 2027-01-08 ^abc", "due")).toBe("Move ^abc");
@@ -289,7 +289,7 @@ describe("Tasks emoji dates", () => {
 	});
 
 	it("handles French and Japanese descriptions", () => {
-		expect(setTaskDate("Déménager à Lyon #décision [confidence:: 70%]", "due", "2027-01-08")).toBe("Déménager à Lyon #décision [confidence:: 70%] 📅 2027-01-08");
+		expect(setTaskDate("Déménager à Lyon #décision [confidence: 70%]", "due", "2027-01-08")).toBe("Déménager à Lyon #décision [confidence: 70%] 📅 2027-01-08");
 		expect(setTaskDate("引っ越す：決める #decision", "due", "2027-01-08")).toBe("引っ越す：決める #decision 📅 2027-01-08");
 	});
 });
@@ -301,23 +301,23 @@ describe("whole-line workflow", () => {
 		line = { ...line, body: setInlineField(line.body, "confidence", "70%") };
 		line = { ...line, body: setTaskDate(line.body, "created", "2026-10-09") };
 		line = { ...line, body: setTaskDate(line.body, "due", "2027-01-09") };
-		expect(serializeTaskLine(line)).toBe("> - [ ] Décision : déménager à Lyon #decision [confidence:: 70%] ➕ 2026-10-09 📅 2027-01-09");
+		expect(serializeTaskLine(line)).toBe("> - [ ] Décision : déménager à Lyon #decision [confidence: 70%] ➕ 2026-10-09 📅 2027-01-09");
 	});
 
 	it("closes a decision with the contract order", () => {
-		let line = parseTaskLine("    - [ ] Move to Lyon #decision [confidence:: 70%] ➕ 2026-10-08 📅 2027-01-08 ^dec1");
+		let line = parseTaskLine("    - [ ] Move to Lyon #decision [confidence: 70%] ➕ 2026-10-08 📅 2027-01-08 ^dec1");
 		line = setTaskStatus(line, "x");
 		line = { ...line, body: setInlineField(line.body, "outcome", "better") };
 		line = { ...line, body: setInlineField(line.body, "quality", "good") };
 		line = { ...line, body: setTaskDate(line.body, "done", "2027-01-08") };
-		expect(serializeTaskLine(line)).toBe("    - [x] Move to Lyon #decision [confidence:: 70%] [outcome:: better] [quality:: good] ➕ 2026-10-08 📅 2027-01-08 ✅ 2027-01-08 ^dec1");
+		expect(serializeTaskLine(line)).toBe("    - [x] Move to Lyon #decision [confidence: 70%] [outcome: better] [quality: good] ➕ 2026-10-08 📅 2027-01-08 ✅ 2027-01-08 ^dec1");
 	});
 });
 
 describe("getDescription", () => {
 	it("returns the text without tags, fields, emojis and block id", () => {
-		expect(getDescription("Move to Lyon #decision [confidence:: 70%] ➕ 2026-10-08 📅 2027-01-08 ^id")).toBe("Move to Lyon");
-		expect(getDescription("Buy #decision a desk [confidence:: 70%]")).toBe("Buy a desk");
+		expect(getDescription("Move to Lyon #decision [confidence: 70%] ➕ 2026-10-08 📅 2027-01-08 ^id")).toBe("Move to Lyon");
+		expect(getDescription("Buy #decision a desk [confidence: 70%]")).toBe("Buy a desk");
 		expect(getDescription("Read `#code` and [[Note#Heading]] #decision ⏫ 🔁 every month")).toBe("Read `#code` and [[Note#Heading]]");
 		expect(getDescription("#decision")).toBe("");
 	});

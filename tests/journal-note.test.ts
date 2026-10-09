@@ -74,8 +74,8 @@ describe("usesTabs", () => {
 	});
 });
 
-const OPEN = "- [ ] Move to Lyon #decision [confidence:: 70%] ➕ 2026-10-08 📅 2027-01-08";
-const CLOSED = "- [x] Move to Lyon #decision [confidence:: 70%] [outcome:: better] [quality:: good] ➕ 2026-10-08 📅 2027-01-08 ✅ 2027-01-08";
+const OPEN = "- [ ] Move to Lyon #decision [confidence: 70%] ➕ 2026-10-08 📅 2027-01-08";
+const CLOSED = "- [x] Move to Lyon #decision [confidence: 70%] [outcome: better] [quality: good] ➕ 2026-10-08 📅 2027-01-08 ✅ 2027-01-08";
 const SUB = "Review 2027-01-08: rent lower than expected. Lesson: visit twice before signing.";
 
 describe("planRewrite", () => {
@@ -138,7 +138,7 @@ describe("newEntryLines", () => {
 
 	it("builds the line and the non-empty sub-items", () => {
 		expect(newEntryLines({ ...base, extras: [["Why", "back pain"], ["Options", ""], ["Expected", "less pain"], ["Signals", "  "]] })).toEqual([
-			"- [ ] Buy a desk #decision [confidence:: 70%] ➕ 2026-10-09 📅 2027-01-09",
+			"- [ ] Buy a desk #decision [confidence: 70%] ➕ 2026-10-09 📅 2027-01-09",
 			"    - Why: back pain",
 			"    - Expected: less pain",
 		]);
@@ -146,7 +146,7 @@ describe("newEntryLines", () => {
 
 	it("builds a prediction without sub-items and with the tab indentation", () => {
 		expect(newEntryLines({ ...base, kind: "prediction", statement: "It rains", extras: [], tabs: true })).toEqual([
-			"- [ ] It rains #prediction [confidence:: 70%] ➕ 2026-10-09 📅 2027-01-09",
+			"- [ ] It rains #prediction [confidence: 70%] ➕ 2026-10-09 📅 2027-01-09",
 		]);
 		expect(newEntryLines({ ...base, extras: [["Why", "x"]], tabs: true })[1]).toBe("\t- Why: x");
 	});

@@ -12,12 +12,12 @@ function entry(line: string): JournalEntry {
 }
 
 function prediction(confidence: number | null, result: string, status = "x"): JournalEntry {
-	const field = confidence === null ? "" : ` [confidence:: ${confidence}%]`;
-	return entry(`- [${status}] Guess #prediction${field} [result:: ${result}]`);
+	const field = confidence === null ? "" : ` [confidence: ${confidence}%]`;
+	return entry(`- [${status}] Guess #prediction${field} [result: ${result}]`);
 }
 
 function decision(outcome: string, quality: string, status = "x"): JournalEntry {
-	return entry(`- [${status}] Pick #decision [outcome:: ${outcome}] [quality:: ${quality}]`);
+	return entry(`- [${status}] Pick #decision [outcome: ${outcome}] [quality: ${quality}]`);
 }
 
 const five = (p: number, result: string): JournalEntry[] => Array.from({ length: 5 }, () => prediction(p, result));
@@ -64,7 +64,7 @@ describe("predictionStats", () => {
 	});
 
 	it("leaves out cancelled, open and resultless entries and counts unscored ones apart", () => {
-		const stats = predictionStats([...five(70, "yes"), prediction(70, "yes", "-"), prediction(70, "yes", " "), prediction(null, "yes"), entry("- [x] No result #prediction [confidence:: 60%]")]);
+		const stats = predictionStats([...five(70, "yes"), prediction(70, "yes", "-"), prediction(70, "yes", " "), prediction(null, "yes"), entry("- [x] No result #prediction [confidence: 60%]")]);
 		expect(stats.scored).toBe(5);
 		expect(stats.unscored).toBe(1);
 		expect(stats.hits).toBe(5);
@@ -89,7 +89,7 @@ describe("decisionStats", () => {
 	});
 
 	it("skips cancelled, open and incomplete decisions", () => {
-		const stats = decisionStats([decision("better", "good", "-"), decision("better", "good", " "), entry("- [x] No quality #decision [outcome:: better]")]);
+		const stats = decisionStats([decision("better", "good", "-"), decision("better", "good", " "), entry("- [x] No quality #decision [outcome: better]")]);
 		expect(stats.closed).toBe(0);
 	});
 });
@@ -119,9 +119,9 @@ describe("computeTrackRecord", () => {
 	const item = (line: string, children: string[] = []) => ({ entry: entry(line), children });
 
 	it("orders lessons by review date, keeps several per entry and counts closed entries", () => {
-		const a = item("- [x] A #decision [outcome:: better] [quality:: good]", ["Review 2026-01-05: a. Lesson: first", "Review 2026-03-01: b. Lesson: third"]);
-		const b = item("- [ ] B #prediction [confidence:: 60%]", ["Review 2026-02-01: c. Lesson: second", "Why: because"]);
-		const c = item("- [x] C #prediction [confidence:: 60%] [result:: yes]");
+		const a = item("- [x] A #decision [outcome: better] [quality: good]", ["Review 2026-01-05: a. Lesson: first", "Review 2026-03-01: b. Lesson: third"]);
+		const b = item("- [ ] B #prediction [confidence: 60%]", ["Review 2026-02-01: c. Lesson: second", "Why: because"]);
+		const c = item("- [x] C #prediction [confidence: 60%] [result: yes]");
 		const record = computeTrackRecord([a, b, c]);
 		expect(record.lessons.map((lesson) => lesson.text)).toEqual(["third", "second", "first"]);
 		expect(record.lessons[0]?.item).toBe(a);

@@ -178,9 +178,10 @@ export function ensureTag(body: string, tag: string): string {
 	return splice(main, at, at, `#${stripHash(tag)}`, block !== "") + block + tail;
 }
 
-// ---- Inline fields (Dataview bracket form) ----------------------------------------------------------
+// ---- Inline fields (`[key: value]`) -----------------------------------------------------------------
+// One colon, not Dataview's `::`, which the Spaced Repetition plugin reads as an inline flashcard.
 
-const FIELD_RE = /\[([\p{L}\p{N}_-]+)::[ \t]*([^\]]*?)[ \t]*\]/gu;
+const FIELD_RE = /\[([\p{L}\p{N}_-]+):[ \t]*([^\]]*?)[ \t]*\]/gu;
 
 interface FieldMatch {
 	key: string;
@@ -195,7 +196,7 @@ function findFields(main: string): FieldMatch[] {
 		const key = match[1] ?? "";
 		const end = match.index + match[0].length;
 		// Read the value from the original text: a URL inside it is masked above.
-		const value = main.slice(match.index + key.length + 3, end - 1).trim();
+		const value = main.slice(match.index + key.length + 2, end - 1).trim();
 		fields.push({ key, value, start: match.index, end });
 	}
 	return fields;
@@ -206,20 +207,20 @@ function findField(main: string, key: string): FieldMatch | undefined {
 	return findFields(main).find((field) => field.key.toLowerCase() === wanted);
 }
 
-/** Value of `[key:: value]` (key compared case-insensitively), or null. */
+/** Value of `[key: value]` (key compared case-insensitively), or null. */
 export function getInlineField(body: string, key: string): string | null {
 	return findField(splitBody(body).main, key)?.value ?? null;
 }
 
-/** Replaces `[key:: …]` in place, or adds it after the existing inline fields and before the emoji block. */
+/** Replaces `[key: …]` in place, or adds it after the existing inline fields and before the emoji block. */
 export function setInlineField(body: string, key: string, value: string): string {
 	const { main, block, tail } = splitBody(body);
 	const fields = findFields(main);
 	const existing = fields.find((field) => field.key.toLowerCase() === key.toLowerCase());
-	if (existing) return `${main.slice(0, existing.start)}[${existing.key}:: ${value}]${main.slice(existing.end)}${block}${tail}`;
+	if (existing) return `${main.slice(0, existing.start)}[${existing.key}: ${value}]${main.slice(existing.end)}${block}${tail}`;
 	const last = fields[fields.length - 1];
 	const at = last ? last.end : main.length;
-	return splice(main, at, at, `[${key}:: ${value}]`, block !== "") + block + tail;
+	return splice(main, at, at, `[${key}: ${value}]`, block !== "") + block + tail;
 }
 
 export function removeInlineField(body: string, key: string): string {
