@@ -806,7 +806,7 @@ button.vaultmate-badge:focus-visible {
 	outline-offset: -2px;
 }
 
-/* Related notes page. */
+/* New connections page. */
 .vaultmate-related-status:empty {
 	display: none;
 }
@@ -856,6 +856,46 @@ button.vaultmate-badge:focus-visible {
 	margin: var(--size-4-2) 0 0;
 	font-size: var(--font-ui-small);
 	overflow-wrap: anywhere;
+}
+
+.vaultmate-related-about em {
+	font-style: normal;
+	font-weight: 700;
+	color: var(--vaultmate-primary);
+}
+
+.vaultmate-related-excerpts {
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-4-2);
+	margin-top: var(--size-4-2);
+}
+
+.vaultmate-related-excerpts:empty {
+	display: none;
+}
+
+.vaultmate-related-excerpt {
+	margin: 0;
+	padding-left: var(--size-4-2);
+	border-left: 2px solid var(--vaultmate-rule);
+	color: var(--vaultmate-text-muted);
+	font-size: var(--font-ui-smaller);
+	line-height: 1.4;
+	overflow-wrap: anywhere;
+}
+
+.vaultmate-related-excerpt-label {
+	display: block;
+	font-weight: 700;
+}
+
+.vaultmate-related-hit {
+	padding: 0 2px;
+	border-radius: 2px;
+	background-color: var(--vaultmate-sakura);
+	color: var(--vaultmate-text);
+	font-weight: 700;
 }
 
 .vaultmate-related-reasons {

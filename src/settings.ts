@@ -1,12 +1,14 @@
 import { Notice, PluginSettingTab, SecretComponent, type Setting, type SettingDefinitionItem } from "obsidian";
 
 import { validateBaseUrl } from "./core/ai/endpoint";
-import { DEFAULT_SETTINGS, validateActionsFolder, validateDistinctCollectionProperties, validateDistinctProperties, validateDistinctTags, validatePropertyList, validatePropertyName, validateTag, parseList, cleanFolderPath } from "./core/settings-model";
+import { DEFAULT_SETTINGS, MAX_CONNECTIONS, validateActionsFolder, validateDistinctCollectionProperties, validateDistinctProperties, validateDistinctTags, validatePropertyList, validatePropertyName, validateTag, parseList, cleanFolderPath } from "./core/settings-model";
 import { createDefaultActions } from "./features/ai-actions/default-actions";
 import type VaultMatePlugin from "./main";
 
 /** Settings stored as a list but edited as comma-separated text. */
 const LIST_KEYS = new Set(["context.excludedFolders", "context.peopleProperties"]);
+/** Settings stored as a number but edited in a dropdown, which holds text. */
+const NUMBER_KEYS = new Set(["context.maxConnections"]);
 
 /** Controls use `feature.name` keys (`journal.enabled`), which map to the nested settings object. */
 export class VaultMateSettingTab extends PluginSettingTab {
@@ -153,22 +155,27 @@ export class VaultMateSettingTab extends PluginSettingTab {
 			},
 			{
 				type: "group",
-				heading: "Related notes",
+				heading: "New connections",
 				items: [
 					{
-						name: "Enable related notes",
-						desc: "Find notes worth reading next to the active note, with the reasons. Everything is computed on this device; nothing is sent anywhere.",
+						name: "Enable new connections",
+						desc: "Find a few notes that are not connected to the active note yet but whose ideas could work with it, with the reasons. Everything is computed on this device; nothing is sent anywhere.",
 						control: { type: "toggle", key: "context.enabled" },
 					},
 					{
 						name: "Excluded folders",
-						desc: "Notes in these folders are never suggested. Separate folders with commas, for example Templates, Scripts.",
+						desc: "Notes in these folders are never proposed. Separate folders with commas, for example Templates, Scripts.",
 						control: { type: "text", key: "context.excludedFolders", placeholder: "Templates, Scripts" },
 					},
 					{
 						name: "People and place properties",
-						desc: "Notes with the same value in one of these properties are related. Separate property names with commas.",
+						desc: "Two notes with the same value in one of these properties can be connected. Separate property names with commas.",
 						control: { type: "text", key: "context.peopleProperties", placeholder: DEFAULT_SETTINGS.context.peopleProperties.join(", "), validate: validatePropertyList },
+					},
+					{
+						name: "Maximum connections",
+						desc: "Most connections shown for a note. Fewer is often better: nothing new is a normal result.",
+						control: { type: "dropdown", key: "context.maxConnections", options: Object.fromEntries(Array.from({ length: MAX_CONNECTIONS }, (_, i) => [String(i + 1), String(i + 1)])) },
 					},
 				],
 			},
@@ -197,6 +204,7 @@ export class VaultMateSettingTab extends PluginSettingTab {
 	public getControlValue(key: string): unknown {
 		const [feature = "", name = ""] = key.split(".");
 		const value = this.featureSettings(feature)?.[name];
+		if (NUMBER_KEYS.has(key)) return String(value);
 		return LIST_KEYS.has(key) && Array.isArray(value) ? value.join(", ") : value;
 	}
 
@@ -204,7 +212,8 @@ export class VaultMateSettingTab extends PluginSettingTab {
 		const [feature = "", name = ""] = key.split(".");
 		const settings = this.featureSettings(feature);
 		if (!settings) return;
-		settings[name] = LIST_KEYS.has(key) && typeof value === "string" ? parseList(value).map(key === "context.excludedFolders" ? cleanFolderPath : (item) => item).filter((item) => item !== "") : value;
+		if (NUMBER_KEYS.has(key)) settings[name] = Number(value);
+		else settings[name] = LIST_KEYS.has(key) && typeof value === "string" ? parseList(value).map(key === "context.excludedFolders" ? cleanFolderPath : (item) => item).filter((item) => item !== "") : value;
 		await this.plugin.saveSettings();
 		this.plugin.onSettingsChanged();
 	}

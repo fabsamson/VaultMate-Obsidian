@@ -1,4 +1,4 @@
-// The words and small rules of the "Related notes" page. Pure, so Vitest can test them.
+// The words and small rules of the "New connections" page. Pure, so Vitest can test them.
 import type { BuildProgress, ContextStats } from "./context-index";
 import type { ReasonKind } from "./engine";
 
@@ -22,19 +22,43 @@ export interface SummaryInput {
 }
 
 /** The line under the tile of the hub. */
-export function relatedSummary(input: SummaryInput): string {
+export function connectionsSummary(input: SummaryInput): string {
 	if (!input.name) return "Open a note first";
 	if (input.building) return `Indexing… ${input.building.done} of ${input.building.total}`;
-	if (input.count === null) return `Notes related to ${input.name}`;
+	if (input.count === null) return `New connections for ${input.name}`;
 	if (input.count === 0) return `No new connection for ${input.name}`;
 	return `${input.count} new ${input.count === 1 ? "connection" : "connections"} for ${input.name}`;
 }
 
-/** "Both are about checklist, preparation and interruptions". */
-export function aboutLine(terms: readonly string[]): string {
-	const [last, ...others] = [...terms].reverse();
-	if (last === undefined) return "";
-	return `Both are about ${others.length === 0 ? last : `${others.reverse().join(", ")} and ${last}`}`;
+/** Terms named on the card. */
+export const ABOUT_TERMS = 2;
+
+export interface AboutPart {
+	text: string;
+	/** The part is one of the terms, shown in emphasis. */
+	term: boolean;
+}
+
+/** "Both are about *checklist* and *preparation*": the pieces of the sentence, the terms flagged. Empty without terms. */
+export function aboutParts(terms: readonly string[]): AboutPart[] {
+	const shown = terms.slice(0, ABOUT_TERMS);
+	const parts: AboutPart[] = shown.length === 0 ? [] : [{ text: "Both are about ", term: false }];
+	shown.forEach((term, index) => {
+		if (index > 0) parts.push({ text: " and ", term: false });
+		parts.push({ text: term, term: true });
+	});
+	return parts;
+}
+
+function topFolder(path: string): string {
+	return path.includes("/") ? (path.split("/")[0] ?? "") : "";
+}
+
+/** "in 20-Areas/Zettelkasten, another area": where the note is, and whether it is outside the active note's top-level folder. Presentation only. */
+export function locationLine(path: string, activePath: string): string {
+	const folder = noteFolder(path);
+	const place = folder === "" ? "at the root of the vault" : `in ${folder}`;
+	return topFolder(path) === topFolder(activePath) ? place : `${place}, another area`;
 }
 
 /** "Indexed 301 notes in 0.4 s · computed on this device". */

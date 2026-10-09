@@ -1,4 +1,4 @@
-// The related notes feature (the connections finder): the engine, the index, the hub page and its command.
+// The new connections feature (the connections finder): the engine, the index, the hub page and its command.
 //
 // For other code: `plugin.context.connections(file, limit)` returns `Connection[]`, `plugin.context.building`
 // is the build progress while the first query indexes the vault, and `plugin.context.stats` has the
@@ -8,7 +8,10 @@ import { debounce, Keymap, MarkdownView, Notice, type Editor, type TFile } from 
 import type VaultMatePlugin from "../../main";
 import { ContextIndex, type BuildProgress, type ContextStats } from "./context-index";
 import { CONTEXT_PAGE_ID, createContextPage } from "./context-page";
-import { DEFAULT_LIMIT, type Connection } from "./engine";
+import { addPair, hasPair, removePair, renamePath } from "./dismissed";
+import type { Connection } from "./engine";
+import { excerpt, type Excerpt } from "./excerpt";
+import { noteTitle } from "./context-labels";
 
 export type { Connection, ConnectionReason, ReasonKind } from "./engine";
 export type { BuildProgress, ContextStats } from "./context-index";
@@ -45,9 +48,10 @@ export class ContextFeature {
 	 * file is not a Markdown note. The first call builds the text index
 	 * (see `building`); later calls take a fraction of a second.
 	 */
-	public async connections(file: TFile, limit = DEFAULT_LIMIT): Promise<Connection[]> {
+	public async connections(file: TFile, limit = this.plugin.settings.context.maxConnections): Promise<Connection[]> {
 		if (!this.enabled() || file.extension !== "md") return [];
-		const found = await this.index.connections(file, limit);
+		const pairs = this.plugin.settings.contextState.notUseful;
+		const found = await this.index.connections(file, limit, (path) => hasPair(pairs, file.path, path));
 		this.last = { path: file.path, count: found.length };
 		return found;
 	}
@@ -57,8 +61,8 @@ export class ContextFeature {
 		const { plugin } = this;
 		this.index.registerEvents();
 		plugin.addCommand({
-			id: "show-related-notes",
-			name: "Show related notes",
+			id: "show-new-connections",
+			name: "Show new connections",
 			icon: "link-2",
 			checkCallback: (checking) => {
 				if (!this.enabled()) return false;
@@ -73,6 +77,8 @@ export class ContextFeature {
 				building: () => this.building,
 				lastCount: (file) => (this.last?.path === file.path ? this.last.count : null),
 				connections: (file) => this.connections(file),
+				excerpts: (file, connection) => this.excerpts(file, connection),
+				dismiss: (file, path) => void this.dismiss(file, path),
 				stats: () => this.stats,
 				open: (path, event) => {
 					const target = plugin.app.vault.getFileByPath(path);
@@ -95,6 +101,15 @@ export class ContextFeature {
 				},
 			}),
 		);
+		// A renamed note keeps the pairs marked not useful.
+		plugin.registerEvent(
+			plugin.app.vault.on("rename", (file, oldPath) => {
+				const { contextState } = plugin.settings;
+				if (!contextState.notUseful.some((pair) => pair.includes(oldPath))) return;
+				contextState.notUseful = renamePath(contextState.notUseful, oldPath, file.path);
+				void plugin.saveSettings();
+			}),
+		);
 		// The page lists notes for the context note: redraw it, without disturbing the other pages, once that note changed.
 		const refresh = debounce(() => plugin.refreshHubs(CONTEXT_PAGE_ID), REFRESH_DELAY_MS, true);
 		plugin.registerEvent(
@@ -102,6 +117,39 @@ export class ContextFeature {
 				if (this.enabled() && file.path === plugin.contextFile()?.path) refresh();
 			}),
 		);
+	}
+
+	/** The passages of the context note and of the connection around their shared words and names. */
+	private async excerpts(file: TFile, connection: Connection): Promise<{ own: Excerpt; other: Excerpt }> {
+		const { vault } = this.plugin.app;
+		const target = vault.getFileByPath(connection.path);
+		const ownText = await vault.cachedRead(file);
+		const otherText = target ? await vault.cachedRead(target) : "";
+		return {
+			own: excerpt(ownText, connection.terms, [noteTitle(connection.path)]),
+			other: excerpt(otherText, connection.terms, [file.basename]),
+		};
+	}
+
+	/** Hides the pair for good, in both directions, and offers to undo. */
+	private async dismiss(file: TFile, targetPath: string): Promise<void> {
+		const { plugin } = this;
+		const { contextState } = plugin.settings;
+		contextState.notUseful = addPair(contextState.notUseful, file.path, targetPath);
+		await plugin.saveSettings();
+		const notice = new Notice(
+			createFragment((fragment) => {
+				fragment.createSpan({ text: "Marked as not useful. " });
+				fragment.createEl("button", { text: "Undo" }).addEventListener("click", () => {
+					plugin.settings.contextState.notUseful = removePair(plugin.settings.contextState.notUseful, file.path, targetPath);
+					void plugin.saveSettings();
+					plugin.refreshHubs(CONTEXT_PAGE_ID);
+					notice.hide();
+				});
+			}),
+			8000,
+		);
+		plugin.refreshHubs(CONTEXT_PAGE_ID);
 	}
 
 	/** The editor (source mode) showing `file`, or null. The hub has focus, so the active editor is not the place to look. */

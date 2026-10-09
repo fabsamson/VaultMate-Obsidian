@@ -224,7 +224,7 @@ export class ContextIndex {
 		return notes;
 	}
 
-	public async connections(file: TFile, limit: number): Promise<Connection[]> {
+	public async connections(file: TFile, limit: number, hidden?: (path: string) => boolean): Promise<Connection[]> {
 		const started = performance.now();
 		await this.ensure();
 		await this.flush();
@@ -238,6 +238,7 @@ export class ContextIndex {
 			notes,
 			text: this.text,
 			limit,
+			hidden,
 			readText: async (path) => {
 				const note = vault.getFileByPath(path);
 				return note ? vault.cachedRead(note) : "";

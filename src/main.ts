@@ -14,7 +14,7 @@ export default class VaultMatePlugin extends Plugin {
 	private readonly journal = new JournalFeature(this);
 	private readonly aiActions = new AiActionsFeature(this);
 	private readonly location = new LocationFeature(this);
-	/** New connections (the Related notes page). Public: `app.plugins.plugins.vaultmate.context.connections(file)` for measuring and for the hub. */
+	/** New connections. Public: `app.plugins.plugins.vaultmate.context.connections(file)` for measuring and for the hub. */
 	public readonly context = new ContextFeature(this);
 	private readonly hubPages = new Map<string, HubPage>();
 
