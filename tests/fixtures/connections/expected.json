@@ -1,0 +1,152 @@
+{
+	"about": "Written before any tuning. Names are note titles. 'bridges' are planted connections that should be proposed, 'traps' must never be proposed (already connected, empty or excluded), 'unrelated' share nothing with the active note. Excluded folder: Templates.",
+	"excludedFolders": ["Templates"],
+	"neverProposed": ["Cooking index", "Projects index", "Garden index", "Music index", "Inbox", "Meeting template", "2026-09-14", "2026-09-15", "2026-09-16", "2026-09-17"],
+	"actives": {
+		"Mise en place": {
+			"bridges": ["Sprint preparation"],
+			"traps": ["Dinner party Saturday", "Ratatouille", "Seasonal menu planning", "Meeting template"],
+			"unrelated": ["Frost protection", "Tax paperwork", "Ear training"]
+		},
+		"Sprint preparation": {
+			"bridges": ["Mise en place"],
+			"traps": ["Scope cutting", "Stand-up rhythm", "Retrospective lessons", "Technical debt review", "Meeting template"],
+			"unrelated": ["Watering schedule", "Birthday gift ideas"]
+		},
+		"Pruning fruit trees": {
+			"bridges": ["Scope cutting"],
+			"traps": ["Knife skills", "Sharpening stones", "Compost bins", "Crop rotation"],
+			"unrelated": ["Relaunch budget", "Salt and acid", "Metronome and tempo"]
+		},
+		"Scope cutting": {
+			"bridges": ["Pruning fruit trees"],
+			"traps": ["Release planning", "Sprint preparation", "Technical debt review", "Meeting template"],
+			"unrelated": ["Ratatouille", "Ear training"]
+		},
+		"Compost bins": {
+			"bridges": ["Retrospective lessons", "Stock from scraps"],
+			"traps": ["Pruning fruit trees", "Crop rotation", "Meeting template"],
+			"unrelated": ["Relaunch budget", "Metronome and tempo"]
+		},
+		"Retrospective lessons": {
+			"bridges": ["Compost bins"],
+			"traps": ["Sprint preparation", "Stand-up rhythm", "Technical debt review", "Meeting template"],
+			"unrelated": ["Croix-Rousse market", "Birthday gift ideas"]
+		},
+		"Stock from scraps": {
+			"bridges": ["Compost bins"],
+			"traps": ["Seasonal menu planning", "Mise en place", "Braising basics"],
+			"unrelated": ["Stakeholder map", "Practice log"]
+		},
+		"Seasonal menu planning": {
+			"bridges": ["Release planning"],
+			"traps": ["Mise en place", "Stock from scraps", "Croix-Rousse market", "Cooking index"],
+			"unrelated": ["Practice log", "Relaunch budget"]
+		},
+		"Release planning": {
+			"bridges": ["Seasonal menu planning"],
+			"traps": ["Sprint preparation", "Scope cutting", "Retrospective lessons", "Meeting template"],
+			"unrelated": ["Ear training", "Watering schedule"]
+		},
+		"Knife skills": {
+			"bridges": ["Deliberate practice"],
+			"traps": ["Pruning fruit trees", "Sharpening stones", "Mise en place"],
+			"unrelated": ["Stakeholder map", "Tax paperwork"]
+		},
+		"Deliberate practice": {
+			"bridges": ["Knife skills"],
+			"traps": ["Metronome and tempo", "Recital preparation", "Practice log", "Ear training"],
+			"unrelated": ["Frost protection", "Relaunch budget"]
+		},
+		"Recital preparation": {
+			"bridges": ["Demo day rehearsal"],
+			"traps": ["Deliberate practice", "Metronome and tempo", "Practice log", "Conservatoire visit"],
+			"unrelated": ["Ratatouille", "Watering schedule"]
+		},
+		"Demo day rehearsal": {
+			"bridges": ["Recital preparation"],
+			"traps": ["Sprint preparation", "Release planning", "Stand-up rhythm"],
+			"unrelated": ["Braising basics", "Sowing dates"]
+		},
+		"Relaunch kickoff": {
+			"bridges": ["Dinner party Saturday"],
+			"traps": ["Website relaunch", "Relaunch risks", "Relaunch budget", "Stakeholder map"],
+			"unrelated": ["Frost protection", "Ear training"]
+		},
+		"Dinner party Saturday": {
+			"bridges": ["Relaunch kickoff"],
+			"traps": ["Mise en place", "Ratatouille", "Seasonal menu planning", "Croix-Rousse market"],
+			"unrelated": ["Technical debt review", "Watering schedule"]
+		},
+		"Crop rotation": {
+			"bridges": ["Technical debt review"],
+			"traps": ["Compost bins", "Sowing dates", "Pruning fruit trees"],
+			"unrelated": ["Ratatouille", "Practice log"]
+		},
+		"Technical debt review": {
+			"bridges": ["Crop rotation"],
+			"traps": ["Sprint preparation", "Scope cutting", "Release planning", "Retrospective lessons"],
+			"unrelated": ["Sowing dates", "Salt and acid"]
+		},
+		"Croix-Rousse market": {
+			"bridges": ["Community garden"],
+			"traps": ["Mise en place", "Ratatouille", "Seasonal menu planning"],
+			"unrelated": ["Technical debt review", "Ear training"]
+		},
+		"Community garden": {
+			"bridges": ["Croix-Rousse market"],
+			"traps": ["Pruning fruit trees", "Botanical garden visit", "Watering schedule"],
+			"unrelated": ["A-B test plan", "Metronome and tempo"]
+		},
+		"Botanical garden visit": {
+			"bridges": ["Conservatoire visit"],
+			"traps": ["Community garden", "Sowing dates", "Compost bins"],
+			"unrelated": ["Relaunch risks", "Braising basics"]
+		},
+		"Conservatoire visit": {
+			"bridges": ["Botanical garden visit"],
+			"traps": ["Ear training", "Recital preparation", "Practice log"],
+			"unrelated": ["Relaunch budget", "Sowing dates"]
+		},
+		"Repos de la pâte": {
+			"bridges": ["Jachère et repos du sol"],
+			"traps": ["Braising basics", "Sourdough starter", "Salt and acid"],
+			"unrelated": ["Stakeholder map", "Metronome and tempo"]
+		},
+		"Jachère et repos du sol": {
+			"bridges": ["Repos de la pâte"],
+			"traps": ["Crop rotation", "Compost bins", "Watering schedule"],
+			"unrelated": ["Relaunch risks", "Ear training"]
+		},
+		"Sourdough starter": {
+			"bridges": [],
+			"traps": ["Stand-up rhythm"],
+			"unrelated": ["Tax paperwork", "Stakeholder map"]
+		},
+		"Stand-up rhythm": {
+			"bridges": [],
+			"traps": ["Sourdough starter", "Frost protection"],
+			"unrelated": ["Ratatouille", "Botanical garden visit"]
+		},
+		"Tomato trials": {
+			"bridges": [],
+			"traps": ["A-B test plan", "Metronome and tempo"],
+			"unrelated": ["Tax paperwork", "Braising basics"]
+		},
+		"A-B test plan": {
+			"bridges": [],
+			"traps": ["Tomato trials", "Metronome and tempo"],
+			"unrelated": ["Sowing dates", "Ear training"]
+		},
+		"Tax paperwork": {
+			"bridges": [],
+			"traps": [],
+			"unrelated": ["Mise en place", "Compost bins", "Recital preparation", "Relaunch kickoff", "Sprint preparation"]
+		},
+		"Birthday gift ideas": {
+			"bridges": [],
+			"traps": [],
+			"unrelated": ["Frost protection", "Technical debt review", "Deliberate practice"]
+		}
+	}
+}
