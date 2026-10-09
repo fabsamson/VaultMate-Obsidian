@@ -2,7 +2,7 @@
 
 VaultMate is a personal companion plugin for Obsidian, and the in-Obsidian half of the VaultMate Android app. It shares the app's pixel-art, Japanese-inspired look.
 
-> **Status:** early development (0.1.0). The decision and prediction journal, the AI actions and the place search are available. The other features below are planned.
+> **Status:** early development (0.2.0). The decision and prediction journal, the AI actions and the place search are available. The other features below are planned.
 
 ## Decision journal
 
