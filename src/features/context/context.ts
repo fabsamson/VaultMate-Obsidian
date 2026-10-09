@@ -3,10 +3,9 @@
 // For other code: `plugin.context.related(file, limit)` returns `RelatedNote[]`, `plugin.context.building`
 // is the build progress while the first query indexes the vault, and `plugin.context.stats` has the
 // numbers for measuring (see `ContextStats`).
-import { debounce, Keymap, MarkdownView, Modal, Notice, type App, type Editor, type TFile } from "obsidian";
+import { debounce, Keymap, MarkdownView, Notice, type Editor, type TFile } from "obsidian";
 
 import type VaultMatePlugin from "../../main";
-import { createPanel, createSectionHeader } from "../../ui/components";
 import { ContextIndex, type BuildProgress, type ContextStats } from "./context-index";
 import { CONTEXT_PAGE_ID, createContextPage } from "./context-page";
 import type { RelatedNote } from "./engine";
@@ -63,9 +62,8 @@ export class ContextFeature {
 			name: "Show related notes",
 			icon: "link-2",
 			checkCallback: (checking) => {
-				const file = plugin.app.workspace.getActiveViewOfType(MarkdownView)?.file;
-				if (!file || !this.enabled()) return false;
-				if (!checking) new RelatedModal(plugin.app, file, this).open();
+				if (!this.enabled()) return false;
+				if (!checking) void plugin.openHub(CONTEXT_PAGE_ID);
 				return true;
 			},
 		});
@@ -119,54 +117,5 @@ export class ContextFeature {
 	private linkTo(source: TFile, targetPath: string): string | null {
 		const target = this.plugin.app.vault.getFileByPath(targetPath);
 		return target ? this.plugin.app.fileManager.generateMarkdownLink(target, source.path) : null;
-	}
-}
-
-/** Temporary list of the related notes of a note; click a note to open it. */
-class RelatedModal extends Modal {
-	public constructor(
-		app: App,
-		private readonly file: TFile,
-		private readonly feature: ContextFeature,
-	) {
-		super(app);
-		this.modalEl.addClass("vaultmate");
-	}
-
-	public onOpen(): void {
-		const { contentEl } = this;
-		createSectionHeader(contentEl, "Related notes");
-		const body = contentEl.createDiv();
-		body.createEl("p", { cls: "vaultmate-muted", text: "Looking for related notes. The first search indexes the vault and can take a few seconds." });
-		void this.feature
-			.related(this.file)
-			.then((notes) => this.render(body, notes))
-			.catch((error: unknown) => {
-				body.empty();
-				body.createEl("p", { cls: "vaultmate-muted", text: `Unable to find related notes: ${error instanceof Error ? error.message : String(error)}` });
-			});
-	}
-
-	private render(body: HTMLElement, notes: RelatedNote[]): void {
-		body.empty();
-		if (notes.length === 0) {
-			body.createEl("p", { cls: "vaultmate-muted", text: "No related notes found for this note." });
-			return;
-		}
-		for (const note of notes) {
-			const item = createPanel(body, "vaultmate-related-item");
-			const title = item.createEl("a", { cls: "vaultmate-related-title", text: note.path.replace(/\.md$/, ""), attr: { href: "#" } });
-			title.addEventListener("click", (event) => {
-				event.preventDefault();
-				this.close();
-				void this.app.workspace.openLinkText(note.path, this.file.path);
-			});
-			const reasons = item.createEl("ul", { cls: "vaultmate-related-reasons" });
-			for (const reason of note.reasons) reasons.createEl("li", { text: reason.text });
-		}
-	}
-
-	public onClose(): void {
-		this.contentEl.empty();
 	}
 }
