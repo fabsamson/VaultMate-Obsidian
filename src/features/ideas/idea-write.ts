@@ -12,7 +12,7 @@ import type { JournalKind } from "../journal/journal-line";
 import type { NewEntryResult } from "../journal/journal-modals";
 import { CHANGED, editorLines, writeEntryLine } from "../journal/journal-write";
 import type { IdeaItem } from "./idea-line";
-import { closeParts, DEFAULT_NEW_NOTE, ideaChildren, ideaText, indentUnit, newNotePath, planAddIdea, renderNewNote, trackedLines } from "./idea-note";
+import { closeParts, DEFAULT_NEW_NOTE, ideaChildren, ideaText, indentUnit, nearestLine, newNotePath, planAddIdea, renderNewNote, trackedLines } from "./idea-note";
 
 /** What the writers need: the Obsidian app and the settings (`VaultMatePlugin` fits). */
 export interface IdeaWriteHost {
@@ -68,6 +68,25 @@ async function readLines(app: App, path: string): Promise<string[] | null> {
 	return file ? (await app.vault.read(file)).split(/\r?\n/) : null;
 }
 
+/**
+ * The idea with `line` set to where its text is now: the line equal to `item.raw` nearest to `item.line`.
+ * Call it right before a writer, since an earlier write can move the line. Null after a notice when the
+ * note or the line is gone.
+ */
+export async function locateIdea(host: Pick<IdeaWriteHost, "app">, item: IdeaItem): Promise<IdeaItem | null> {
+	const lines = await readLines(host.app, item.path);
+	if (!lines) {
+		new Notice("VaultMate could not find this note.");
+		return null;
+	}
+	const line = nearestLine(lines, item.raw, item.line);
+	if (line === null) {
+		new Notice(CHANGED);
+		return null;
+	}
+	return line === item.line ? item : { ...item, line };
+}
+
 /** The lines of the idea's note when the idea line is still the one that was read, else null after a notice. */
 async function readSource(app: App, item: IdeaItem): Promise<string[] | null> {
 	const lines = await readLines(app, item.path);
@@ -119,7 +138,7 @@ export async function addIdeaToNote(host: IdeaWriteHost, item: IdeaItem, target:
 
 	const linkText = app.metadataCache.fileToLinktext(target, item.path, true);
 	const { line, subItem } = closeParts(item, host.settings.ideas.tag, "added", formatDate(startOfDay()), linkText, note);
-	if (await writeEntryLine(app, item, line, subItem)) return true;
+	if (await writeEntryLine(app, item, line, subItem, undefined, null)) return true;
 	new Notice(`Added to ${linkText}, but the idea line changed: mark it yourself.`);
 	return false;
 }
@@ -195,6 +214,6 @@ export async function createNoteFromIdea(host: IdeaWriteHost, item: IdeaItem, na
 
 	const linkText = app.metadataCache.fileToLinktext(file, item.path, true);
 	const { line, subItem } = closeParts(item, tag, "new-note", formatDate(startOfDay()), linkText, note);
-	if (!(await writeEntryLine(app, item, line, subItem))) new Notice(`Created ${linkText}, but the idea line changed: mark it yourself.`);
+	if (!(await writeEntryLine(app, item, line, subItem, undefined, null))) new Notice(`Created ${linkText}, but the idea line changed: mark it yourself.`);
 	return { status: "created", file };
 }

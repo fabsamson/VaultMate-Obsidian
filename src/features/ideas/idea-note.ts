@@ -34,6 +34,15 @@ export function trackedLines(kind: JournalKind, entry: NewEntryResult, tags: Jou
 		});
 }
 
+/** The index of the line equal to `raw` that is nearest to `near` (the earlier one on a tie), or null when no line equals it. */
+export function nearestLine(lines: readonly string[], raw: string, near: number): number | null {
+	let best: number | null = null;
+	lines.forEach((line, index) => {
+		if (line === raw && (best === null || Math.abs(index - near) < Math.abs(best - near))) best = index;
+	});
+	return best;
+}
+
 // ---- Sending an idea to a note ------------------------------------------------------------------------
 
 /** A sub-item line of an idea, relative to the idea: nesting level (0 for its direct sub-items) and the text with its list marker. */

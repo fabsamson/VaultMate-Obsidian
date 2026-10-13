@@ -18,15 +18,26 @@ export function editorLines(editor: Editor): string[] {
 
 export const CHANGED = "This line changed since VaultMate read it. Open the note and try again.";
 
-/** Replaces the target line by `newLine` and adds the sub-item, then the `appended` lines, after the item's last sub-item. Returns whether it wrote. */
-export async function writeEntryLine(app: App, target: LineTarget, newLine: string, subItem: string | null, appended?: AppendedLines): Promise<boolean> {
+/**
+ * Replaces the target line by `newLine` and adds the sub-item, then the `appended` lines, after the item's last
+ * sub-item. Returns whether it wrote. When the line changed, a notice says `refusal` (none when null: the
+ * caller says it in its own words).
+ */
+export async function writeEntryLine(
+	app: App,
+	target: LineTarget,
+	newLine: string,
+	subItem: string | null,
+	appended?: AppendedLines,
+	refusal: string | null = CHANGED,
+): Promise<boolean> {
 	const view = app.workspace.getActiveViewOfType(MarkdownView);
 	if (view?.file?.path === target.path) {
 		const { editor } = view;
 		const lines = editorLines(editor);
 		const plan = planRewrite(lines, target.line, target.raw, newLine, subItem, appended);
 		if (!plan.ok) {
-			new Notice(CHANGED);
+			if (refusal !== null) new Notice(refusal);
 			return false;
 		}
 		editor.transaction({
@@ -45,6 +56,6 @@ export async function writeEntryLine(app: App, target: LineTarget, newLine: stri
 		written = result.ok;
 		return result.ok ? result.text : text;
 	});
-	if (!written) new Notice(CHANGED);
+	if (!written && refusal !== null) new Notice(refusal);
 	return written;
 }

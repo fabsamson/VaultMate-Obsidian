@@ -14,6 +14,7 @@ import {
 	ideaText,
 	indentUnit,
 	listHeadings,
+	nearestLine,
 	newNotePath,
 	planAddIdea,
 	renderNewNote,
@@ -223,4 +224,15 @@ describe("ideaText", () => {
 		expect(ideaText("Prepare", [{ level: 0, text: "- a" }, { level: 1, text: "- b" }], "    ")).toBe("Prepare\n- a\n    - b");
 		expect(ideaText("Prepare", [], "    ")).toBe("Prepare");
 	});
+});
+
+describe("nearestLine", () => {
+	const lines = ["- [ ] a #idea", "x", "- [ ] b #idea", "- [ ] a #idea", "y", "- [ ] a #idea"];
+	it("finds the same line when it did not move", () => expect(nearestLine(lines, "- [ ] a #idea", 3)).toBe(3));
+	it("follows a line that moved down", () => expect(nearestLine(lines, "- [ ] b #idea", 1)).toBe(2));
+	it("takes the nearest of equal lines, the earlier on a tie", () => {
+		expect(nearestLine(lines, "- [ ] a #idea", 4)).toBe(3);
+		expect(nearestLine(lines, "- [ ] a #idea", 2)).toBe(0);
+	});
+	it("returns null when the line is gone", () => expect(nearestLine(lines, "- [ ] c #idea", 0)).toBeNull());
 });
