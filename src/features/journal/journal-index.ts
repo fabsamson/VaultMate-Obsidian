@@ -30,7 +30,7 @@ export class JournalIndex extends TaggedLineIndex<JournalItem> {
 			key: () => `${plugin.settings.journal.decisionTag}
 ${plugin.settings.journal.predictionTag}`,
 			isTag: (tag) => isJournalTag(tag, plugin.settings.journal),
-			parse: (path, line, raw, lines) => {
+			parse: ({ path }, line, raw, lines) => {
 				const cls = classifyLine(raw, plugin.settings.journal);
 				return cls?.type === "entry" ? { path, line, raw, entry: cls.entry, children: getChildren(lines, line).items } : null;
 			},

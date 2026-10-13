@@ -3,6 +3,7 @@ import { addIcon, debounce, MarkdownView, Plugin, type TFile, type WorkspaceLeaf
 import { normalizeSettings, type VaultMateSettings } from "./core/settings-model";
 import { AiActionsFeature } from "./features/ai-actions/ai-actions";
 import { ContextFeature } from "./features/context/context";
+import { IdeasFeature } from "./features/ideas/ideas";
 import { JournalFeature } from "./features/journal/journal";
 import { LocationFeature } from "./features/location/location";
 import { VaultMateSettingTab } from "./settings";
@@ -12,6 +13,8 @@ import { CAT_ICON_ID, CAT_ICON_SVG } from "./ui/icon";
 export default class VaultMatePlugin extends Plugin {
 	public settings: VaultMateSettings = normalizeSettings(undefined);
 	private readonly journal = new JournalFeature(this);
+	/** The idea index is public for live tests and for the coming pages: `app.plugins.plugins.vaultmate.ideas.index`. */
+	public readonly ideas = new IdeasFeature(this);
 	private readonly aiActions = new AiActionsFeature(this);
 	private readonly location = new LocationFeature(this);
 	/** New connections. Public: `app.plugins.plugins.vaultmate.context.connections(file)` for measuring and for the hub. */
@@ -31,6 +34,7 @@ export default class VaultMatePlugin extends Plugin {
 			callback: () => void this.openHub(),
 		});
 		this.journal.register();
+		this.ideas.register();
 		this.aiActions.register();
 		this.location.register();
 		this.context.register();
@@ -48,6 +52,7 @@ export default class VaultMatePlugin extends Plugin {
 	 */
 	public onSettingsChanged(): void {
 		this.journal.onSettingsChanged();
+		this.ideas.onSettingsChanged();
 		this.aiActions.onSettingsChanged();
 		this.refreshHubs();
 	}

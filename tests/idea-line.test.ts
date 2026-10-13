@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { statementOffset } from "../src/core/task-line";
 import {
 	ageGroup,
+	buildIdeaItem,
 	classifyIdeaLine,
 	closeIdea,
 	convertToIdea,
@@ -302,5 +303,41 @@ describe("titleFromIdea", () => {
 		expect(titleFromIdea("???")).toBe("Idea");
 		expect(titleFromIdea("")).toBe("");
 		expect(titleFromIdea("   ")).toBe("");
+	});
+});
+
+describe("buildIdeaItem", () => {
+	const lines = [
+		"# Notes",
+		"- [x] Prepare a sprint #idea [result: added] ➕ 2026-10-13 ✅ 2026-10-15",
+		"    - context stays",
+		"    - Added to [[Sprint planning|the sprint]]: why",
+		"",
+		"- a plain idea #idea",
+		"## Heading #idea",
+	];
+	const build = (line: number) => buildIdeaItem("Inbox/2026-09-30.md", "2026-09-30", "2026-09-01", line, lines, "idea");
+
+	it("carries the place, the line, its children and the result target", () => {
+		expect(build(1)).toMatchObject({
+			path: "Inbox/2026-09-30.md",
+			line: 1,
+			raw: lines[1],
+			idea: { type: "task", entry: { status: "done", result: "added" } },
+			children: ["context stays", "Added to [[Sprint planning|the sprint]]: why"],
+			date: "2026-10-13",
+			resultTarget: "Sprint planning",
+		});
+	});
+
+	it("dates a plain tagged line from the note name, else the creation date", () => {
+		expect(build(5)).toMatchObject({ idea: { type: "plain", statement: "a plain idea" }, children: [], date: "2026-09-30", resultTarget: null });
+		expect(buildIdeaItem("Inbox/Ideas.md", "Ideas", "2026-09-01", 5, lines, "idea")?.date).toBe("2026-09-01");
+	});
+
+	it("gives nothing for a heading or a line without the tag", () => {
+		expect(build(6)).toBeNull();
+		expect(build(0)).toBeNull();
+		expect(build(99)).toBeNull();
 	});
 });

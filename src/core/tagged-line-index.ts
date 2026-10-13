@@ -14,7 +14,7 @@ export interface TaggedLineSource<T extends { path: string }> {
 	/** Whether a cached tag (`#idea`, `#Idea/work`) is one the feature wants. */
 	isTag(tag: string): boolean;
 	/** The item for one tagged line, or null when the line is not one. `lines` is the whole note. */
-	parse(path: string, line: number, raw: string, lines: readonly string[]): T | null;
+	parse(file: TFile, line: number, raw: string, lines: readonly string[]): T | null;
 }
 
 export class TaggedLineIndex<T extends { path: string }> {
@@ -104,7 +104,7 @@ export class TaggedLineIndex<T extends { path: string }> {
 			items = [...lines]
 				.sort((a, b) => a - b)
 				.flatMap((line) => {
-					const item = this.source.parse(file.path, line, all[line] ?? "", all);
+					const item = this.source.parse(file, line, all[line] ?? "", all);
 					return item ? [item] : [];
 				});
 		}

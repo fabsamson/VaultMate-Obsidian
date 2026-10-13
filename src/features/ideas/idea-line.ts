@@ -21,6 +21,7 @@ import {
 	setTaskStatus,
 	toTaskLine,
 } from "../../core/task-line";
+import { getChildren } from "../journal/journal-note";
 
 export const IDEA_RESULTS = ["dropped", "new-note", "added", "decision", "prediction"] as const;
 export type IdeaResult = (typeof IDEA_RESULTS)[number];
@@ -185,4 +186,40 @@ export function titleFromIdea(statement: string): string {
 	if (/\s/.test(chars[MAX_TITLE_LENGTH] ?? "")) return cut.trim();
 	const space = cut.lastIndexOf(" ");
 	return (space > 0 ? cut.slice(0, space) : cut).trim();
+}
+
+// ---- Items of the index -----------------------------------------------------------------------------
+
+/** An idea with its place in the vault. */
+export interface IdeaItem {
+	path: string;
+	/** 0-based line number at the time the note was indexed. */
+	line: number;
+	/** The line as read; a write refuses to touch the note when the line no longer equals this text. */
+	raw: string;
+	/** A task idea, or a tagged line that is not a task yet (an open idea). */
+	idea: Extract<IdeaClass, { type: "task" | "plain" }>;
+	/** Text of the sub-items, without list markers. */
+	children: string[];
+	/** `YYYY-MM-DD`: ➕, else a date in the note's name, else the note's creation date. */
+	date: string;
+	/** Link text of the note the idea was sent to (`New note:` or `Added to` sub-item), or null. */
+	resultTarget: string | null;
+}
+
+/** The item for line `line` of a note (`lines` is the whole note), or null when it is not an idea task or tagged line. */
+export function buildIdeaItem(path: string, basename: string, createdOn: string, line: number, lines: readonly string[], tag: string): IdeaItem | null {
+	const raw = lines[line] ?? "";
+	const idea = classifyIdeaLine(raw, tag);
+	if (idea?.type !== "task" && idea?.type !== "plain") return null;
+	const children = getChildren(lines, line).items;
+	return {
+		path,
+		line,
+		raw,
+		idea,
+		children,
+		date: ideaDate(idea.type === "task" ? idea.entry : null, basename, createdOn),
+		resultTarget: resultLinkTarget(children),
+	};
 }
