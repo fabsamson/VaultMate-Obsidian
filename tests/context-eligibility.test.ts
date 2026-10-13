@@ -57,6 +57,47 @@ describe("eligibleNotes", () => {
 	});
 });
 
+/** Like `eligible`; `traces` lists, per note, the links that only record where an idea was sent. */
+function eligibleWithTraces(graph: Record<string, string[]>, traces: Record<string, string[]>): string[] {
+	const notes = new Map<string, NoteMeta>();
+	for (const [name, links] of Object.entries(graph)) {
+		const citations = links.filter((link) => !(traces[name] ?? []).includes(link));
+		const paths = (names: string[]): string[] => names.map((link) => `${link}.md`);
+		notes.set(`${name}.md`, buildNoteMeta({ path: `${name}.md`, links: paths(links), citations: paths(citations), tags: [], frontmatter: undefined }, OPTIONS));
+	}
+	const context = buildGraphContext(notes.get("A.md") as NoteMeta, notes);
+	return [...eligibleNotes(context, () => MIN_OWN_WORDS)].map((path) => path.replace(/\.md$/, "")).sort();
+}
+
+describe("eligibleNotes with idea traces", () => {
+	const graph = { A: [], B: [], Free: [], Daily: ["A", "B"] };
+
+	it("does not co-cite two notes that a note only recorded ideas for", () => {
+		expect(eligibleWithTraces(graph, { Daily: ["A", "B"] })).toEqual(["B", "Free"]);
+	});
+
+	it("still co-cites notes linked normally, and a note linked both ways counts as cited", () => {
+		expect(eligibleWithTraces(graph, {})).toEqual(["Free"]);
+	});
+
+	it("ties nothing to a note that is only recorded, even when the other is cited", () => {
+		expect(eligibleWithTraces(graph, { Daily: ["A"] })).toEqual(["B", "Free"]);
+		expect(eligibleWithTraces(graph, { Daily: ["B"] })).toEqual(["B", "Free"]);
+	});
+
+	it("keeps excluding a note linked directly, in either direction, even through a trace", () => {
+		expect(eligibleWithTraces({ A: ["B"], B: [], Free: [] }, { A: ["B"] })).toEqual(["Free"]);
+		expect(eligibleWithTraces({ A: [], B: ["A"], Free: [] }, { B: ["A"] })).toEqual(["Free"]);
+	});
+
+	it("follows citations only for 2-hop paths", () => {
+		// A recorded an idea for X; Sibling cites X. With a citation that would be a 2-hop path.
+		const links = { A: ["X"], X: [], Sibling: ["X"], Free: [] };
+		expect(eligibleWithTraces(links, {})).toEqual(["Free"]);
+		expect(eligibleWithTraces(links, { A: ["X"] })).toEqual(["Free", "Sibling"]);
+	});
+});
+
 describe("own words", () => {
 	it("counts the prose outside links, code and frontmatter", () => {
 		const doc = (markdown: string) => makeDoc(markdown, 1).words;

@@ -12,6 +12,8 @@ const OPTIONS: MetaOptions = { peopleProperties: ["author", "people"], latitudeP
 interface Fixture {
 	text?: string;
 	links?: string[];
+	/** Links that only record where an idea was sent (`Added to [[X]]`): they are not citations. */
+	traces?: string[];
 	tags?: string[];
 	frontmatter?: Record<string, unknown>;
 	/** Leave the text as it is instead of adding words of prose of its own. */
@@ -30,7 +32,11 @@ async function connections(active: string, vault: Record<string, Fixture>, extra
 	const text = new TextIndex();
 	for (const [name, note] of Object.entries(vault)) {
 		const path = `${name}.md`;
-		const meta = buildNoteMeta({ path, links: (note.links ?? []).map((link) => `${link}.md`), tags: note.tags ?? [], frontmatter: note.frontmatter }, OPTIONS);
+		const citations = (note.links ?? []).filter((link) => !(note.traces ?? []).includes(link));
+		const meta = buildNoteMeta(
+			{ path, links: (note.links ?? []).map((link) => `${link}.md`), citations: citations.map((link) => `${link}.md`), tags: note.tags ?? [], frontmatter: note.frontmatter },
+			OPTIONS,
+		);
 		const body = note.bare ? (note.text ?? "") : `${note.text ?? ""} ${padding(name)}`;
 		notes.set(path, meta);
 		texts.set(path, body);
@@ -70,6 +76,14 @@ describe("note-meta", () => {
 		expect(meta.tags).toEqual(["idea"]);
 		expect(meta.geo).toEqual({ lat: 45.76, lon: 4.83 });
 		expect(buildNoteMeta({ path: "x.md", links: [], tags: [], frontmatter: { latitude: 120, longitude: 1 } }, OPTIONS).geo).toBeNull();
+	});
+
+	it("keeps the citations among the links, every link when none are given", () => {
+		const links = ["a.md", "b.md", "a.md", "x.md"];
+		expect(buildNoteMeta({ path: "x.md", links, tags: [], frontmatter: undefined }, OPTIONS).citations).toEqual(["a.md", "b.md"]);
+		const meta = buildNoteMeta({ path: "x.md", links, citations: ["b.md", "other.md"], tags: [], frontmatter: undefined }, OPTIONS);
+		expect(meta.links).toEqual(["a.md", "b.md"]);
+		expect(meta.citations).toEqual(["b.md"]);
 	});
 
 	it("excludes folders and measures distances", () => {
@@ -203,6 +217,21 @@ describe("findConnections", () => {
 			Free: { text: same },
 		});
 		expect(paths(result)).toEqual(["Free"]);
+	});
+
+	it("proposes two notes that a note only recorded ideas for, but not two it cites", async () => {
+		const same = "marmalade quince jelly preserve citrus";
+		const vault = (traces: string[]): Record<string, Fixture> => ({
+			...filler(10),
+			Active: { text: same },
+			Twin: { text: same },
+			Daily: { text: "diary", links: ["Active", "Twin"], traces },
+		});
+		expect(paths(await connections("Active", vault(["Active", "Twin"])))).toEqual(["Twin"]);
+		expect(paths(await connections("Active", vault([])))).toEqual([]);
+		// A note the active note recorded an idea for is still linked with it: never proposed.
+		const sent: Record<string, Fixture> = { ...filler(10), Active: { text: same, links: ["Twin"], traces: ["Twin"] }, Twin: { text: same } };
+		expect(paths(await connections("Active", sent))).toEqual([]);
 	});
 
 	it("returns nothing when the active note has no content of its own, and skips candidates without", async () => {

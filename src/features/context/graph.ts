@@ -8,18 +8,24 @@ export interface GraphContext {
 	notes: ReadonlyMap<string, NoteMeta>;
 	/** Target path -> notes that link to it. */
 	backlinks: ReadonlyMap<string, ReadonlySet<string>>;
+	/** Target path -> notes that cite it (`NoteMeta.citations`): a subset of the backlinks. */
+	citedBy: ReadonlyMap<string, ReadonlySet<string>>;
+}
+
+function invert(notes: ReadonlyMap<string, NoteMeta>, targetsOf: (note: NoteMeta) => readonly string[]): Map<string, Set<string>> {
+	const from = new Map<string, Set<string>>();
+	for (const note of notes.values()) {
+		for (const target of targetsOf(note)) {
+			let sources = from.get(target);
+			if (!sources) from.set(target, (sources = new Set()));
+			sources.add(note.path);
+		}
+	}
+	return from;
 }
 
 export function buildGraphContext(active: NoteMeta, notes: ReadonlyMap<string, NoteMeta>): GraphContext {
-	const backlinks = new Map<string, Set<string>>();
-	for (const note of notes.values()) {
-		for (const target of note.links) {
-			let from = backlinks.get(target);
-			if (!from) backlinks.set(target, (from = new Set()));
-			from.add(note.path);
-		}
-	}
-	return { active, notes, backlinks };
+	return { active, notes, backlinks: invert(notes, (note) => note.links), citedBy: invert(notes, (note) => note.citations) };
 }
 
 /** 1 for something only the active note and one other have, near 0 for something almost every note has. */
@@ -41,25 +47,27 @@ export const MIN_OWN_WORDS = 30;
  * - the notes co-cited with it, whatever the size of the citing note (an index, a map, a project note, a daily note);
  * - the 2-hop neighbours (A to X to B, A to X from B, B to X to A) through a note X that is not a hub;
  * - the notes without content of their own.
+ * Links in either direction exclude directly. Co-citation and the 2-hop paths follow citations only: a
+ * note that merely records where its ideas were sent links every target without citing them together.
  * Folders play no part: some are generic and mix unrelated ideas. If the active note itself has no
  * content, nothing is eligible.
  */
 export function eligibleNotes(context: GraphContext, ownWords: (path: string) => number): Set<string> {
-	const { active, notes, backlinks } = context;
+	const { active, notes, backlinks, citedBy } = context;
 	const eligible = new Set<string>();
 	if (ownWords(active.path) < MIN_OWN_WORDS) return eligible;
 
-	const citing = backlinks.get(active.path) ?? new Set<string>();
-	const excluded = new Set<string>([active.path, ...active.links, ...citing]);
-	for (const from of citing) for (const target of notes.get(from)?.links ?? []) excluded.add(target); // co-cited
-	for (const via of active.links) {
+	const citing = citedBy.get(active.path) ?? new Set<string>();
+	const excluded = new Set<string>([active.path, ...active.links, ...(backlinks.get(active.path) ?? [])]);
+	for (const from of citing) for (const target of notes.get(from)?.citations ?? []) excluded.add(target); // co-cited
+	for (const via of active.citations) {
 		if (isHub(context, via)) continue;
-		for (const path of backlinks.get(via) ?? []) excluded.add(path); // A to X, B to X
-		for (const path of notes.get(via)?.links ?? []) excluded.add(path); // A to X to B
+		for (const path of citedBy.get(via) ?? []) excluded.add(path); // A to X, B to X
+		for (const path of notes.get(via)?.citations ?? []) excluded.add(path); // A to X to B
 	}
 	for (const via of citing) {
 		if (isHub(context, via)) continue;
-		for (const path of backlinks.get(via) ?? []) excluded.add(path); // B to X to A
+		for (const path of citedBy.get(via) ?? []) excluded.add(path); // B to X to A
 	}
 
 	for (const path of notes.keys()) if (!excluded.has(path) && ownWords(path) >= MIN_OWN_WORDS) eligible.add(path);
@@ -92,6 +100,6 @@ export function graphDistances(context: GraphContext, maxDepth: number): Map<str
 /** Whether two notes are linked either way or cited together by a third note. */
 export function areTied(context: GraphContext, a: string, b: string): boolean {
 	if (context.notes.get(a)?.links.includes(b) || context.notes.get(b)?.links.includes(a)) return true;
-	const citingB = context.backlinks.get(b);
-	return [...(context.backlinks.get(a) ?? [])].some((from) => citingB?.has(from));
+	const citingB = context.citedBy.get(b);
+	return [...(context.citedBy.get(a) ?? [])].some((from) => citingB?.has(from));
 }

@@ -21,6 +21,25 @@ export class IdeasFeature {
 		return this.plugin.settings.ideas.tag;
 	}
 
+	/**
+	 * Per note path, how many result sub-items (`Added to [[X]]`, `New note: [[X]]`) point to each resolved
+	 * target path. Those links only record where an idea went: the context finder does not count them as
+	 * citations. Empty when the feature is off.
+	 */
+	public traceLinks(): Map<string, Map<string, number>> {
+		const traces = new Map<string, Map<string, number>>();
+		if (!this.enabled()) return traces;
+		const { metadataCache } = this.plugin.app;
+		for (const item of this.index.items()) {
+			const target = item.resultTarget === null ? null : metadataCache.getFirstLinkpathDest(item.resultTarget, item.path);
+			if (!target) continue;
+			let counts = traces.get(item.path);
+			if (!counts) traces.set(item.path, (counts = new Map<string, number>()));
+			counts.set(target.path, (counts.get(target.path) ?? 0) + 1);
+		}
+		return traces;
+	}
+
 	/** Call from `onload`: registers the index events; the first pass waits for the layout. */
 	public register(): void {
 		this.index.registerEvents();

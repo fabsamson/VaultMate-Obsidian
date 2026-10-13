@@ -46,4 +46,16 @@ describe("areTied", () => {
 		expect(areTied(context, "C.md", "D.md")).toBe(true);
 		expect(areTied(context, "C.md", "E.md")).toBe(false);
 	});
+
+	it("does not tie notes that a third note only recorded ideas for", () => {
+		const meta = (name: string, links: string[], citations: string[]): [string, NoteMeta] => [
+			`${name}.md`,
+			buildNoteMeta({ path: `${name}.md`, links: links.map((link) => `${link}.md`), citations: citations.map((link) => `${link}.md`), tags: [], frontmatter: undefined }, OPTIONS),
+		];
+		const notes = new Map([meta("A", [], []), meta("B", [], []), meta("C", [], []), meta("Daily", ["A", "B", "C"], ["C"]), meta("Other", ["A", "B"], ["A", "B"]), meta("D", ["A"], [])]);
+		const context = buildGraphContext(notes.get("A.md") as NoteMeta, notes);
+		expect(areTied(context, "A.md", "C.md")).toBe(false);
+		expect(areTied(context, "A.md", "B.md")).toBe(true); // Other cites both
+		expect(areTied(context, "D.md", "A.md")).toBe(true); // a direct link still ties, trace or not
+	});
 });

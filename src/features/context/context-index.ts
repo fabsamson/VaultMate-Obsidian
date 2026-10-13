@@ -204,16 +204,22 @@ export class ContextIndex {
 		const { context, location } = this.plugin.settings;
 		const options = { peopleProperties: context.peopleProperties, latitudeProperty: location.latitudeProperty, longitudeProperty: location.longitudeProperty };
 		const folders = this.excludedFolders();
+		const traces = this.plugin.ideas.traceLinks();
 		const notes = new Map<string, NoteMeta>();
 		for (const file of vault.getMarkdownFiles()) {
 			if (file.path !== active.path && isExcluded(file.path, folders)) continue;
 			const cache = metadataCache.getFileCache(file);
+			const counts = metadataCache.resolvedLinks[file.path] ?? {};
+			const links = Object.keys(counts).filter((path) => path.endsWith(".md"));
+			// A link is a citation when the note links the target more often than its idea results do.
+			const citations = links.filter((path) => (counts[path] ?? 0) > (traces.get(file.path)?.get(path) ?? 0));
 			notes.set(
 				file.path,
 				buildNoteMeta(
 					{
 						path: file.path,
-						links: Object.keys(metadataCache.resolvedLinks[file.path] ?? {}).filter((path) => path.endsWith(".md")),
+						links,
+						citations,
 						tags: cache ? (getAllTags(cache) ?? []) : [],
 						frontmatter: cache?.frontmatter,
 					},

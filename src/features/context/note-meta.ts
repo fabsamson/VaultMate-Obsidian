@@ -18,6 +18,11 @@ export interface NoteMeta {
 	aliases: string[];
 	/** Paths this note links to (resolved, deduplicated). */
 	links: string[];
+	/**
+	 * The links that cite the target: `links` without those that only record where an idea was sent (the
+	 * `Added to [[X]]` sub-item). Two notes cited by one note are tied; two notes it merely recorded are not.
+	 */
+	citations: string[];
 	/** Lowercase tags without `#`. */
 	tags: string[];
 	people: PropertyValue[];
@@ -27,6 +32,8 @@ export interface NoteMeta {
 export interface MetaInput {
 	path: string;
 	links: readonly string[];
+	/** The links that are citations; every link when omitted. */
+	citations?: readonly string[];
 	/** Tags as the metadata cache reports them, with or without `#`. */
 	tags: readonly string[];
 	frontmatter: Record<string, unknown> | undefined;
@@ -88,11 +95,14 @@ export function buildNoteMeta(input: MetaInput, options: MetaOptions): NoteMeta 
 	}
 	const lat = parseCoordinate(lookup(frontmatter, options.latitudeProperty), 90);
 	const lon = parseCoordinate(lookup(frontmatter, options.longitudeProperty), 180);
+	const links = [...new Set(input.links)].filter((link) => link !== input.path);
+	const cited = input.citations ? new Set(input.citations) : null;
 	return {
 		path: input.path,
 		title,
 		aliases,
-		links: [...new Set(input.links)].filter((link) => link !== input.path),
+		links,
+		citations: cited ? links.filter((link) => cited.has(link)) : links,
 		tags: [...new Set(input.tags.map((tag) => tag.replace(/^#/, "").toLowerCase()).filter((tag) => tag !== ""))],
 		people,
 		geo: lat !== null && lon !== null ? { lat, lon } : null,
