@@ -7,6 +7,7 @@
 // (priority, recurrence, block id, other fields) stay as they were.
 import { addInterval, daysBetween, dueLabel, formatDate, parseDate, type ReviewInterval } from "../../core/dates";
 import {
+	checkboxState,
 	ensureTag,
 	getDescription,
 	getInlineField,
@@ -98,11 +99,6 @@ function oneOf<T extends string>(allowed: readonly T[], value: string | null): T
 	return allowed.find((item) => item === lower) ?? null;
 }
 
-function statusOf(char: string): JournalStatus {
-	if (char === "x" || char === "X") return "done";
-	return char === "-" ? "cancelled" : "open";
-}
-
 /** Classifies one line; null when the journal has nothing to do with it. */
 export function classifyLine(line: string, tags: JournalTags): LineClass | null {
 	const parsed = parseTaskLine(line);
@@ -128,7 +124,7 @@ export function parseJournalLine(line: string, tags: JournalTags): JournalEntry 
 function buildEntry(kind: JournalKind, statusChar: string, body: string): JournalEntry {
 	return {
 		kind,
-		status: statusOf(statusChar),
+		status: checkboxState(statusChar),
 		statement: getDescription(body),
 		confidence: parseConfidence(getInlineField(body, "confidence")),
 		created: getTaskDate(body, "created"),
@@ -173,13 +169,6 @@ export function convertToEntry(line: string, options: ConvertOptions): string {
 	body = setTaskDate(body, "due", options.due);
 	if (getDescription(body) === "") body = ` ${body}`;
 	return serializeTaskLine({ ...toTaskLine(parsed), body });
-}
-
-/** Where the statement goes in a line made by `convertToEntry` with an empty statement. */
-export function statementOffset(line: string): number {
-	const parsed = parseTaskLine(line);
-	const prefix = line.length - parsed.body.length;
-	return parsed.statusGap.length > 1 ? prefix - 1 : prefix;
 }
 
 export type CloseOptions =

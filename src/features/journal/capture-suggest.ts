@@ -2,7 +2,8 @@
 import { EditorSuggest, type App, type Editor, type EditorPosition, type EditorSuggestContext, type EditorSuggestTriggerInfo } from "obsidian";
 
 import { addInterval, formatDate, INTERVAL_LABELS, REVIEW_INTERVALS, startOfDay, type ReviewInterval } from "../../core/dates";
-import { classifyLine, convertToEntry, statementOffset, tagOf, type JournalKind, type JournalTags } from "./journal-line";
+import { statementOffset } from "../../core/task-line";
+import { classifyLine, convertToEntry, tagOf, type JournalKind, type JournalTags } from "./journal-line";
 
 interface Suggestion {
 	kind: JournalKind;

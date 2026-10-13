@@ -11,10 +11,10 @@ import {
 	parseJournalLine,
 	parsePercentInput,
 	reviewAgain,
-	statementOffset,
 	type ConvertOptions,
 	type JournalTags,
 } from "../src/features/journal/journal-line";
+import { statementOffset } from "../src/core/task-line";
 
 const TAGS: JournalTags = { decisionTag: "decision", predictionTag: "prediction" };
 const TODAY = new Date(2026, 9, 9);

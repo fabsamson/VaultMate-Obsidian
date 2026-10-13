@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
 	ensureTag,
+	checkboxState,
 	getDescription,
 	getInlineField,
 	getTags,
@@ -15,6 +16,7 @@ import {
 	setInlineField,
 	setTaskDate,
 	setTaskStatus,
+	statementOffset,
 	toTaskLine,
 } from "../src/core/task-line";
 
@@ -171,6 +173,15 @@ describe("tags", () => {
 		expect(isTagOrSubtag("#Idea", "idea")).toBe(true);
 		expect(isTagOrSubtag("#idea/work", "#idea")).toBe(true);
 		expect(isTagOrSubtag("#ideas", "idea")).toBe(false);
+	});
+
+	it("reads the checkbox state", () => {
+		expect(["x", "X", "-", " ", "/"].map(checkboxState)).toEqual(["done", "done", "cancelled", "open", "open"]);
+	});
+
+	it("finds where the statement goes after the checkbox", () => {
+		expect(statementOffset("- [ ]  #idea")).toBe(6);
+		expect(statementOffset("> - [ ] #idea")).toBe("> - [ ] ".length);
 	});
 
 	it("adds a tag after the description and before fields and emojis", () => {

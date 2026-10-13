@@ -55,6 +55,22 @@ export function setTaskStatus(line: TaskLine, status: string): TaskLine {
 	return { ...toTaskLine(line), status };
 }
 
+/** What a checkbox character means: done (`x`), cancelled (`-`), open for every other character. */
+export function checkboxState(status: string): "open" | "done" | "cancelled" {
+	if (status === "x" || status === "X") return "done";
+	return status === "-" ? "cancelled" : "open";
+}
+
+/**
+ * Where the statement goes in a converted line whose statement is empty (two spaces before the tag):
+ * right after the checkbox.
+ */
+export function statementOffset(line: string): number {
+	const parsed = parseTaskLine(line);
+	const prefix = line.length - parsed.body.length;
+	return parsed.statusGap.length > 1 ? prefix - 1 : prefix;
+}
+
 // ---- Body structure -------------------------------------------------------------------------------
 
 const VS = "[\\uFE0E\\uFE0F]?"; // emoji or text variation selector, both accepted
