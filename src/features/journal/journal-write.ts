@@ -16,7 +16,7 @@ export function editorLines(editor: Editor): string[] {
 	return Array.from({ length: editor.lineCount() }, (_, index) => editor.getLine(index));
 }
 
-const CHANGED = "This line changed since VaultMate read it. Open the note and try again.";
+export const CHANGED = "This line changed since VaultMate read it. Open the note and try again.";
 
 /** Replaces the target line by `newLine` and adds the sub-item, then the `appended` lines, after the item's last sub-item. Returns whether it wrote. */
 export async function writeEntryLine(app: App, target: LineTarget, newLine: string, subItem: string | null, appended?: AppendedLines): Promise<boolean> {
