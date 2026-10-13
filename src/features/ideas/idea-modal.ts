@@ -246,7 +246,10 @@ export class IdeaModal extends JournalModal {
 			});
 		}
 		refresh();
-		target.focus();
-		target.select();
+		// Opening the modal focuses its first control (the note link) after this runs: focus the field next.
+		target.win.setTimeout(() => {
+			target.focus();
+			target.select();
+		}, 0);
 	}
 }
