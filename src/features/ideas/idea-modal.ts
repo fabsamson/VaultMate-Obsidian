@@ -20,6 +20,7 @@ export interface IdeaPortalHost extends IdeaWriteHost {
 /** A notice with one button, for a few seconds (Undo after a drop, Open after a note was created). */
 export function noticeWithButton(message: string, label: string, onClick: () => void, duration = 8000): void {
 	const notice = new Notice("", duration);
+	notice.messageEl.addClass("vaultmate");
 	notice.messageEl.createSpan({ text: `${message} ` });
 	const button = notice.messageEl.createEl("button", { cls: "vaultmate-button", text: label, attr: { type: "button" } });
 	button.addEventListener("click", () => {

@@ -949,3 +949,91 @@ button.vaultmate-badge:focus-visible {
 	margin-top: var(--size-4-4);
 	font-size: var(--font-ui-smaller);
 }
+
+/* Ideas: the portal, the hub cards and the processed rows. */
+.vaultmate-select {
+	width: 100%;
+	min-height: 40px;
+}
+
+.vaultmate-idea-actions {
+	flex-wrap: wrap;
+	justify-content: flex-start;
+}
+
+.vaultmate-idea-actions > .vaultmate-button {
+	width: auto;
+	height: auto;
+}
+
+/* A text-sized button inside a muted line (the idea's note, the note it went to). */
+.vaultmate button.vaultmate-inline-link,
+.is-mobile .vaultmate button.vaultmate-inline-link {
+	display: inline;
+	width: auto;
+	height: auto;
+	min-height: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	box-shadow: none;
+	border-radius: 0;
+	color: var(--vaultmate-primary);
+	font-size: inherit;
+	font-weight: 700;
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+.vaultmate-inline-link:focus-visible,
+.vaultmate-idea-statement:focus-visible {
+	outline: 2px solid var(--vaultmate-seal);
+	outline-offset: 2px;
+}
+
+.vaultmate button.vaultmate-idea-statement,
+.is-mobile .vaultmate button.vaultmate-idea-statement {
+	display: block;
+	width: auto;
+	height: auto;
+	min-height: 40px;
+	padding: 0;
+	border: 0;
+	background: none;
+	box-shadow: none;
+	border-radius: 0;
+	color: var(--vaultmate-text);
+	font-weight: 700;
+	text-align: left;
+	white-space: normal;
+	overflow-wrap: anywhere;
+	cursor: pointer;
+}
+
+.vaultmate-idea-card .vaultmate-muted {
+	margin: 0;
+}
+
+.vaultmate-idea-rows {
+	margin-bottom: var(--size-4-2);
+}
+
+.vaultmate-idea-row {
+	padding: var(--size-4-1) 0;
+	border-bottom: 1px solid var(--vaultmate-rule);
+}
+
+.vaultmate-idea-row .vaultmate-idea-statement {
+	font-weight: 500;
+}
+
+.vaultmate-idea-meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--size-4-1) var(--size-4-2);
+	margin: 0;
+}
+
+.vaultmate-idea-filter {
+	margin-bottom: var(--size-4-3);
+}
