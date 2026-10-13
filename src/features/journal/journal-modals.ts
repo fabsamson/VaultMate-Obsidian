@@ -25,7 +25,7 @@ function capitalize(text: string): string {
 
 type Field = HTMLInputElement | HTMLTextAreaElement;
 
-function textField(parent: HTMLElement, label: string, options: { placeholder?: string; multiline?: boolean; numeric?: boolean } = {}): Field {
+export function textField(parent: HTMLElement, label: string, options: { placeholder?: string; multiline?: boolean; numeric?: boolean } = {}): Field {
 	const row = parent.createEl("label", { cls: "vaultmate-field" });
 	row.createSpan({ cls: "vaultmate-field-label", text: label });
 	const placeholder = options.placeholder ?? "";
@@ -58,7 +58,7 @@ function intervalField(parent: HTMLElement, label: string): () => ReviewInterval
 	return () => group.getValue() ?? DEFAULT_INTERVAL;
 }
 
-abstract class JournalModal extends Modal {
+export abstract class JournalModal extends Modal {
 	public constructor(app: App) {
 		super(app);
 		this.modalEl.addClass("vaultmate");
@@ -104,6 +104,8 @@ export class NewEntryModal extends JournalModal {
 		app: App,
 		private readonly kind: JournalKind,
 		private readonly onSubmit: (result: NewEntryResult) => void,
+		/** Prefills the statement, for an entry made from an idea. */
+		private readonly initialStatement = "",
 	) {
 		super(app);
 	}
@@ -112,6 +114,7 @@ export class NewEntryModal extends JournalModal {
 		const { contentEl, kind } = this;
 		createSectionHeader(contentEl, `New ${kindName(kind)}`);
 		const statement = textField(contentEl, capitalize(kindName(kind)), { placeholder: kind === "decision" ? "What did you decide?" : "What do you expect to happen?" });
+		statement.value = this.initialStatement;
 		const confidence = textField(contentEl, confidenceLabel(kind), { placeholder: "70", numeric: true });
 		const interval = intervalField(contentEl, "Review in");
 		const labels = kind === "decision" ? ["Why", "Options", "Expected", "Signals"] : ["Why", "Signals"];
