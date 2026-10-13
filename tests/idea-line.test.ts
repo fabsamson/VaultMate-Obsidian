@@ -4,9 +4,11 @@ import { statementOffset } from "../src/core/task-line";
 import {
 	ageGroup,
 	buildIdeaItem,
+	canTrackAsIdea,
 	classifyIdeaLine,
 	closeIdea,
 	convertToIdea,
+	ideaCapture,
 	ideaAge,
 	ideaDate,
 	resultItemText,
@@ -147,6 +149,52 @@ describe("convertToIdea", () => {
 		for (const line of ["Idea: x", "- plain #idea", "text", "> Idee：y"]) {
 			expect(classifyIdeaLine(convertToIdea(line, "idea", TODAY), "idea")?.type, line).toBe("task");
 		}
+	});
+});
+
+describe("ideaCapture", () => {
+	it("triggers after the whole tag and a space", () => {
+		expect(ideaCapture("Prepare a sprint #idea ", "idea")).toBe("tagged");
+		expect(ideaCapture("- [ ] Prepare a sprint #idea ", "idea")).toBe("tagged");
+		expect(ideaCapture("> - Sprint #idea/work ", "idea")).toBe("tagged");
+		expect(ideaCapture("- [ ] #idea ", "idea")).toBe("tagged");
+		expect(ideaCapture("Sprint #Idea ", "idea")).toBe("tagged");
+	});
+
+	it("does not trigger before the space, on another tag, or mid-line", () => {
+		expect(ideaCapture("Sprint #idea", "idea")).toBeNull();
+		expect(ideaCapture("Sprint #ideal ", "idea")).toBeNull();
+		expect(ideaCapture("Sprint #decision ", "idea")).toBeNull();
+		expect(ideaCapture("Sprint #idea later ", "idea")).toBeNull();
+		expect(ideaCapture("Sprint ", "idea")).toBeNull();
+	});
+
+	it("leaves tasks that already have a date, closed tasks and headings alone", () => {
+		expect(ideaCapture("- [ ] Sprint #idea ➕ 2026-10-13 ", "idea")).toBeNull();
+		expect(ideaCapture("- [x] Sprint #idea ", "idea")).toBeNull();
+		expect(ideaCapture("- [ ] Sprint #idea ", "idea")).toBe("tagged");
+		expect(ideaCapture("# Title #idea ", "idea")).toBeNull();
+	});
+
+	it("triggers on an empty prose label in French, English and Dutch forms, either colon", () => {
+		for (const line of ["Idea: ", "Idée : ", "Idee: ", "Idée： ", "- idea: "]) expect(ideaCapture(line, "idea")).toBe("prose");
+		expect(ideaCapture("Idea: sprint ", "idea")).toBeNull();
+		expect(ideaCapture("Idea:", "idea")).toBeNull();
+	});
+
+	it("ignores the journal's capture forms", () => {
+		expect(ideaCapture("Decision: ", "idea")).toBeNull();
+		expect(ideaCapture("Move #decision ", "idea")).toBeNull();
+	});
+});
+
+describe("canTrackAsIdea", () => {
+	it("accepts text lines, tagged or not", () => {
+		for (const line of ["A thought", "- a bullet", "Idea: x", "- [ ] a task", "A thing #idea"]) expect(canTrackAsIdea(line, "idea")).toBe(true);
+	});
+
+	it("refuses empty lines, headings and idea tasks", () => {
+		for (const line of ["", "   ", "## Heading", "> # Quoted heading", "- [ ] x #idea", "- [x] x #idea [result: added]"]) expect(canTrackAsIdea(line, "idea")).toBe(false);
 	});
 });
 

@@ -136,6 +136,29 @@ export function resultLinkTarget(children: readonly string[]): string | null {
 	return null;
 }
 
+// ---- Capture ----------------------------------------------------------------------------------------
+
+const TAG_AT_END_RE = /(?:^|\s)#([^\s#]+) $/;
+
+/** Whether the cursor line (cursor at its end) invites planting an idea: the whole tag and a space typed, or an empty "Idea: " line. */
+export function ideaCapture(line: string, tag: string): "tagged" | "prose" | null {
+	// Cheap exits first: this runs on every cursor move.
+	if (!line.endsWith(" ") || (!line.includes("#") && !/[:：]/.test(line))) return null;
+	const cls = classifyIdeaLine(line, tag);
+	if (!cls) return null;
+	if (cls.type === "prose") return cls.statement === "" ? "prose" : null;
+	if (cls.type === "task" && (cls.entry.status !== "open" || cls.entry.created !== null)) return null;
+	const name = TAG_AT_END_RE.exec(line)?.[1]?.toLowerCase();
+	const wanted = tag.replace(/^#/, "").toLowerCase();
+	return name !== undefined && (name === wanted || name.startsWith(`${wanted}/`)) ? "tagged" : null;
+}
+
+/** Whether the command "Track this line as an idea" applies: a line with text, not a heading, not already an idea task. */
+export function canTrackAsIdea(line: string, tag: string): boolean {
+	if (line.trim() === "" || HEADING_RE.test(parseTaskLine(line).body)) return false;
+	return classifyIdeaLine(line, tag)?.type !== "task";
+}
+
 // ---- Dates and age ----------------------------------------------------------------------------------
 
 export type AgeGroup = "fresh" | "waiting" | "wilting";

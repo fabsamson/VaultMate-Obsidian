@@ -1,6 +1,10 @@
-// The ideas feature: wires the idea index. The editor capture, the portal and the hub page come later.
+// The ideas feature: wires the idea index and the editor capture. The portal and the hub page come later.
+import type { Editor, MarkdownFileInfo, MarkdownView } from "obsidian";
+
 import type VaultMatePlugin from "../../main";
+import { IdeaCaptureSuggest, plantIdea } from "./capture-suggest";
 import { IdeaIndex } from "./idea-index";
+import { canTrackAsIdea } from "./idea-line";
 
 export class IdeasFeature {
 	public readonly index: IdeaIndex;
@@ -20,6 +24,18 @@ export class IdeasFeature {
 	/** Call from `onload`: registers the index events; the first pass waits for the layout. */
 	public register(): void {
 		this.index.registerEvents();
+		this.plugin.registerEditorSuggest(new IdeaCaptureSuggest(this.plugin.app, this));
+		this.plugin.addCommand({
+			id: "track-idea",
+			name: "Track this line as an idea",
+			icon: "lightbulb",
+			editorCheckCallback: (checking, editor: Editor, ctx: MarkdownView | MarkdownFileInfo) => {
+				const lineNo = editor.getCursor().line;
+				if (!ctx.file || !this.enabled() || !canTrackAsIdea(editor.getLine(lineNo), this.tag())) return false;
+				if (!checking) plantIdea(editor, lineNo, this.tag());
+				return true;
+			},
+		});
 		this.plugin.app.workspace.onLayoutReady(() => void this.index.sync());
 	}
 
