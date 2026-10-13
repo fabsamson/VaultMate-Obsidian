@@ -7,6 +7,7 @@ import {
 	getTags,
 	getTaskDate,
 	hasTag,
+	isTagOrSubtag,
 	parseTaskLine,
 	removeInlineField,
 	removeTaskDate,
@@ -164,6 +165,12 @@ describe("tags", () => {
 		expect(hasTag("Move #decisions", "decision")).toBe(false);
 		expect(hasTag("Move `#decision`", "decision")).toBe(false);
 		expect(hasTag("Décision #DÉCISION", "décision")).toBe(true);
+	});
+
+	it("tells a cached tag from its parent tag", () => {
+		expect(isTagOrSubtag("#Idea", "idea")).toBe(true);
+		expect(isTagOrSubtag("#idea/work", "#idea")).toBe(true);
+		expect(isTagOrSubtag("#ideas", "idea")).toBe(false);
 	});
 
 	it("adds a tag after the description and before fields and emojis", () => {

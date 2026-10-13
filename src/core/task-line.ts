@@ -147,13 +147,16 @@ function stripHash(tag: string): string {
 	return tag.startsWith("#") ? tag.slice(1) : tag;
 }
 
+/** Whether `name` is `wanted` or one of its subtags (`decision/work` for `decision`), ignoring case and any leading `#`. */
+export function isTagOrSubtag(name: string, wanted: string): boolean {
+	const lower = stripHash(name).toLowerCase();
+	const parent = stripHash(wanted).toLowerCase();
+	return lower === parent || lower.startsWith(`${parent}/`);
+}
+
 /** Case-insensitive, like Obsidian; a nested tag (`decision/work`) counts for its parent (`decision`). */
 export function hasTag(body: string, tag: string): boolean {
-	const wanted = stripHash(tag).toLowerCase();
-	return getTags(body).some((name) => {
-		const lower = name.toLowerCase();
-		return lower === wanted || lower.startsWith(`${wanted}/`);
-	});
+	return getTags(body).some((name) => isTagOrSubtag(name, tag));
 }
 
 /** The description of a body: its text without tags, inline fields, Tasks emojis and block id, on one line. */
