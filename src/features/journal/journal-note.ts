@@ -80,27 +80,41 @@ export function reviewItemText(date: string, happened: string, lesson: string): 
 export type RewritePlan = { ok: true; from: number; to: number; replacement: string[] } | { ok: false };
 
 /**
- * Replaces line `index` by `newLine` and adds the review sub-item after the item's last sub-item. The
- * plan replaces lines `from` to `to` (inclusive). It refuses (`ok: false`) when the line is not the one
- * that was read, so a note edited in the meantime is never overwritten.
+ * Ready-made lines added after the item's last sub-item (its sub-task, for instance). It receives the
+ * quote markers and indentation of a new sub-item and the note's indent unit.
  */
-export function planRewrite(lines: readonly string[], index: number, expected: string, newLine: string, subItem: string | null): RewritePlan {
+export type AppendedLines = (prefix: string, unit: string) => string[];
+
+/**
+ * Replaces line `index` by `newLine`, adds the review sub-item after the item's last sub-item, then the
+ * `appended` lines. The plan replaces lines `from` to `to` (inclusive). It refuses (`ok: false`) when the
+ * line is not the one that was read, so a note edited in the meantime is never overwritten.
+ */
+export function planRewrite(
+	lines: readonly string[],
+	index: number,
+	expected: string,
+	newLine: string,
+	subItem: string | null,
+	appended?: AppendedLines,
+): RewritePlan {
 	if (lines[index] !== expected) return { ok: false };
-	if (subItem === null) return { ok: true, from: index, to: index, replacement: [newLine] };
+	if (subItem === null && !appended) return { ok: true, from: index, to: index, replacement: [newLine] };
 	const children = getChildren(lines, index);
 	const own = splitLine(expected);
-	const indent = children.indent ?? own.indent + (usesTabs(lines) ? "\t" : "    ");
-	const sub = `${own.quote}${indent}- ${subItem}`;
-	return { ok: true, from: index, to: children.end, replacement: [newLine, ...lines.slice(index + 1, children.end + 1), sub] };
+	const unit = usesTabs(lines) ? "\t" : "    ";
+	const prefix = `${own.quote}${children.indent ?? own.indent + unit}`;
+	const added = [...(subItem === null ? [] : [`${prefix}- ${subItem}`]), ...(appended?.(prefix, unit) ?? [])];
+	return { ok: true, from: index, to: children.end, replacement: [newLine, ...lines.slice(index + 1, children.end + 1), ...added] };
 }
 
 export type RewriteResult = { ok: true; text: string } | { ok: false };
 
 /** `planRewrite` applied to the whole text of a note, keeping its line breaks. */
-export function rewriteText(text: string, index: number, expected: string, newLine: string, subItem: string | null): RewriteResult {
+export function rewriteText(text: string, index: number, expected: string, newLine: string, subItem: string | null, appended?: AppendedLines): RewriteResult {
 	const eol = text.includes("\r\n") ? "\r\n" : "\n";
 	const lines = text.split(/\r?\n/);
-	const plan = planRewrite(lines, index, expected, newLine, subItem);
+	const plan = planRewrite(lines, index, expected, newLine, subItem, appended);
 	if (!plan.ok) return plan;
 	lines.splice(plan.from, plan.to - plan.from + 1, ...plan.replacement);
 	return { ok: true, text: lines.join(eol) };

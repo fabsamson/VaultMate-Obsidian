@@ -105,6 +105,23 @@ describe("planRewrite", () => {
 		expect(planRewrite([OPEN, "    - Why: x"], 0, OPEN, "NEW", null)).toEqual({ ok: true, from: 0, to: 0, replacement: ["NEW"] });
 	});
 
+	it("appends ready-made lines after the children and the sub-item, given the child prefix and the indent unit", () => {
+		const seen: string[][] = [];
+		const appended = (prefix: string, unit: string): string[] => {
+			seen.push([prefix, unit]);
+			return [`${prefix}- sub-task`, `${prefix}${unit}- detail`];
+		};
+		const lines = ["> [!note]", "> - [ ] Idea", ">   - existing", "> next"];
+		expect(planRewrite(lines, 1, "> - [ ] Idea", "NEW", SUB, appended)).toEqual({
+			ok: true,
+			from: 1,
+			to: 2,
+			replacement: ["NEW", ">   - existing", `>   - ${SUB}`, ">   - sub-task", ">       - detail"],
+		});
+		expect(seen).toEqual([[">   ", "    "]]);
+		expect(planRewrite(["- parent", "\t- other", OPEN], 2, OPEN, "NEW", null, appended)).toMatchObject({ to: 2, replacement: ["NEW", "\t- sub-task", "\t\t- detail"] });
+	});
+
 	it("refuses when the line changed since it was read", () => {
 		expect(planRewrite([`${OPEN} edited`], 0, OPEN, CLOSED, SUB)).toEqual({ ok: false });
 		expect(planRewrite(["inserted", OPEN], 0, OPEN, CLOSED, SUB)).toEqual({ ok: false });
@@ -126,6 +143,12 @@ describe("rewriteText", () => {
 	it("refuses a changed line and a CRLF note alike", () => {
 		expect(rewriteText(`${OPEN}!\n`, 0, OPEN, CLOSED, SUB)).toEqual({ ok: false });
 		expect(rewriteText(`${OPEN}!\r\n`, 0, OPEN, CLOSED, SUB)).toEqual({ ok: false });
+	});
+
+	it("appends ready-made lines, keeping CRLF", () => {
+		const text = `${OPEN}\r\n    - Why: x\r\nEnd`;
+		const appended = (prefix: string): string[] => [`${prefix}- sub-task`];
+		expect(rewriteText(text, 0, OPEN, "NEW", null, appended)).toEqual({ ok: true, text: "NEW\r\n    - Why: x\r\n    - sub-task\r\nEnd" });
 	});
 
 	it("writes a line without a sub-item", () => {
