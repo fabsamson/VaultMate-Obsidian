@@ -1,6 +1,7 @@
 // Planning what processing an idea writes: the closed line and its result sub-item, the decision
 // sub-task, the text sent to a note or to a new note. Pure: no runtime Obsidian import, so Vitest tests it.
 import { formatDate } from "../../core/dates";
+import { cleanFolderPath } from "../../core/settings-model";
 import { findHeadings, lastNonBlank, planHeadingInsert, type Heading, type InsertPlan } from "../ai-actions/insertion";
 import { dueFrom, type JournalKind, type JournalTags } from "../journal/journal-line";
 import type { NewEntryResult } from "../journal/journal-modals";
@@ -94,4 +95,49 @@ export function planAddIdea(lines: string[], heading: string | null, statement: 
 		if (plan) return plan;
 	}
 	return { at: lastNonBlank(lines, 0, lines.length) + 1, remove: 0, lines: rendered };
+}
+
+// ---- A new note from an idea --------------------------------------------------------------------------
+
+// The characters `titleFromIdea` removes, except `/`, which separates folders in a typed path.
+const FORBIDDEN_IN_SEGMENT_RE = /[\\:*?"<>|#^[\]]/g;
+
+/**
+ * The vault path of a note created from `name`, or null when the name is empty. A name with `/` is a vault
+ * path; any other goes in `folderSetting`, else in `defaultParent` (where Obsidian puts new notes). A
+ * trailing `.md` is dropped, then added back; characters forbidden in file names are removed.
+ */
+export function newNotePath(name: string, folderSetting: string, defaultParent: string): string | null {
+	const typed = name.trim().replace(/\.md$/i, "");
+	const segments = typed
+		.split("/")
+		.map((segment) => segment.replace(FORBIDDEN_IN_SEGMENT_RE, "").replace(/\s+/g, " ").trim())
+		.filter((segment) => segment !== "" && segment !== "." && segment !== "..");
+	if (segments.length === 0) return null;
+	const folder = typed.includes("/") ? "" : cleanFolderPath(folderSetting === "" ? defaultParent : folderSetting);
+	return `${[folder, ...segments].filter((part) => part !== "").join("/")}.md`;
+}
+
+export interface NewNoteValues {
+	/** The new note's basename. */
+	title: string;
+	/** The idea as plain text: the statement, then its sub-bullets. */
+	idea: string;
+	/** A wikilink to the note the idea comes from. */
+	source: string;
+	/** Today, `YYYY-MM-DD`. */
+	date: string;
+}
+
+/** Content of a new note without a template. */
+export const DEFAULT_NEW_NOTE = "{{idea}}\n\nSource: {{source}}\n";
+
+/** Fills `{{title}}`, `{{idea}}`, `{{source}}` and `{{date}}`; any other `{{…}}` and Templater `<% %>` stay as written. */
+export function renderNewNote(template: string, values: NewNoteValues): string {
+	return template.replace(/\{\{(title|idea|source|date)\}\}/g, (_, key: keyof NewNoteValues) => values[key]);
+}
+
+/** The idea as plain text for a note: the statement, then its sub-bullets de-indented. */
+export function ideaText(statement: string, children: readonly ChildLine[], unit: string): string {
+	return [statement, ...childLines(children, unit)].join("\n");
 }

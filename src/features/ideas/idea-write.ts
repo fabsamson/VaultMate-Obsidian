@@ -1,17 +1,18 @@
 // Writing what processing an idea produces. The note the idea lives in is rewritten through the journal's
 // checked rewrite (Editor for the active note, Vault.process otherwise): the line must still be the one
 // the index read, else the write is refused with a notice. Planning is in `idea-note`.
-import { MarkdownView, Notice, type App, type Editor, type TFile } from "obsidian";
+import { MarkdownView, normalizePath, Notice, type App, type Editor, type TFile } from "obsidian";
 
 import { formatDate, startOfDay } from "../../core/dates";
 import type { VaultMateSettings } from "../../core/settings-model";
+import { baseName } from "../context/note-meta";
 import { applyPlan, type InsertPlan } from "../ai-actions/insertion";
 import { applyToEditor } from "../ai-actions/insert-write";
 import type { JournalKind } from "../journal/journal-line";
 import type { NewEntryResult } from "../journal/journal-modals";
 import { CHANGED, editorLines, writeEntryLine } from "../journal/journal-write";
 import type { IdeaItem } from "./idea-line";
-import { closeParts, ideaChildren, planAddIdea, trackedLines } from "./idea-note";
+import { closeParts, DEFAULT_NEW_NOTE, ideaChildren, ideaText, indentUnit, newNotePath, planAddIdea, renderNewNote, trackedLines } from "./idea-note";
 
 /** What the writers need: the Obsidian app and the settings (`VaultMatePlugin` fits). */
 export interface IdeaWriteHost {
@@ -121,4 +122,79 @@ export async function addIdeaToNote(host: IdeaWriteHost, item: IdeaItem, target:
 	if (await writeEntryLine(app, item, line, subItem)) return true;
 	new Notice(`Added to ${linkText}, but the idea line changed: mark it yourself.`);
 	return false;
+}
+
+// ---- A new note from an idea --------------------------------------------------------------------------
+
+export type NewNoteResult =
+	/** The note was created; the idea is closed unless a notice said its line changed. */
+	| { status: "created"; file: TFile }
+	/** A note with that path exists: nothing was written (the UI can offer to add the idea to it). */
+	| { status: "exists"; file: TFile }
+	| { status: "failed" };
+
+/** The template's text, or the default when no template is set or it cannot be found (with a notice in that case). */
+async function newNoteTemplate(app: App, setting: string): Promise<string> {
+	if (setting.trim() === "") return DEFAULT_NEW_NOTE;
+	const path = normalizePath(setting.trim());
+	const file = app.vault.getFileByPath(path) ?? app.vault.getFileByPath(`${path}.md`);
+	if (file) return app.vault.read(file);
+	new Notice(`VaultMate could not find the template ${path}. Using the default.`);
+	return DEFAULT_NEW_NOTE;
+}
+
+async function createFolders(app: App, path: string): Promise<void> {
+	const parts = path.split("/").slice(0, -1);
+	for (let i = 1; i <= parts.length; i++) {
+		const folder = parts.slice(0, i).join("/");
+		if (!app.vault.getFolderByPath(folder)) await app.vault.createFolder(folder);
+	}
+}
+
+/**
+ * Creates a note from the idea (the template of the settings, else the idea and a link to its note), then
+ * closes the idea as `new-note` with a `New note: [[…]]` sub-item. Never overwrites: an existing path is
+ * reported as `exists`. `name` is a title or a vault path (see `newNotePath`).
+ */
+export async function createNoteFromIdea(host: IdeaWriteHost, item: IdeaItem, name: string, note: string): Promise<NewNoteResult> {
+	const { app } = host;
+	const { newNoteFolder, newNoteTemplate: templatePath, tag } = host.settings.ideas;
+	const statement = statementOf(item);
+	if (statement === "") {
+		new Notice("This idea has no text yet.");
+		return { status: "failed" };
+	}
+	const path = newNotePath(name, newNoteFolder, app.fileManager.getNewFileParent(item.path).path);
+	if (path === null) {
+		new Notice("Enter a name for the note.");
+		return { status: "failed" };
+	}
+	const notePath = normalizePath(path);
+	const existing = app.vault.getFileByPath(notePath);
+	if (existing) return { status: "exists", file: existing };
+	const sourceFile = app.vault.getFileByPath(item.path);
+	const source = await readSource(app, item);
+	if (!sourceFile || !source) return { status: "failed" };
+
+	const template = await newNoteTemplate(app, templatePath);
+	const content = renderNewNote(template, {
+		title: baseName(notePath),
+		idea: ideaText(statement, ideaChildren(source, item.line), indentUnit(source)),
+		source: `[[${app.metadataCache.fileToLinktext(sourceFile, notePath, true)}]]`,
+		date: formatDate(startOfDay()),
+	});
+	let file: TFile;
+	try {
+		await createFolders(app, notePath);
+		file = await app.vault.create(notePath, content);
+	} catch (error) {
+		console.error("VaultMate could not create the note", error);
+		new Notice("VaultMate could not create the note.");
+		return { status: "failed" };
+	}
+
+	const linkText = app.metadataCache.fileToLinktext(file, item.path, true);
+	const { line, subItem } = closeParts(item, tag, "new-note", formatDate(startOfDay()), linkText, note);
+	if (!(await writeEntryLine(app, item, line, subItem))) new Notice(`Created ${linkText}, but the idea line changed: mark it yourself.`);
+	return { status: "created", file };
 }

@@ -5,7 +5,20 @@ import { classifyLine, type JournalTags } from "../src/features/journal/journal-
 import { planRewrite } from "../src/features/journal/journal-note";
 import { buildIdeaItem, classifyIdeaLine, type IdeaItem } from "../src/features/ideas/idea-line";
 import { applyPlan } from "../src/features/ai-actions/insertion";
-import { childLines, closeParts, defaultIdeaHeading, ideaChildren, indentUnit, listHeadings, planAddIdea, trackedLines } from "../src/features/ideas/idea-note";
+import {
+	childLines,
+	closeParts,
+	defaultIdeaHeading,
+	DEFAULT_NEW_NOTE,
+	ideaChildren,
+	ideaText,
+	indentUnit,
+	listHeadings,
+	newNotePath,
+	planAddIdea,
+	renderNewNote,
+	trackedLines,
+} from "../src/features/ideas/idea-note";
 
 const TODAY = "2026-10-15";
 const JOURNAL: JournalTags = { decisionTag: "decision", predictionTag: "prediction" };
@@ -156,5 +169,58 @@ describe("planAddIdea", () => {
 	it("starts the section when the heading is gone", () => {
 		const plan = planAddIdea(["text"], "Ideas", "New", []);
 		expect(plan).toEqual({ at: 1, remove: 0, lines: ["", "## Ideas", "- New"] });
+	});
+});
+
+describe("newNotePath", () => {
+	it("puts a plain name in the setting folder, else in the default parent", () => {
+		expect(newNotePath("Kitchen sprint", "Ideas/Notes", "Inbox")).toBe("Ideas/Notes/Kitchen sprint.md");
+		expect(newNotePath("Kitchen sprint", "", "Inbox")).toBe("Inbox/Kitchen sprint.md");
+		expect(newNotePath("Kitchen sprint", "", "/")).toBe("Kitchen sprint.md");
+		expect(newNotePath("Kitchen sprint", "", "")).toBe("Kitchen sprint.md");
+	});
+
+	it("treats a name with a slash as a vault path and ignores the folder setting", () => {
+		expect(newNotePath("Projects/Cooking/Sprint", "Ideas", "Inbox")).toBe("Projects/Cooking/Sprint.md");
+		expect(newNotePath("/Projects//Sprint/", "Ideas", "Inbox")).toBe("Projects/Sprint.md");
+	});
+
+	it("drops a trailing .md and the forbidden characters of each segment", () => {
+		expect(newNotePath("Sprint.md", "", "/")).toBe("Sprint.md");
+		expect(newNotePath("Sprint.MD", "", "/")).toBe("Sprint.md");
+		expect(newNotePath('What: a "sprint"? [x] #1', "", "/")).toBe("What a sprint x 1.md");
+		expect(newNotePath("A|B/C*D^e", "", "/")).toBe("AB/CDe.md");
+		expect(newNotePath("A\\B/C", "", "/")).toBe("AB/C.md");
+		expect(newNotePath("../../up/Note", "", "/")).toBe("up/Note.md");
+	});
+
+	it("refuses an empty name", () => {
+		for (const name of ["", "   ", ".md", "/", '??:"', "../.."]) expect(newNotePath(name, "Ideas", "Inbox")).toBeNull();
+	});
+});
+
+describe("renderNewNote", () => {
+	const values = { title: "Kitchen sprint", idea: "Prepare a sprint\n- first", source: "[[Daily]]", date: "2026-10-15" };
+
+	it("fills the four placeholders everywhere they appear", () => {
+		expect(renderNewNote("# {{title}}\n{{date}} from {{source}}\n\n{{idea}}\n{{title}}", values)).toBe(
+			"# Kitchen sprint\n2026-10-15 from [[Daily]]\n\nPrepare a sprint\n- first\nKitchen sprint",
+		);
+	});
+
+	it("leaves other placeholders and Templater tags alone, and does not expand filled values", () => {
+		const template = "{{other}} <% tp.date.now() %> {{TITLE}} {{idea}}";
+		expect(renderNewNote(template, { ...values, idea: "uses {{date}} and $& text" })).toBe("{{other}} <% tp.date.now() %> {{TITLE}} uses {{date}} and $& text");
+	});
+
+	it("has a default with the idea, a blank line and the source", () => {
+		expect(renderNewNote(DEFAULT_NEW_NOTE, values)).toBe("Prepare a sprint\n- first\n\nSource: [[Daily]]\n");
+	});
+});
+
+describe("ideaText", () => {
+	it("is the statement, then the sub-bullets de-indented", () => {
+		expect(ideaText("Prepare", [{ level: 0, text: "- a" }, { level: 1, text: "- b" }], "    ")).toBe("Prepare\n- a\n    - b");
+		expect(ideaText("Prepare", [], "    ")).toBe("Prepare");
 	});
 });
