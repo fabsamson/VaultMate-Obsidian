@@ -2,7 +2,7 @@
 
 VaultMate is a personal companion plugin for Obsidian, and the in-Obsidian half of the VaultMate Android app. It shares the app's pixel-art, Japanese-inspired look.
 
-> **Status:** early development (0.3.0). The decision and prediction journal, the AI actions (*Challenge this note* and *Recommend me*), the place search and new connections are available.
+> **Status:** early development (0.3.0). The decision and prediction journal, ideas, the AI actions (*Challenge this note* and *Recommend me*), the place search and new connections are available.
 
 ## Decision journal
 
@@ -13,6 +13,21 @@ Write a decision or a prediction anywhere in a note as a task-style line, such a
 - **Track record:** the hub's "Track record" section shows hanko stamps for hits, misses and reviews done, your Brier score and a calibration row per probability band (once five predictions are resolved), a decision quality by outcome table, and the latest lessons from your reviews.
 - **Review:** the **Review this line** command, the badge or the panel opens a form that shows what you wrote and expected. Close the entry with its outcome, or review again later. The review is written as a `Review <date>: …` sub-item under the line.
 - **Panel:** the Reviews section lists open entries as overdue, this week, upcoming, or without a review date. A notice tells you once a day when reviews are due.
+
+## Ideas
+
+Write an idea anywhere in a note and sort it later. An idea is a task-style line with the idea tag, such as `- [ ] Prepare a sprint like a kitchen mise en place #idea ➕ 2026-10-13`; a line with the tag that is not a task yet counts too. Once you have dealt with it, the line is closed and says what became of it: `- [x] … #idea [result: added] ➕ 2026-10-13 ✅ 2026-10-15`, with a sub-item such as `Added to [[Cooking]]`, `New note: [[Mise en place]]` or `Dropped: not now`. The result is `new-note`, `added`, `decision`, `prediction` or `dropped`. Everything stays plain Markdown, so Tasks queries and the VaultMate app read the same lines. The ideas feature and its tag can be changed or turned off in the settings, under Ideas.
+
+- **Capture:** type `#idea` and a space at the end of a line, or start a line with `Idea:` (also `Idée :`), to plant it as a task with today's date. The command **Track this line as an idea** does the same for the line at the cursor.
+- **Badge:** a small label at the end of each idea line: `Idea · 3 days` for an open idea, `Idea` for a tagged line that is not a task yet, and for a processed one `Added · <note>`, `New note · <note>`, `Decision`, `Prediction`, `Dropped` or `Done`. Click an open idea's badge to process it, or a processed one's to open the note it went to. Live Preview and source mode only; reading view shows no badge.
+- **Process an idea:** the badge, the **Process idea on this line** command or the Ideas page opens a form with the idea and where it was planted.
+  - **Send to a note:** type or pick an existing note, choose the heading (the first one with "idea" in it is preselected, else the end of the note) and **Add to <note>**. The idea goes in as a plain bullet with its sub-bullets, without the tag or the checkbox, and the idea line is closed with `Added to [[…]]`.
+  - **Create a note:** type a name that matches no note and **Create "<name>"** makes a new note in the folder set in the settings (or where Obsidian puts new notes), from the template you chose or from the idea and a link back to its note. Nothing is ever overwritten.
+  - **Track as a decision** or **Track as a prediction** opens the usual form with the idea as its statement and writes the journal line as a sub-task of the idea.
+  - **Drop** closes the idea; the optional note is kept as `Dropped: …`.
+- **Ideas page:** the panel's **Ideas** page (or the **Open ideas** command) shows a summary of the month, then the open ideas as fresh (0 to 2 days), waiting (3 to 14) and wilting (older), each with **Process** and **Drop** (**Undo** shows for a few seconds), and the processed ideas with a filter by result. Pick the whole vault, this note or a folder note's tree with the scope list.
+- **Tend fresh ideas:** the button on the page or the command goes through the fresh ideas one by one, oldest first ("Idea 2 of 5"), with the same form and a **Skip** button.
+- **Local only:** ideas are read from your notes on your device. Nothing is sent anywhere.
 
 ## AI actions
 
