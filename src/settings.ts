@@ -1,7 +1,7 @@
 import { Notice, PluginSettingTab, SecretComponent, type Setting, type SettingDefinitionItem } from "obsidian";
 
 import { validateBaseUrl } from "./core/ai/endpoint";
-import { DEFAULT_SETTINGS, MAX_CONNECTIONS, validateActionsFolder, validateDistinctCollectionProperties, validateDistinctProperties, validateDistinctTags, validatePropertyList, validatePropertyName, validateTag, parseList, cleanFolderPath } from "./core/settings-model";
+import { DEFAULT_SETTINGS, MAX_CONNECTIONS, validateActionsFolder, validateDistinctCollectionProperties, validateDistinctIdeaTag, validateDistinctProperties, validateDistinctTags, validatePropertyList, validatePropertyName, validateTag, parseList, cleanFolderPath } from "./core/settings-model";
 import { createDefaultActions } from "./features/ai-actions/default-actions";
 import type VaultMatePlugin from "./main";
 
@@ -17,7 +17,7 @@ export class VaultMateSettingTab extends PluginSettingTab {
 	}
 
 	public getSettingDefinitions(): SettingDefinitionItem[] {
-		const { journal, location, collections } = this.plugin.settings;
+		const { journal, ideas, location, collections } = this.plugin.settings;
 		const propertyValidator = (index: 0 | 1 | 2) => (value: string): string | undefined => {
 			const names = [location.latitudeProperty, location.longitudeProperty, location.labelProperty];
 			names[index] = value;
@@ -40,7 +40,7 @@ export class VaultMateSettingTab extends PluginSettingTab {
 							type: "text",
 							key: "journal.decisionTag",
 							placeholder: "decision",
-							validate: (value) => validateTag(value) ?? validateDistinctTags(value, journal.predictionTag),
+							validate: (value) => validateTag(value) ?? validateDistinctTags(value, journal.predictionTag) ?? validateDistinctIdeaTag(ideas.tag, value),
 						},
 					},
 					{
@@ -50,8 +50,39 @@ export class VaultMateSettingTab extends PluginSettingTab {
 							type: "text",
 							key: "journal.predictionTag",
 							placeholder: "prediction",
-							validate: (value) => validateTag(value) ?? validateDistinctTags(journal.decisionTag, value),
+							validate: (value) => validateTag(value) ?? validateDistinctTags(journal.decisionTag, value) ?? validateDistinctIdeaTag(ideas.tag, value),
 						},
+					},
+				],
+			},
+			{
+				type: "group",
+				heading: "Ideas",
+				items: [
+					{
+						name: "Enable ideas",
+						desc: "Capture ideas as task lines in any note and sort them later: a new note, an addition to a note, a decision, a prediction, or nothing.",
+						control: { type: "toggle", key: "ideas.enabled" },
+					},
+					{
+						name: "Idea tag",
+						desc: "Lines with this tag are ideas. Enter it without #.",
+						control: {
+							type: "text",
+							key: "ideas.tag",
+							placeholder: DEFAULT_SETTINGS.ideas.tag,
+							validate: (value) => validateTag(value) ?? validateDistinctIdeaTag(value, journal.decisionTag) ?? validateDistinctIdeaTag(value, journal.predictionTag),
+						},
+					},
+					{
+						name: "New note folder",
+						desc: "Folder of the notes created from ideas. Leave empty to use the location Obsidian sets for new notes.",
+						control: { type: "folder", key: "ideas.newNoteFolder", placeholder: "Default location for new notes" },
+					},
+					{
+						name: "New note template",
+						desc: "Optional note used as the template of notes created from ideas. It can use {{title}}, {{idea}}, {{source}} and {{date}}.",
+						control: { type: "file", key: "ideas.newNoteTemplate", placeholder: "No template", filter: (file) => file.extension === "md" },
 					},
 				],
 			},

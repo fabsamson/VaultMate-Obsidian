@@ -11,6 +11,16 @@ export interface JournalSettings {
 	predictionTag: string;
 }
 
+export interface IdeasSettings {
+	enabled: boolean;
+	/** Tag of idea lines, without `#`. */
+	tag: string;
+	/** Folder of the notes created from ideas; empty = where Obsidian puts new notes. */
+	newNoteFolder: string;
+	/** Path of the template note for those notes; empty = none. */
+	newNoteTemplate: string;
+}
+
 /** Small state a feature keeps next to its settings (shared between devices by Syncthing, rarely written). */
 export interface JournalState {
 	/** Day (`YYYY-MM-DD`) of the last "reviews due" notice; empty until one was shown. */
@@ -75,6 +85,7 @@ export interface ContextState {
 export interface VaultMateSettings {
 	journal: JournalSettings;
 	journalState: JournalState;
+	ideas: IdeasSettings;
 	ai: AiSettings;
 	aiState: AiState;
 	collections: CollectionsSettings;
@@ -86,6 +97,7 @@ export interface VaultMateSettings {
 export const DEFAULT_SETTINGS: VaultMateSettings = {
 	journal: { enabled: true, decisionTag: "decision", predictionTag: "prediction" },
 	journalState: { lastNoticeDate: "" },
+	ideas: { enabled: true, tag: "idea", newNoteFolder: "", newNoteTemplate: "" },
 	ai: { enabled: true, baseUrl: "https://api.openai.com/v1", model: "gpt-5.6-luna", apiKeySecret: "", actionsFolder: "VaultMate/AI actions" },
 	aiState: { confirmed: {}, notInterested: {} },
 	collections: { folder: "", typeProperty: "type", ratingProperty: "rating" },
@@ -113,6 +125,11 @@ function sameTag(a: string, b: string): boolean {
 /** Error message when the two journal tags would clash, or undefined. */
 export function validateDistinctTags(decisionTag: string, predictionTag: string): string | undefined {
 	return sameTag(decisionTag, predictionTag) ? "Decisions and predictions need different tags." : undefined;
+}
+
+/** Error message when the idea tag clashes with a journal tag (ignoring case), or undefined. */
+export function validateDistinctIdeaTag(ideaTag: string, journalTag: string): string | undefined {
+	return sameTag(ideaTag, journalTag) ? "Ideas need a tag different from decisions and predictions." : undefined;
 }
 
 /** Folder path as stored: no backslashes, repeated, leading or trailing slashes. Empty when nothing is left. */
@@ -178,6 +195,14 @@ export function normalizeSettings(value: unknown): VaultMateSettings {
 		decisionTag = defaults.decisionTag;
 		predictionTag = defaults.predictionTag;
 	}
+	const ideas = isRecord(value) && isRecord(value.ideas) ? value.ideas : {};
+	const ideaDefaults = DEFAULT_SETTINGS.ideas;
+	let ideaTag = validTag(ideas.tag, ideaDefaults.tag);
+	if (sameTag(ideaTag, decisionTag) || sameTag(ideaTag, predictionTag)) ideaTag = ideaDefaults.tag;
+	if (sameTag(ideaTag, decisionTag) || sameTag(ideaTag, predictionTag)) {
+		decisionTag = defaults.decisionTag;
+		predictionTag = defaults.predictionTag;
+	}
 	const state = isRecord(value) && isRecord(value.journalState) ? value.journalState : {};
 	const lastNoticeDate = typeof state.lastNoticeDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(state.lastNoticeDate) ? state.lastNoticeDate : "";
 	const ai = isRecord(value) && isRecord(value.ai) ? value.ai : {};
@@ -236,5 +261,11 @@ export function normalizeSettings(value: unknown): VaultMateSettings {
 		collections: { folder: typeof col.folder === "string" ? cleanFolderPath(col.folder) : colDefaults.folder, typeProperty, ratingProperty },
 		journal: { enabled: typeof journal.enabled === "boolean" ? journal.enabled : defaults.enabled, decisionTag, predictionTag },
 		journalState: { lastNoticeDate },
+		ideas: {
+			enabled: typeof ideas.enabled === "boolean" ? ideas.enabled : ideaDefaults.enabled,
+			tag: ideaTag,
+			newNoteFolder: typeof ideas.newNoteFolder === "string" ? cleanFolderPath(ideas.newNoteFolder) : ideaDefaults.newNoteFolder,
+			newNoteTemplate: typeof ideas.newNoteTemplate === "string" ? cleanFolderPath(ideas.newNoteTemplate) : ideaDefaults.newNoteTemplate,
+		},
 	};
 }
