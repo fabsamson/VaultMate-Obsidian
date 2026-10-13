@@ -20,14 +20,14 @@ export function applyPlan(lines: string[], plan: InsertPlan): string[] {
 	return next;
 }
 
-interface Heading {
+export interface Heading {
 	line: number;
 	level: number;
 	text: string;
 }
 
 /** Headings outside the frontmatter and outside fenced code. */
-function findHeadings(lines: string[]): Heading[] {
+export function findHeadings(lines: string[]): Heading[] {
 	const headings: Heading[] = [];
 	let i = 0;
 	if (lines[0]?.trim() === "---") {
@@ -52,7 +52,7 @@ function findHeadings(lines: string[]): Heading[] {
 	return headings;
 }
 
-function lastNonBlank(lines: string[], from: number, to: number): number {
+export function lastNonBlank(lines: string[], from: number, to: number): number {
 	for (let i = to - 1; i >= from; i--) if ((lines[i] ?? "").trim() !== "") return i;
 	return from - 1;
 }
@@ -71,9 +71,10 @@ function newLines(rendered: string[], existing: string[]): string[] {
 
 /**
  * Inserts at the end of the first section whose heading text matches (any level, case-insensitive), or
- * appends a new `## <heading>` section at the end of the note. Null when every line is already there.
+ * appends a new `## <heading>` section at the end of the note. Null when every line is already there
+ * (unless `dedupe` is false: the lines are then inserted whatever the section already holds).
  */
-export function planHeadingInsert(lines: string[], heading: string, rendered: string[]): InsertPlan | null {
+export function planHeadingInsert(lines: string[], heading: string, rendered: string[], dedupe = true): InsertPlan | null {
 	const wanted = heading.trim().toLowerCase();
 	const headings = findHeadings(lines);
 	const index = headings.findIndex((candidate) => candidate.text.toLowerCase() === wanted);
@@ -81,11 +82,11 @@ export function planHeadingInsert(lines: string[], heading: string, rendered: st
 	if (found) {
 		const next = headings.slice(index + 1).find((candidate) => candidate.level <= found.level);
 		const end = next ? next.line : lines.length;
-		const fresh = newLines(rendered, lines.slice(found.line + 1, end));
+		const fresh = dedupe ? newLines(rendered, lines.slice(found.line + 1, end)) : rendered;
 		if (fresh.length === 0) return null;
 		return { at: lastNonBlank(lines, found.line + 1, end) + 1, remove: 0, lines: fresh };
 	}
-	const fresh = newLines(rendered, []);
+	const fresh = dedupe ? newLines(rendered, []) : rendered;
 	if (fresh.length === 0) return null;
 	const at = lastNonBlank(lines, 0, lines.length) + 1;
 	return { at, remove: 0, lines: [...(at > 0 ? [""] : []), `## ${heading.trim()}`, ...fresh] };

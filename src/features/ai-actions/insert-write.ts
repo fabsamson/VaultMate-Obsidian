@@ -11,7 +11,7 @@ function editorLines(editor: Editor): string[] {
 	return Array.from({ length: editor.lineCount() }, (_, index) => editor.getLine(index));
 }
 
-function applyToEditor(editor: Editor, plan: InsertPlan): void {
+export function applyToEditor(editor: Editor, plan: InsertPlan): void {
 	const count = editor.lineCount();
 	const text = plan.lines.join("\n");
 	if (plan.at >= count) {

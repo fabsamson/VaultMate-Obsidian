@@ -7,14 +7,14 @@ import { convertToEntry, type JournalKind, type JournalTags } from "./journal-li
 const QUOTE_RE = /^(?:[ \t]*>[ \t]?)*/;
 const CHILD_MARKER_RE = /^(?:[-*+]|\d{1,9}[.)])[ \t]+/;
 
-interface LineParts {
+export interface LineParts {
 	/** Blockquote or callout markers ("> ", "> > "), as written. */
 	quote: string;
 	indent: string;
 	content: string;
 }
 
-function splitLine(line: string): LineParts {
+export function splitLine(line: string): LineParts {
 	const quote = QUOTE_RE.exec(line)?.[0] ?? "";
 	const rest = line.slice(quote.length);
 	const indent = /^[ \t]*/.exec(rest)?.[0] ?? "";
@@ -26,7 +26,7 @@ function quoteDepth(quote: string): number {
 }
 
 /** Indentation width in columns, a tab counting as four. */
-function width(indent: string): number {
+export function width(indent: string): number {
 	let columns = 0;
 	for (const char of indent) columns += char === "\t" ? 4 : 1;
 	return columns;
