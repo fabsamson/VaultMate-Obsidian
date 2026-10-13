@@ -112,6 +112,18 @@ For the app's developers. All values are percent-encoded UTF-8 in the query stri
 3. **Echo test:** `vaultmate://echo?nonce=<nonce>&lat=45.76404&lng=4.83566&label=Caf%C3%A9%20%26%20Co%20%2F%20Lyon` must be answered with `obsidian://vaultmate-echo?nonce=<nonce>&lat=<lat>&lng=<lng>&label=<label>` carrying the decoded values unchanged (`Café & Co / Lyon`, re-encoded). Obsidian compares them exactly and reports which parameter changed.
 4. A nonce is accepted once, only on the device that created it, and less than 2 minutes after its creation. Anything else is refused and nothing is written.
 
+### Idea link
+
+For the app's developers. The Ideas list of the VaultMate Android app opens an idea in Obsidian with:
+
+`obsidian://vaultmate-idea?vault=<vault name>&file=<path>&line=<index>`
+
+- `vault`: handled by Obsidian itself.
+- `file`: the note's path relative to the vault, percent-encoded, with or without `.md` (the same path as for `obsidian://open`).
+- `line`: the 0-based index of the idea's line, as the app read it.
+
+When the Ideas feature is on, the plugin opens the note (in the pane already showing it, else the current one), puts the cursor on that line and opens the idea portal for it. If the note changed since the app read it, it uses the nearest open idea within 3 lines; if there is none, the note stays open at the line with a message. A processed idea is not reopened. A missing note, a missing `file` or a `line` that is not a non-negative integer is refused with a message. The link only opens: it never writes, and every change still needs a click in the portal.
+
 ## Privacy
 
 The plugin collects no telemetry. Its network requests are the AI actions you run (sent to the AI provider you configured, with the content you previewed) and the place searches you start (sent to OpenStreetMap Nominatim, with your search text only). See [PRIVACY.md](PRIVACY.md).
