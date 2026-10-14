@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { addTrackTask, applyEdits, dedentChildren, dropIdea, promoteIdea, refusalMessage, setTrackStatus, trackTaskLine, type WritePlan } from "../src/features/projects/project-write";
+import { addTrackTask, applyEdits, dedentChildren, dropIdea, promoteIdea, refusalMessage, setTrackStatus, trackTaskLine, undoDropIdea, type WritePlan } from "../src/features/projects/project-write";
 import { readProject } from "../src/features/projects/project-note";
 
 const NOTE = [
@@ -217,5 +217,21 @@ describe("dropIdea", () => {
 		const ref = idea(NOTE, "second idea");
 		const edited = NOTE.map((line) => (line === "- second idea" ? "- other" : line));
 		expect(dropIdea(edited, ref)).toEqual({ ok: false, reason: "changed" });
+	});
+});
+
+describe("undoDropIdea", () => {
+	it("puts the dropped idea back when the note is as the drop left it", () => {
+		const target = idea(NOTE, "first idea");
+		const dropped = apply(NOTE, dropIdea(NOTE, target));
+		const back = apply(dropped, undoDropIdea(dropped, target, NOTE[target.end]));
+		expect(back).toEqual(NOTE);
+	});
+
+	it("refuses when the line at that place changed", () => {
+		const target = idea(NOTE, "first idea");
+		const dropped = apply(NOTE, dropIdea(NOTE, target));
+		const edited = dropped.map((line) => (line === "- second idea" ? "- other" : line));
+		expect(undoDropIdea(edited, target, NOTE[target.end])).toEqual({ ok: false, reason: "changed" });
 	});
 });

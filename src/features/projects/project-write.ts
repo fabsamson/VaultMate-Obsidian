@@ -166,3 +166,12 @@ export function promoteIdea(lines: readonly string[], ref: LineRef, options: Pro
 	const heading = `${"#".repeat(model.level)} ${options.tracksTitle?.trim() || DEFAULT_TRACKS_TITLE}`;
 	return { ok: true, edits: byLineDescending([remove, { at: appendPoint(lines, ideasSection.line + 1, ideasSection.end), remove: 0, lines: ["", heading, "", ...track] }]) };
 }
+
+/**
+ * Puts a dropped idea back where it was: its lines go in at `idea.line`, provided the line now there is
+ * still `lineAfter` (the line that followed the idea when it was dropped, undefined at the end of the note).
+ */
+export function undoDropIdea(lines: readonly string[], idea: Pick<ProjectIdea, "line" | "raw" | "children">, lineAfter: string | undefined): WritePlan {
+	if (lines[idea.line] !== lineAfter || idea.line > lines.length) return refuse("changed");
+	return { ok: true, edits: [{ at: idea.line, remove: 0, lines: [idea.raw, ...idea.children] }] };
+}
