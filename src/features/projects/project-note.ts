@@ -138,7 +138,7 @@ function findSections(headings: readonly Heading[], lineCount: number): { level:
 	for (const { heading, kind } of recognized) if (kind === "tracks" && heading.level <= shallowest && (level === null || heading.level < level)) level = heading.level;
 	if (level === null) {
 		const counts = new Map<number, number>();
-		for (const { heading } of recognized) counts.set(heading.level, (counts.get(heading.level) ?? 0) + 1);
+		for (const { heading, kind } of recognized) if (kind !== "tracks") counts.set(heading.level, (counts.get(heading.level) ?? 0) + 1);
 		let best = 0;
 		for (const [candidate, count] of [...counts].sort((a, b) => a[0] - b[0])) {
 			if (count > best) {
