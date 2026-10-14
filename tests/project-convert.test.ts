@@ -193,6 +193,13 @@ describe("convertProject", () => {
 		});
 	});
 
+	it("converts a sub-heading whose title says track or piste", () => {
+		const lines = ["# Ideas", "- a", "## ★ Piste ancienne", "text", "## ⭐ Track record", "# Notes"];
+		const out = convertProject(lines, "🧭 Pistes");
+		expect(out.tracksCreated).toBe(2);
+		expect(readProject(out.lines).tracks.map((t) => t.title)).toEqual(["Piste ancienne", "Track record"]);
+	});
+
 	it("ignores headings and bullets in code fences", () => {
 		const lines = ["# Backlog", "```", "- not an item", "## not a heading", "```", "# Notes"];
 		expect(convertProject(lines, "Tracks").tracksCreated).toBe(0);

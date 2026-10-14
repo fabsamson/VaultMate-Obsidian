@@ -100,6 +100,12 @@ export function isTracksHeading(text: string): boolean {
 	return sectionKind(text) === "tracks";
 }
 
+/** Whether a note with these headings (text and level, in order) has a Tracks section: what the project index asks of the metadata cache. */
+export function hasTracksSection(headings: ReadonlyArray<{ text: string; level: number }>): boolean {
+	const list: Heading[] = headings.map((heading, line) => ({ line, level: heading.level, text: heading.text }));
+	return findSections(list, list.length).sections.some((section) => section.kind === "tracks");
+}
+
 export interface Section {
 	kind: SectionKind;
 	/** Index of the heading line. */
@@ -124,8 +130,12 @@ function findSections(headings: readonly Heading[], lineCount: number): { level:
 		const kind = sectionKind(heading.text);
 		return kind ? [{ heading, kind }] : [];
 	});
+	// A heading that says "track" below the level of the other sections is a sub-heading (a track of an
+	// older note, "Track record"), not the Tracks section.
+	const otherLevels = recognized.filter((entry) => entry.kind !== "tracks").map((entry) => entry.heading.level);
+	const shallowest = otherLevels.length > 0 ? Math.min(...otherLevels) : Infinity;
 	let level: number | null = null;
-	for (const { heading, kind } of recognized) if (kind === "tracks" && (level === null || heading.level < level)) level = heading.level;
+	for (const { heading, kind } of recognized) if (kind === "tracks" && heading.level <= shallowest && (level === null || heading.level < level)) level = heading.level;
 	if (level === null) {
 		const counts = new Map<number, number>();
 		for (const { heading } of recognized) counts.set(heading.level, (counts.get(heading.level) ?? 0) + 1);
@@ -141,7 +151,7 @@ function findSections(headings: readonly Heading[], lineCount: number): { level:
 	return {
 		level,
 		sections: recognized
-			.filter((entry) => entry.heading.level === level)
+			.filter((entry) => entry.heading.level === level && (entry.kind !== "tracks" || entry.heading.level <= shallowest))
 			.map(({ heading, kind }) => ({ kind, line: heading.line, level: heading.level, title: heading.text, end: endOfBlock(headings, heading, lineCount) })),
 	};
 }

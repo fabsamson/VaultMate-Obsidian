@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { isTracksHeading, openTasks, parseTrackHeading, readProject, sectionKind, trackCounts, withMarker } from "../src/features/projects/project-note";
+import { hasTracksSection, isTracksHeading, openTasks, parseTrackHeading, readProject, sectionKind, trackCounts, withMarker } from "../src/features/projects/project-note";
 
 const FR = [
 	"---",
@@ -203,5 +203,26 @@ describe("readProject variants", () => {
 		const model = readProject(["# Idea Engine", "## Ideas", "- a", "## Done", "- b"]);
 		expect(model.level).toBe(2);
 		expect(model.ideas).toHaveLength(1);
+	});
+});
+
+describe("a heading that says track below the sections", () => {
+	it("is a sub-heading, not the Tracks section", () => {
+		const lines = ["# Ideas", "- a", "## ★ Piste ancienne", "text", "# Done", "- b"];
+		const model = readProject(lines);
+		expect(model.tracksSection).toBeNull();
+		expect(model.level).toBe(1);
+		expect(model.sections.map((section) => section.kind)).toEqual(["ideas", "done"]);
+	});
+
+	it("still lets a Tracks section share the level of the others", () => {
+		expect(readProject(["# Ideas", "# Tracks", "## A"]).tracks).toHaveLength(1);
+		expect(readProject(["# Project", "## Ideas", "## Tracks", "### A"]).tracks).toHaveLength(1);
+	});
+
+	it("is what the project index asks of the cached headings", () => {
+		expect(hasTracksSection([{ text: "Ideas", level: 1 }, { text: "★ Piste ancienne", level: 2 }])).toBe(false);
+		expect(hasTracksSection([{ text: "Ideas", level: 1 }, { text: "🧭 Pistes", level: 1 }, { text: "★ Piste ancienne", level: 2 }])).toBe(true);
+		expect(hasTracksSection([])).toBe(false);
 	});
 });
