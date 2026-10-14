@@ -75,7 +75,8 @@ describe("track headings", () => {
 		expect(parseTrackHeading("🗑️ Gone").status).toBe("dropped");
 		expect(parseTrackHeading("🗑 Gone").status).toBe("dropped");
 		expect(parseTrackHeading("Plain title")).toEqual({ status: "explore", marker: null, title: "Plain title" });
-		expect(parseTrackHeading("✅Glued").marker).toBeNull();
+		expect(parseTrackHeading("★Context engine")).toEqual({ status: "explore", marker: "★", title: "Context engine" });
+		expect(parseTrackHeading("✅Glued")).toMatchObject({ status: "done", title: "Glued" });
 	});
 });
 
@@ -91,6 +92,12 @@ describe("withMarker", () => {
 		expect(withMarker("## Plain", "backlog")).toBe("## 📥 Plain");
 		expect(withMarker("## Plain", "dropped")).toBe("## 🗑️ Plain");
 		expect(withMarker("##", "done")).toBeNull();
+	});
+
+	it("keeps an indentation of up to three spaces and adds the missing space after the marker", () => {
+		expect(withMarker(" ## ★Achievement Engine", "progress")).toBe(" ## 🔨 Achievement Engine");
+		expect(withMarker("## ★Context engine", "explore")).toBe("## ★ Context engine");
+		expect(withMarker("   ### Plain", "done")).toBe("   ### ✅ Plain");
 	});
 
 	it("returns null when the marker is already the written one", () => {
@@ -174,6 +181,15 @@ describe("readProject variants", () => {
 	it("ignores headings in code fences and sub-headings of other levels in the Tracks section", () => {
 		const model = readProject(["# Tracks", "```", "## 🔨 fake", "```", "#### too deep", "## real", "", "# Notes"]);
 		expect(model.tracks.map((t) => t.title)).toEqual(["real"]);
+	});
+
+	it("reads tracks whose marker has no space and whose heading is indented", () => {
+		const model = readProject(["# Tracks", "## ★Context engine", " ## 🔨Achievement Engine", "   ## Plain", "    ## four spaces is code"]);
+		expect(model.tracks.map((t) => [t.status, t.title])).toEqual([
+			["explore", "Context engine"],
+			["progress", "Achievement Engine"],
+			["explore", "Plain"],
+		]);
 	});
 
 	it("returns nothing for a note without recognized sections", () => {

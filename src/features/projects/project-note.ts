@@ -22,9 +22,9 @@ export const STATUS_INFO: Record<TrackStatus, { marker: string; label: string }>
 
 // Read forms: the star may be the emoji, the wastebasket may lack U+FE0F; any may carry a variation selector.
 const MARKER_CHARS = "\\u2605|\\u2B50|\\u{1F4E5}|\\u{1F528}|\\u2705|\\u{1F5D1}";
-const MARKER_RE = new RegExp(`^(?:${MARKER_CHARS})[\\uFE0E\\uFE0F]?(?=\\s|$)`, "u");
+const MARKER_RE = new RegExp(`^(?:${MARKER_CHARS})[\\uFE0E\\uFE0F]?`, "u");
 /** A heading line cut into its `#` prefix, the marker as written (if any), the gap after it and the rest. */
-const HEADING_MARKER_RE = new RegExp(`^( {0,3}#{1,6}[ \\t]+)(?:((?:${MARKER_CHARS})[\\uFE0E\\uFE0F]?)(?=\\s|$)([ \\t]*))?`, "u");
+const HEADING_MARKER_RE = new RegExp(`^( {0,3}#{1,6}[ \\t]+)(?:((?:${MARKER_CHARS})[\\uFE0E\\uFE0F]?)([ \\t]*))?`, "u");
 
 function statusOfMarker(marker: string): TrackStatus {
 	switch (marker.codePointAt(0)) {
@@ -66,10 +66,9 @@ export function withMarker(line: string, status: TrackStatus): string | null {
 	if (!match) return null;
 	const wanted = STATUS_INFO[status].marker;
 	const [whole, prefix = "", marker, gap = ""] = match;
-	if (marker === wanted) return null;
 	const rest = line.slice(whole.length);
-	if (marker === undefined) return `${prefix}${wanted}${rest === "" ? "" : " "}${rest}`;
-	return `${prefix}${wanted}${gap}${rest}`;
+	if (marker === wanted && (gap !== "" || rest === "")) return null;
+	return `${prefix}${wanted}${gap === "" && rest !== "" ? " " : gap}${rest}`;
 }
 
 // ---- Sections -----------------------------------------------------------------------------------------
