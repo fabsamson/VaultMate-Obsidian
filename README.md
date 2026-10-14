@@ -2,7 +2,7 @@
 
 VaultMate is a personal companion plugin for Obsidian, and the in-Obsidian half of the VaultMate Android app. It shares the app's pixel-art, Japanese-inspired look.
 
-> **Status:** early development (0.4.0). The decision and prediction journal, ideas, the AI actions (*Challenge this note* and *Recommend me*), the place search and new connections are available.
+> **Status:** early development (0.4.0). The decision and prediction journal, ideas, project tracks, the AI actions (*Challenge this note* and *Recommend me*), the place search and new connections are available.
 
 ## Decision journal
 
@@ -28,6 +28,31 @@ Write an idea anywhere in a note and sort it later. An idea is a task-style line
 - **Ideas page:** the panel's **Ideas** page (or the **Open ideas** command) shows a summary of the month, then the open ideas as fresh (0 to 2 days), waiting (3 to 14) and wilting (older), each with **Process** and **Drop** (**Undo** shows for a few seconds), and the processed ideas with a filter by result. Pick the whole vault, this note or a folder note's tree with the scope list.
 - **Tend fresh ideas:** the button on the page or the command goes through the fresh ideas one by one, oldest first ("Idea 2 of 5"), with the same form and a **Skip** button.
 - **Local only:** ideas are read from your notes on your device. Nothing is sent anywhere.
+
+## Projects
+
+A project note keeps its raw ideas in an **Ideas** section and its work in a **Tracks** section. Each track is a heading one level below the Tracks section, and the first character of the heading is its status: `★` Explore, `📥` Backlog, `🔨` In progress, `✅` Done, `🗑️` Dropped. Changing the status changes that character; the track's block never moves.
+
+```markdown
+# 💡 Ideas
+- a raw idea (sub-bullets are its details)
+# 🧭 Tracks
+## ★ Explore this
+## 📥 Decided, not started
+## 🔨 Being built · F1
+- [ ] Write the parser ➕ 2026-10-14 📅 2026-10-18
+## ✅ Finished
+## 🗑️ Dropped
+```
+
+The title after the marker is never changed by VaultMate. A heading with no marker reads as Explore, `⭐` reads as `★`, and the space after the marker is optional when reading. A section is recognized by its title, ignoring case and accents: the Ideas section contains `idea` or `idée`, the Tracks section contains `🧭` or the word `track` or `piste`. A note with a Tracks section is a project note; no folder or tag is needed.
+
+- **Projects page:** the panel's **Projects** page shows, for each project note, its ideas and a board with one column per status, each card with its open tasks and the next one. Done and dropped tracks are hidden until you turn on **Show done and dropped**. Pick the whole vault, this note or a folder note's tree with the scope list.
+- **Ideas box:** **Promote** turns an idea into a track at the end of the Tracks section, with the status you pick (its sub-bullets move with it), and **Drop** removes it (**Undo** shows for a few seconds). If the note has no Tracks section yet, a promotion creates one after the Ideas section, using the **Tracks section title** setting.
+- **Buttons:** each card has a main button (Explore: **To backlog**, Backlog: **Start**, In progress: **Done**, Done: **Reopen**, Dropped: **Restore**) and a **Move to…** menu. **Start** and **Add task** ask for a task and an optional due date, written as `- [ ] <task> ➕ <today> 📅 <due>` at the end of the track. An In progress track with no open task shows **No next task**.
+- **Commands:** **Move this track…**, **Promote this idea to a track** and **Add a task to this track** work on the note you are editing, from the cursor, and can be undone with Ctrl+Z. **Convert this note to tracks** turns an older project note (sections of ideas, improvements, backlog and work in progress that hold sub-headings and bullets) into a Tracks section in one undoable change, then tells you how many tracks it made.
+- **Safe writes:** every change checks that the line it targets still reads as it did when it was shown; otherwise nothing is written. Other notes are changed through `Vault.process`, the note you are editing through the editor.
+- **Local only:** projects are read from your notes on your device. Nothing is sent anywhere. Turn the feature, or change the title of new Tracks sections, in the settings under Projects.
 
 ## AI actions
 

@@ -1062,7 +1062,9 @@ button.vaultmate-badge:focus-visible {
 	border-bottom: 2px solid var(--vaultmate-border);
 }
 
-.vaultmate-project-name {
+.vaultmate button.vaultmate-project-name,
+.is-mobile .vaultmate button.vaultmate-project-name {
+	min-height: 40px;
 	width: auto;
 	height: auto;
 	padding: 0;

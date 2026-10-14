@@ -85,6 +85,7 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		const counts = headerCounts(trackCounts(project.model.tracks), showClosed);
 		head.createSpan({ cls: "vaultmate-muted", text: counts || "No tracks yet" });
 		renderIdeas(section, project);
+		if (project.model.tracks.length === 0) return;
 		const board = section.createDiv({ cls: "vaultmate-board" });
 		for (const status of boardStatuses(showClosed)) {
 			const tracks = project.model.tracks.filter((track) => track.status === status);
