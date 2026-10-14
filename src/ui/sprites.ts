@@ -4,9 +4,15 @@ import moduleContext from "../../assets/sprites/module_context.png";
 import moduleDecision from "../../assets/sprites/module_decision.png";
 import moduleIdea from "../../assets/sprites/module_idea.png";
 import moduleLocation from "../../assets/sprites/module_location.png";
+import moduleProjects from "../../assets/sprites/module_projects.png";
 import moduleQuestions from "../../assets/sprites/module_questions.png";
 import modulePrediction from "../../assets/sprites/module_prediction.png";
 import patternSeigaiha from "../../assets/sprites/pattern_seigaiha.png";
+import sealTrackBacklog from "../../assets/sprites/seal_track_backlog.png";
+import sealTrackDone from "../../assets/sprites/seal_track_done.png";
+import sealTrackDropped from "../../assets/sprites/seal_track_dropped.png";
+import sealTrackExplore from "../../assets/sprites/seal_track_explore.png";
+import sealTrackProgress from "../../assets/sprites/seal_track_progress.png";
 import stampHit from "../../assets/sprites/stamp_hit.png";
 import stampMiss from "../../assets/sprites/stamp_miss.png";
 import stampReview from "../../assets/sprites/stamp_review.png";
@@ -21,9 +27,15 @@ export const SPRITES = {
 	moduleDecision: { src: moduleDecision, pixels: 24 },
 	moduleIdea: { src: moduleIdea, pixels: 24 },
 	moduleLocation: { src: moduleLocation, pixels: 24 },
+	moduleProjects: { src: moduleProjects, pixels: 24 },
 	moduleQuestions: { src: moduleQuestions, pixels: 24 },
 	modulePrediction: { src: modulePrediction, pixels: 24 },
 	patternSeigaiha: { src: patternSeigaiha, pixels: 16 },
+	sealTrackBacklog: { src: sealTrackBacklog, pixels: 48 },
+	sealTrackDone: { src: sealTrackDone, pixels: 48 },
+	sealTrackDropped: { src: sealTrackDropped, pixels: 48 },
+	sealTrackExplore: { src: sealTrackExplore, pixels: 48 },
+	sealTrackProgress: { src: sealTrackProgress, pixels: 48 },
 	stampHit: { src: stampHit, pixels: 20 },
 	stampMiss: { src: stampMiss, pixels: 20 },
 	stampReview: { src: stampReview, pixels: 20 },
