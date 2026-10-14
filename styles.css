@@ -1037,3 +1037,87 @@ button.vaultmate-badge:focus-visible {
 .vaultmate-idea-filter {
 	margin-bottom: var(--size-4-3);
 }
+
+/* Projects page ------------------------------------------------------------------------------------ */
+
+.vaultmate-toggle {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-2);
+	min-height: 40px;
+	color: var(--vaultmate-text);
+}
+
+.vaultmate-project {
+	margin-bottom: var(--size-4-6);
+}
+
+.vaultmate-project-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: var(--size-4-1) var(--size-4-3);
+	margin-bottom: var(--size-4-3);
+	padding-bottom: var(--size-4-1);
+	border-bottom: 2px solid var(--vaultmate-border);
+}
+
+.vaultmate-project-name {
+	width: auto;
+	height: auto;
+	padding: 0;
+	border: 0;
+	background: none;
+	box-shadow: none;
+	color: var(--vaultmate-text);
+	font-size: var(--font-ui-large);
+	font-weight: 700;
+	text-align: left;
+	white-space: normal;
+	overflow-wrap: anywhere;
+	cursor: pointer;
+}
+
+.vaultmate-project-ideas {
+	margin-bottom: var(--size-4-3);
+}
+
+.vaultmate-project-idea + .vaultmate-project-idea {
+	margin-top: var(--size-4-3);
+	padding-top: var(--size-4-2);
+	border-top: 1px solid var(--vaultmate-rule);
+}
+
+.vaultmate-board {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+	gap: var(--size-4-4);
+	align-items: start;
+}
+
+.vaultmate-column-title {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-2);
+	margin-bottom: var(--size-4-2);
+	font-weight: 700;
+	color: var(--vaultmate-text);
+}
+
+.vaultmate-column > .vaultmate-track-card + .vaultmate-track-card {
+	margin-top: var(--size-4-3);
+}
+
+.vaultmate-track-meta {
+	margin: 0;
+}
+
+.vaultmate-track-flag {
+	display: inline-block;
+	margin-top: var(--size-4-1);
+	padding: 0 var(--size-4-2);
+	border: 2px solid var(--vaultmate-seal);
+	color: var(--vaultmate-seal);
+	font-size: var(--font-ui-smaller);
+	font-weight: 700;
+}

@@ -4,16 +4,19 @@
 import { debounce, TFile, type EventRef } from "obsidian";
 
 import type VaultMatePlugin from "../../main";
-import { isTracksHeading, readProject, type ProjectModel } from "./project-note";
+import { isTracksHeading, readProject, trackCounts, type ProjectModel } from "./project-note";
+import type { ProjectCounts } from "./projects-model";
 
-export interface ProjectNote {
+export interface ProjectNote extends ProjectCounts {
 	path: string;
 	/** File name without extension. */
 	name: string;
 }
 
 /** A project note read from the vault: its lines (no line breaks) and the parsed model. */
-export interface ProjectContent extends ProjectNote {
+export interface ProjectContent {
+	path: string;
+	name: string;
 	lines: string[];
 	model: ProjectModel;
 }
@@ -21,6 +24,7 @@ export interface ProjectContent extends ProjectNote {
 export class ProjectIndex {
 	private readonly byPath = new Map<string, ProjectNote>();
 	private readonly listeners = new Set<() => void>();
+	private readonly versions = new Map<string, number>();
 	private built = false;
 	private readonly notify = debounce(() => this.listeners.forEach((listener) => listener()), 200, true);
 
@@ -35,7 +39,7 @@ export class ProjectIndex {
 	public registerEvents(): void {
 		const { vault, metadataCache } = this.plugin.app;
 		const track = (ref: EventRef): void => this.plugin.registerEvent(ref);
-		track(metadataCache.on("changed", (file) => this.update(file, true)));
+		track(metadataCache.on("changed", (file) => void this.update(file, true)));
 		track(
 			vault.on("delete", (file) => {
 				if (this.byPath.delete(file.path)) this.notify();
@@ -43,19 +47,21 @@ export class ProjectIndex {
 		);
 		track(
 			vault.on("rename", (file, oldPath) => {
-				if (!(file instanceof TFile) || !this.byPath.delete(oldPath)) return;
-				this.byPath.set(file.path, { path: file.path, name: file.basename });
+				const entry = this.byPath.get(oldPath);
+				if (!(file instanceof TFile) || !entry) return;
+				this.byPath.delete(oldPath);
+				this.byPath.set(file.path, { ...entry, path: file.path, name: file.basename });
 				this.notify();
 			}),
 		);
 	}
 
 	/** Builds the index, or empties it when the feature is off. */
-	public sync(): void {
+	public async sync(): Promise<void> {
 		this.byPath.clear();
 		this.built = false;
 		if (this.plugin.settings.projects.enabled) {
-			for (const file of this.plugin.app.vault.getMarkdownFiles()) this.update(file, false);
+			await Promise.all(this.plugin.app.vault.getMarkdownFiles().map((file) => this.update(file, false)));
 			this.built = true;
 		}
 		this.notify();
@@ -84,12 +90,20 @@ export class ProjectIndex {
 		return { path: file.path, name: file.basename, lines, model: readProject(lines) };
 	}
 
-	private update(file: TFile, notify: boolean): void {
+	/** Reads the note when its cached headings show a Tracks section, to count its tracks and ideas. */
+	private async update(file: TFile, notify: boolean): Promise<void> {
 		if (!this.plugin.settings.projects.enabled || (notify && !this.built) || file.extension !== "md") return;
+		const version = (this.versions.get(file.path) ?? 0) + 1;
+		this.versions.set(file.path, version);
 		const headings = this.plugin.app.metadataCache.getFileCache(file)?.headings ?? [];
-		const isProject = headings.some((heading) => isTracksHeading(heading.heading));
-		const changed = isProject ? !this.byPath.has(file.path) || this.byPath.get(file.path)?.name !== file.basename : this.byPath.delete(file.path);
-		if (isProject) this.byPath.set(file.path, { path: file.path, name: file.basename });
-		if (notify && changed) this.notify();
+		if (!headings.some((heading) => isTracksHeading(heading.heading))) {
+			if (this.byPath.delete(file.path) && notify) this.notify();
+			return;
+		}
+		const lines = (await this.plugin.app.vault.cachedRead(file)).split(/\r?\n/);
+		if (this.versions.get(file.path) !== version) return; // a newer pass owns this note
+		const model = readProject(lines);
+		this.byPath.set(file.path, { path: file.path, name: file.basename, tracks: trackCounts(model.tracks), ideas: model.ideas.length });
+		if (notify) this.notify();
 	}
 }
