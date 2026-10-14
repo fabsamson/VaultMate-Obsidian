@@ -168,12 +168,29 @@ describe("convertProject", () => {
 	});
 
 	it("leaves a note with nothing to convert untouched", () => {
-		for (const lines of [["# Title", "text"], ["# Ideas", "- a", "# Notes"], ["# Backlog", "- [ ] task", "# Tracks", "## 🔨 A"]]) {
+		for (const lines of [["# Title", "text"], ["# Ideas", "- a", "# 🧭 Pistes", "# Notes"], ["# Backlog", "- [ ] task", "# Tracks", "## 🔨 A"]]) {
 			const out = convertProject(lines, "🧭 Tracks");
 			expect(out.lines).toBe(lines);
 			expect(out.tracksCreated).toBe(0);
 			expect(out.sectionsRemoved).toBe(0);
 		}
+	});
+
+	it("writes moved headings in canonical form, without indentation or a missing space", () => {
+		const lines = ["# Ideas", " ## ★Context engine", "x", "  ## ⭐ Achievement Engine", "y", "## Plain", "# 🧭 Pistes"];
+		const out = convertProject(lines, "🧭 Pistes");
+		expect(out.lines.filter((l) => l.startsWith("##"))).toEqual(["## ★ Context engine", "## ★ Achievement Engine", "## ★ Plain"]);
+		expect(out.tracksCreated).toBe(3);
+	});
+
+	it("removes empty Improvements, Backlog and In progress sections and creates Tracks even with no track to convert", () => {
+		const lines = ["# Goal", "# 💡 Ideas", "- a", "", "# 🔨 En cours", "", "# ✨ Améliorations", "# 📥 Backlog", "- [-] cancelled", "", "# Notes"];
+		const out = convertProject(lines, "🧭 Pistes");
+		expect(out).toEqual({
+			lines: ["# Goal", "# 💡 Ideas", "- a", "", "# 🧭 Pistes", "", "# 📥 Backlog", "- [-] cancelled", "", "# Notes"],
+			tracksCreated: 0,
+			sectionsRemoved: 2,
+		});
 	});
 
 	it("ignores headings and bullets in code fences", () => {

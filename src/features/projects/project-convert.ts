@@ -2,7 +2,7 @@
 // sub-headings and bullets) to tracks: plan §11.4. Pure: no Obsidian import, so Vitest tests it.
 import { findHeadings, lastNonBlank, type Heading, type InsertPlan } from "../ai-actions/insertion";
 import { DEFAULT_TRACKS_TITLE, trackFromIdea } from "./project-write";
-import { fenceMask, parseTrackHeading, readProject, scanIdeas, withMarker, type SectionKind, type TrackStatus } from "./project-note";
+import { fenceMask, parseTrackHeading, readProject, scanIdeas, STATUS_INFO, type SectionKind, type TrackStatus } from "./project-note";
 
 export interface Conversion {
 	/** The converted lines; the input itself (same array) when there was nothing to convert. */
@@ -23,9 +23,14 @@ const SECTION_STATUS: Partial<Record<SectionKind, TrackStatus>> = {
 /** Sections whose top-level bullets become tracks too, and that are removed once empty. */
 const BULLET_SECTIONS: ReadonlySet<SectionKind> = new Set(["improve", "backlog", "doing"]);
 
-/** The sub-heading with the written marker of `status`. An existing ★ or ⭐ is replaced, any other marker is kept. */
-function convertHeading(raw: string, status: TrackStatus, text: string): string {
-	return parseTrackHeading(text).status === "explore" ? (withMarker(raw, status) ?? raw) : raw;
+/**
+ * The sub-heading in its canonical form `<#…> <marker> <title>`, without indentation. A missing marker
+ * or an existing ★ or ⭐ becomes the written marker of `status`; any other marker is kept as written.
+ */
+function convertHeading(level: number, status: TrackStatus, text: string): string {
+	const { status: own, marker, title } = parseTrackHeading(text);
+	const written = own === "explore" ? STATUS_INFO[status].marker : (marker ?? "");
+	return `${"#".repeat(level)} ${written}${title === "" ? "" : ` ${title}`}`;
 }
 
 /** One edit replacing the lines that differ between `before` and `after` (common start and end kept); null when equal. */
@@ -52,7 +57,6 @@ export function convertProject(lines: readonly string[], tracksTitle: string = D
 	const fence = fenceMask(lines);
 	const removed = new Array<boolean>(lines.length).fill(false);
 	const moves: Array<{ line: number; lines: string[] }> = [];
-	const emptied = new Set<number>();
 	const trackLevel = model.level + 1;
 	const remove = (from: number, to: number): void => void removed.fill(true, from, to);
 
@@ -62,30 +66,29 @@ export function convertProject(lines: readonly string[], tracksTitle: string = D
 		const touch = (line: number, block: string[], from: number, to: number): void => {
 			moves.push({ line, lines: block });
 			remove(from, to);
-			emptied.add(section.line);
 		};
 		for (const heading of headings) {
 			if (heading.line <= section.line || heading.line >= section.end || heading.level !== trackLevel) continue;
 			const next = headings.find((candidate) => candidate.line > heading.line && candidate.level <= heading.level)?.line ?? lines.length;
 			const end = lastNonBlank([...lines], heading.line + 1, next) + 1;
-			touch(heading.line, [convertHeading(lines[heading.line] ?? "", status, heading.text), ...lines.slice(heading.line + 1, end)], heading.line, end);
+			touch(heading.line, [convertHeading(heading.level, status, heading.text), ...lines.slice(heading.line + 1, end)], heading.line, end);
 		}
 		if (!BULLET_SECTIONS.has(section.kind)) continue;
 		for (const idea of scanIdeas(lines, section.line + 1, section.end, fence)) {
 			if (!removed[idea.line]) touch(idea.line, trackFromIdea(trackLevel, status, idea), idea.line, idea.end);
 		}
 	}
-	if (moves.length === 0) return unchanged;
 
 	let sectionsRemoved = 0;
 	for (const section of model.sections) {
-		if (!BULLET_SECTIONS.has(section.kind) || !emptied.has(section.line)) continue;
+		if (!BULLET_SECTIONS.has(section.kind)) continue;
 		let empty = true;
 		for (let i = section.line + 1; i < section.end; i++) if (!removed[i] && (lines[i] ?? "").trim() !== "") empty = false;
 		if (!empty) continue;
 		remove(section.line, section.end);
 		sectionsRemoved++;
 	}
+	if (moves.length === 0 && sectionsRemoved === 0 && model.tracksSection) return unchanged;
 
 	moves.sort((a, b) => a.line - b.line);
 	const appended = moves.flatMap((move) => ["", ...move.lines]);
