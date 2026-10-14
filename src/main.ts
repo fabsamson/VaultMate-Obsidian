@@ -6,6 +6,7 @@ import { ContextFeature } from "./features/context/context";
 import { IdeasFeature } from "./features/ideas/ideas";
 import { JournalFeature } from "./features/journal/journal";
 import { LocationFeature } from "./features/location/location";
+import { ProjectsFeature } from "./features/projects/projects";
 import { VaultMateSettingTab } from "./settings";
 import { HUB_VIEW_TYPE, HubView, type HubPage } from "./ui/hub-view";
 import { CAT_ICON_ID, CAT_ICON_SVG } from "./ui/icon";
@@ -15,6 +16,8 @@ export default class VaultMatePlugin extends Plugin {
 	private readonly journal = new JournalFeature(this);
 	/** The idea index is public for live tests and for the coming pages: `app.plugins.plugins.vaultmate.ideas.index`. */
 	public readonly ideas = new IdeasFeature(this);
+	/** The project-note index is public like the idea index: `app.plugins.plugins.vaultmate.projects.index`. */
+	public readonly projects = new ProjectsFeature(this);
 	private readonly aiActions = new AiActionsFeature(this);
 	private readonly location = new LocationFeature(this);
 	/** New connections. Public: `app.plugins.plugins.vaultmate.context.connections(file)` for measuring and for the hub. */
@@ -35,6 +38,7 @@ export default class VaultMatePlugin extends Plugin {
 		});
 		this.journal.register();
 		this.ideas.register();
+		this.projects.register();
 		this.aiActions.register();
 		this.location.register();
 		this.context.register();
@@ -53,6 +57,7 @@ export default class VaultMatePlugin extends Plugin {
 	public onSettingsChanged(): void {
 		this.journal.onSettingsChanged();
 		this.ideas.onSettingsChanged();
+		this.projects.onSettingsChanged();
 		this.aiActions.onSettingsChanged();
 		this.refreshHubs();
 	}

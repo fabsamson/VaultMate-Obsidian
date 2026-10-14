@@ -44,6 +44,7 @@ describe("normalizeSettings", () => {
 			journal: { enabled: false, decisionTag: "choix", predictionTag: "pari" },
 			journalState: { lastNoticeDate: "2026-10-09" },
 			ideas: { enabled: false, tag: "idee", newNoteFolder: "Ideas", newNoteTemplate: "Templates/Idea.md" },
+			projects: { enabled: false, tracksTitle: "🧭 Pistes" },
 			ai: { enabled: false, baseUrl: "http://localhost:1234/v1", model: "local", apiKeySecret: "kotoba-key", actionsFolder: "Prompts/AI" },
 			aiState: { confirmed: { "Prompts/AI/A.md": ["note", "properties"] }, notInterested: { movie: ["Heat"] } },
 			collections: { folder: "Media", typeProperty: "kind", ratingProperty: "score" },

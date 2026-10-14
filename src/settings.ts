@@ -1,7 +1,7 @@
 import { Notice, PluginSettingTab, SecretComponent, type Setting, type SettingDefinitionItem } from "obsidian";
 
 import { validateBaseUrl } from "./core/ai/endpoint";
-import { DEFAULT_SETTINGS, MAX_CONNECTIONS, validateActionsFolder, validateDistinctCollectionProperties, validateDistinctIdeaTag, validateDistinctProperties, validateDistinctTags, validatePropertyList, validatePropertyName, validateTag, parseList, cleanFolderPath } from "./core/settings-model";
+import { DEFAULT_SETTINGS, MAX_CONNECTIONS, validateActionsFolder, validateDistinctCollectionProperties, validateDistinctIdeaTag, validateDistinctProperties, validateDistinctTags, validatePropertyList, validatePropertyName, validateTag, validateTracksTitle, parseList, cleanFolderPath } from "./core/settings-model";
 import { createDefaultActions } from "./features/ai-actions/default-actions";
 import type VaultMatePlugin from "./main";
 
@@ -83,6 +83,22 @@ export class VaultMateSettingTab extends PluginSettingTab {
 						name: "New note template",
 						desc: "Optional note used as the template of notes created from ideas. It can use {{title}}, {{idea}}, {{source}} and {{date}}.",
 						control: { type: "file", key: "ideas.newNoteTemplate", placeholder: "No template", filter: (file) => file.extension === "md" },
+					},
+				],
+			},
+			{
+				type: "group",
+				heading: "Projects",
+				items: [
+					{
+						name: "Enable projects",
+						desc: "Move the tracks of a project note between statuses (explore, backlog, in progress, done, dropped), promote its ideas to tracks and convert older notes.",
+						control: { type: "toggle", key: "projects.enabled" },
+					},
+					{
+						name: "Tracks section title",
+						desc: "Heading of the Tracks section VaultMate creates in a note that has none. It needs the \u{1F9ED} symbol or the word track or tracks.",
+						control: { type: "text", key: "projects.tracksTitle", placeholder: DEFAULT_SETTINGS.projects.tracksTitle, validate: validateTracksTitle },
 					},
 				],
 			},
