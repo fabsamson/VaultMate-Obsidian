@@ -194,7 +194,7 @@ export class IdeasFeature {
 		}
 		// On mobile the editor may still be loading the text when `openFile` resolves.
 		for (let wait = 0; wait < 20 && view.editor.getValue() === "" && file.stat.size > 0; wait++) {
-			await new Promise((resolve) => activeWindow.setTimeout(resolve, 50));
+			await new Promise((resolve) => window.setTimeout(resolve, 50));
 		}
 		return view;
 	}
