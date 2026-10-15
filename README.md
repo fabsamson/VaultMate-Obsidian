@@ -14,6 +14,7 @@ Write a decision or a prediction anywhere in a note as a task-style line, such a
 - **Track record:** the hub's "Track record" section shows hanko stamps for hits, misses and reviews done, your Brier score and a calibration row per probability band (once five predictions are resolved), a decision quality by outcome table, and the latest lessons from your reviews.
 - **Review:** the **Review this line** command, the badge or the panel opens a form that shows what you wrote and expected. Close the entry with its outcome, or review again later. The review is written as a `Review <date>: …` sub-item under the line.
 - **Panel:** the Reviews section lists open entries as overdue, this week, upcoming, or without a review date. A notice tells you once a day when reviews are due.
+- **Closed without a review:** an entry ticked done without its review (a decision without `[outcome: …]` or `[quality: …]`, a prediction without `[result: …]`) is listed in its own group under the Reviews, and counted under the track record instead of being ignored. **Add the outcome** opens the review form with the fields already on the line filled in; it writes only the missing fields, keeps the box ticked and the existing ✅ date, and adds a `Review <date>: …` sub-item only if you typed a note. **Not reviewable** turns the box into `[-]` (cancelled) so the entry leaves the list and your statistics; **Undo** shows for a few seconds.
 
 ## Ideas
 
@@ -152,6 +153,18 @@ For the app's developers. The Ideas list of the VaultMate Android app opens an i
 - `line`: the 0-based index of the idea's line, as the app read it.
 
 When the Ideas feature is on, the plugin opens the note (in the pane already showing it, else the current one), puts the cursor on that line and opens the idea portal for it. If the note changed since the app read it, it uses the nearest open idea within 3 lines; if there is none, the note stays open at the line with a message. A processed idea is not reopened. A missing note, a missing `file` or a `line` that is not a non-negative integer is refused with a message. The link only opens: it never writes, and every change still needs a click in the portal.
+
+### Review link
+
+For the app's developers. The VaultMate Android app shows a **Review** button, instead of a checkbox, on every open decision or prediction. It opens the entry in Obsidian with:
+
+`obsidian://vaultmate-review?vault=<vault name>&file=<path>&line=<index>`
+
+- `vault`: handled by Obsidian itself.
+- `file`: the note's path relative to the vault, percent-encoded, with or without `.md` (the same path as for `obsidian://open`).
+- `line`: the 0-based index of the entry's line, as the app read it.
+
+When the decision journal is on, the plugin opens the note (in the pane already showing it, else the current one), puts the cursor on that line and opens the review form. If the note changed since the app read it, it uses the nearest decision or prediction within 3 lines that still needs a review; if there is none, the note stays open at the line with a message. An entry ticked without a review opens **Add the outcome** instead; an entry already reviewed or cancelled only gets a message. A missing note, a missing `file` or a `line` that is not a non-negative integer is refused with a message. The link only opens: it never writes, and every change still needs a click in the form.
 
 ## Privacy
 
