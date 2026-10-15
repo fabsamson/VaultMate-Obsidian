@@ -75,7 +75,8 @@ function statementOf(item: IdeaItem): string {
 
 function activeEditor(app: App, path: string): Editor | null {
 	const view = app.workspace.getActiveViewOfType(MarkdownView);
-	return view?.file?.path === path ? view.editor : null;
+	// Not in reading view: it keeps its own copy of the text, and an edit through its hidden editor is never saved.
+	return view?.file?.path === path && view.getMode() === "source" ? view.editor : null;
 }
 
 /** The lines of a note, from the editor when it is open there. */

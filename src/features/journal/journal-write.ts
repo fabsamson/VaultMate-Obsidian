@@ -32,7 +32,8 @@ export async function writeEntryLine(
 	refusal: string | null = CHANGED,
 ): Promise<boolean> {
 	const view = app.workspace.getActiveViewOfType(MarkdownView);
-	if (view?.file?.path === target.path) {
+	// Reading view keeps its own copy of the text: an edit through its hidden editor would never be saved.
+	if (view?.file?.path === target.path && view.getMode() === "source") {
 		const { editor } = view;
 		const lines = editorLines(editor);
 		const plan = planRewrite(lines, target.line, target.raw, newLine, subItem, appended);

@@ -29,7 +29,8 @@ export function applyToEditor(editor: Editor, plan: InsertPlan): void {
 export async function insertQuestions(app: App, path: string, target: InsertTarget, questions: string[]): Promise<InsertResult> {
 	const rendered = questions.map((question) => renderLine(target.line, question));
 	const view = app.workspace.getActiveViewOfType(MarkdownView);
-	const editor = view?.file?.path === path ? view.editor : null;
+	// Not in reading view: it keeps its own copy of the text, and an edit through its hidden editor is never saved.
+	const editor = view?.file?.path === path && view.getMode() === "source" ? view.editor : null;
 
 	const plan = (lines: string[], cursorLine: number): InsertPlan | null =>
 		target.type === "heading" ? planHeadingInsert(lines, target.heading, rendered) : planCursorInsert(lines, cursorLine, rendered);

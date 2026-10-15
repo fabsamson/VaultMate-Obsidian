@@ -7,10 +7,13 @@ import { editorLines } from "../journal/journal-write";
 import { applyToEditor } from "../ai-actions/insert-write";
 import { applyEdits, refusalMessage, type Edit, type WritePlan } from "./project-write";
 
-/** The editor showing `path` in the active Markdown view, or null. */
+/**
+ * The editor showing `path` in the active Markdown view, or null. Not in reading view: it keeps its own
+ * copy of the text, and an edit through its hidden editor is never saved.
+ */
 export function editorFor(app: App, path: string): Editor | null {
 	const view = app.workspace.getActiveViewOfType(MarkdownView);
-	return view?.file?.path === path ? view.editor : null;
+	return view?.file?.path === path && view.getMode() === "source" ? view.editor : null;
 }
 
 /** The lines of a note: the editor's when the note is open there, else the file's. Null when the note is gone. */
