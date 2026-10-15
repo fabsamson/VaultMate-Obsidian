@@ -1,6 +1,6 @@
 // The track record (plan §4, F1): what closed predictions and decisions say about the user's judgment.
 // Pure: no Obsidian import, so Vitest tests it.
-import { OUTCOMES, QUALITIES, type JournalEntry, type Outcome, type PredictionResult, type Quality } from "./journal-line";
+import { closedWithoutReview, OUTCOMES, QUALITIES, type JournalEntry, type Outcome, type PredictionResult, type Quality } from "./journal-line";
 
 /** The least number of resolved predictions for a Brier score and calibration bands to mean something. */
 export const MIN_SCORED = 5;
@@ -54,6 +54,8 @@ export interface TrackRecord<T> {
 	lessons: Lesson<T>[];
 	/** Closed entries, decisions and predictions. */
 	reviewsDone: number;
+	/** Done entries without the outcome a review writes: they are in no statistic. */
+	unreviewed: number;
 }
 
 interface Scored {
@@ -134,5 +136,6 @@ export function computeTrackRecord<T extends { entry: JournalEntry; children: st
 		decisions: decisionStats(entries),
 		lessons,
 		reviewsDone: entries.filter((entry) => entry.status === "done").length,
+		unreviewed: entries.filter(closedWithoutReview).length,
 	};
 }

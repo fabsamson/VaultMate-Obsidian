@@ -126,6 +126,12 @@ describe("computeTrackRecord", () => {
 		expect(record.lessons.map((lesson) => lesson.text)).toEqual(["third", "second", "first"]);
 		expect(record.lessons[0]?.item).toBe(a);
 		expect(record.reviewsDone).toBe(2);
+		expect(record.unreviewed).toBe(0);
+	});
+
+	it("counts the entries ticked without a review, not the cancelled or open ones", () => {
+		const lines = ["- [x] A #decision [outcome: better]", "- [x] B #prediction", "- [-] C #prediction", "- [ ] D #decision", "- [x] E #decision [outcome: better] [quality: good]"];
+		expect(computeTrackRecord(lines.map((line) => item(line))).unreviewed).toBe(2);
 	});
 
 	it("is empty without entries", () => {

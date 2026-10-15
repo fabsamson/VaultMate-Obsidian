@@ -207,6 +207,34 @@ export function closeEntry(line: string, options: CloseOptions): string {
 	return serializeTaskLine({ ...parsed, body: setTaskDate(body, "done", options.today) });
 }
 
+/** A done entry that lacks what a review writes: a decision without outcome or quality, a prediction without result. Cancelled entries never count. */
+export function closedWithoutReview(entry: JournalEntry): boolean {
+	if (entry.status !== "done") return false;
+	return entry.kind === "decision" ? entry.outcome === null || entry.quality === null : entry.result === null;
+}
+
+/**
+ * Adds the outcome to an entry that was ticked without a review. Only the review fields are written; the box
+ * stays `[x]` and an existing ✅ date stays (✅ today is added when there is none).
+ */
+export function addOutcome(line: string, options: CloseOptions): string {
+	const parsed = parseTaskLine(line);
+	let { body } = parsed;
+	if (options.kind === "decision") {
+		body = setInlineField(body, "outcome", options.outcome);
+		body = setInlineField(body, "quality", options.quality);
+	} else {
+		body = setInlineField(body, "result", options.result);
+	}
+	if (!getTaskDate(body, "done")) body = setTaskDate(body, "done", options.today);
+	return serializeTaskLine({ ...parsed, body });
+}
+
+/** Cancels an entry that was ticked without a review: `[x]` becomes `[-]`, the rest of the line stays. */
+export function markNotReviewable(line: string): string {
+	return serializeTaskLine(setTaskStatus(parseTaskLine(line), "-"));
+}
+
 /** An intermediate review: the box stays open and 📅 moves to the new date. */
 export function reviewAgain(line: string, due: string): string {
 	const parsed = parseTaskLine(line);
