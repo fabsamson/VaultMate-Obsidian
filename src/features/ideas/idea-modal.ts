@@ -253,7 +253,8 @@ export class IdeaModal extends JournalModal {
 			headingSelect.empty();
 			headingSelect.createEl("option", { value: "", text: "End of note" });
 			for (const heading of headings) headingSelect.createEl("option", { value: heading.text, text: `${"#".repeat(heading.level)} ${heading.text}` });
-			headingSelect.value = defaultIdeaHeading(headings) ?? "";
+			// The default is read in note order: a track whose title says "idea" must not win over the Ideas section.
+			headingSelect.value = defaultIdeaHeading([...headings].sort((a, b) => a.line - b.line)) ?? "";
 		};
 		const refresh = (): void => {
 			const file = existing();
