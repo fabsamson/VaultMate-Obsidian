@@ -4,13 +4,15 @@ import { createPanel } from "../../ui/components";
 import { createSprite } from "../../ui/pixel";
 import { SPRITES } from "../../ui/sprites";
 import type { JournalItem } from "./journal-index";
-import { groupByDue, kindName } from "./journal-line";
+import { groupByDue, kindName, otherKind, type JournalKind } from "./journal-line";
 
 export interface ReviewsHost {
 	decisionTag(): string;
 	/** Opens the note at the entry's line. */
 	openItem(item: JournalItem): void;
 	openReview(item: JournalItem): void;
+	/** Tracks an undated or plain line as `kind`: the review form of a new entry, then the line is rewritten. */
+	track(item: JournalItem, kind: JournalKind): void;
 }
 
 const UPCOMING_SHOWN = 5;
@@ -25,7 +27,7 @@ export function createReviewsBlock(host: ReviewsHost): (body: HTMLElement, items
 	let showAllUpcoming = false;
 	let shownItems: JournalItem[] = [];
 
-	const renderRow = (list: HTMLElement, item: JournalItem, today: Date): void => {
+	const renderRow = (list: HTMLElement, item: JournalItem, today: Date, untracked = false): void => {
 		const { entry } = item;
 		const row = list.createDiv({ cls: "vaultmate-review-row" });
 		createSprite(row, entry.kind === "decision" ? SPRITES.moduleDecision : SPRITES.modulePrediction, 24);
@@ -35,16 +37,24 @@ export function createReviewsBlock(host: ReviewsHost): (body: HTMLElement, items
 		const due = entry.due === null ? null : parseDate(entry.due);
 		main.createSpan({ cls: "vaultmate-muted", text: `${noteName(item.path)} · ${due ? dueLabel(due, today) : "no review date"}` });
 		main.addEventListener("click", () => host.openItem(item));
+		if (untracked) {
+			// The tag says which kind the line was written as; the other one is offered too.
+			for (const kind of [entry.kind, otherKind(entry.kind)]) {
+				const track = row.createEl("button", { cls: "vaultmate-button", text: `Track as ${kindName(kind)}`, attr: { type: "button", "aria-label": `Track as ${kindName(kind)}: ${entry.statement}` } });
+				track.addEventListener("click", () => host.track(item, kind));
+			}
+			return;
+		}
 		const review = row.createEl("button", { cls: "vaultmate-button", text: "Review", attr: { type: "button", "aria-label": `Review ${kindName(entry.kind)}: ${entry.statement}` } });
 		review.addEventListener("click", () => host.openReview(item));
 	};
 
-	const renderGroup = (body: HTMLElement, title: string, items: JournalItem[], today: Date, limit?: number): void => {
+	const renderGroup = (body: HTMLElement, title: string, items: JournalItem[], today: Date, limit?: number, untracked = false): void => {
 		if (items.length === 0) return;
 		const group = body.createDiv({ cls: "vaultmate-review-group" });
 		group.createDiv({ cls: "vaultmate-review-group-title", text: `${title} · ${items.length}`, attr: { role: "heading", "aria-level": "3" } });
 		const shown = limit !== undefined && !showAllUpcoming ? items.slice(0, limit) : items;
-		for (const item of shown) renderRow(group, item, today);
+		for (const item of shown) renderRow(group, item, today, untracked);
 		if (shown.length < items.length) {
 			const more = group.createEl("button", { cls: "vaultmate-link", text: `${items.length - shown.length} more`, attr: { type: "button" } });
 			more.addEventListener("click", () => {
@@ -68,7 +78,7 @@ export function createReviewsBlock(host: ReviewsHost): (body: HTMLElement, items
 		renderGroup(body, "Overdue", groups.overdue, today);
 		renderGroup(body, "This week", groups.week, today);
 		renderGroup(body, "Upcoming", groups.upcoming, today, UPCOMING_SHOWN);
-		renderGroup(body, "No review date", groups.undated, today);
+		renderGroup(body, "Not tracked yet", groups.undated, today, undefined, true);
 	};
 
 	return (body, items) => {

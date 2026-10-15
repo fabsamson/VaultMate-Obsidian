@@ -11,10 +11,13 @@ import {
 	ensureTag,
 	getDescription,
 	getInlineField,
+	getTags,
 	getTaskDate,
 	hasTag,
+	isTagOrSubtag,
 	parseTaskLine,
 	removeInlineField,
+	replaceTag,
 	serializeTaskLine,
 	setInlineField,
 	setTaskDate,
@@ -123,6 +126,38 @@ export function classifyLine(line: string, tags: JournalTags): LineClass | null 
 	return kind ? { type: "plain", kind, statement: getDescription(body) } : null;
 }
 
+export function otherKind(kind: JournalKind): JournalKind {
+	return kind === "decision" ? "prediction" : "decision";
+}
+
+/**
+ * The body with the tag of `kind`: a tag of the other kind is turned into it in place, sub-tag kept
+ * (`#decision/work` tracked as a prediction becomes `#prediction/work`); otherwise the tag is added.
+ */
+function swapKindTag(body: string, kind: JournalKind, tags: JournalTags): string {
+	const own = tagOf(kind, tags);
+	const other = tagOf(otherKind(kind), tags);
+	const found = hasTag(body, own) ? undefined : getTags(body).find((name) => isTagOrSubtag(name, other));
+	if (found === undefined) return ensureTag(body, own);
+	return replaceTag(body, other, `${own}${found.slice(other.replace(/^#/, "").length)}`) ?? ensureTag(body, own);
+}
+
+/**
+ * What the index keeps for a line: a journal task, or a line that only carries the tag (`- Move to Lyon
+ * #decision`), read as an open entry with no dates until it is tracked. Null for anything else.
+ */
+export function indexedEntry(line: string, tags: JournalTags): { entry: JournalEntry; plain: boolean } | null {
+	const cls = classifyLine(line, tags);
+	if (cls?.type === "entry") return { entry: cls.entry, plain: false };
+	if (cls?.type !== "plain") return null;
+	return { entry: { ...buildEntry(cls.kind, " ", parseTaskLine(line).body), created: null, due: null, done: null }, plain: true };
+}
+
+/** An open entry with no review date, or a plain tagged line: it is offered to be tracked. */
+export function isUntracked(entry: JournalEntry): boolean {
+	return entry.status === "open" && entry.due === null;
+}
+
 /** The entry on a line, or null when the line is not a task with the decision or prediction tag. */
 export function parseJournalLine(line: string, tags: JournalTags): JournalEntry | null {
 	const cls = classifyLine(line, tags);
@@ -174,7 +209,7 @@ export function convertToEntry(line: string, options: ConvertOptions): string {
 		parsed = { ...parsed, body: parsed.body.slice(prose?.[0].length ?? 0).replace(/^\p{Ll}/u, (c) => c.toUpperCase()) };
 	}
 	let { body } = toTaskLine(parsed);
-	body = ensureTag(body, tagOf(options.kind, options.tags));
+	body = swapKindTag(body, options.kind, options.tags);
 	const answer = cleanAnswer(options.answer ?? "");
 	if (answer) {
 		// A new answer goes before an existing confidence (contract order): lift the confidence and put it back after.

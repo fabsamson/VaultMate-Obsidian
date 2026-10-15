@@ -1,9 +1,9 @@
-// The journal index: every decision and prediction entry of the vault, kept current from the metadata
-// cache by the shared tagged-line index.
+// The journal index: every decision and prediction entry of the vault, and the plain lines that only carry
+// the tag (to be tracked), kept current from the metadata cache by the shared tagged-line index.
 import { TaggedLineIndex } from "../../core/tagged-line-index";
 import { isTagOrSubtag } from "../../core/task-line";
 import type VaultMatePlugin from "../../main";
-import { classifyLine, type JournalEntry, type JournalTags } from "./journal-line";
+import { indexedEntry, type JournalEntry, type JournalTags } from "./journal-line";
 import { getChildren } from "./journal-note";
 
 /** An entry with its place in the vault. L1.B reads these. */
@@ -16,6 +16,8 @@ export interface JournalItem {
 	entry: JournalEntry;
 	/** Text of the sub-items (Why, Expected, Signals, earlier reviews), without list markers. */
 	children: string[];
+	/** A line that carries the tag but is not a task yet: open, undated, offered to be tracked. */
+	plain?: boolean;
 }
 
 /** Whether a cached tag (`#decision`, `#Decision/work`) is one of the journal tags. */
@@ -31,8 +33,9 @@ export class JournalIndex extends TaggedLineIndex<JournalItem> {
 ${plugin.settings.journal.predictionTag}`,
 			isTag: (tag) => isJournalTag(tag, plugin.settings.journal),
 			parse: ({ path }, line, raw, lines) => {
-				const cls = classifyLine(raw, plugin.settings.journal);
-				return cls?.type === "entry" ? { path, line, raw, entry: cls.entry, children: getChildren(lines, line).items } : null;
+				const found = indexedEntry(raw, plugin.settings.journal);
+				if (!found) return null;
+				return { path, line, raw, entry: found.entry, children: getChildren(lines, line).items, ...(found.plain ? { plain: true } : {}) };
 			},
 		});
 	}
