@@ -1,0 +1,77 @@
+[
+ {
+  "input": "Calendrier du ribbon",
+  "max": 80,
+  "expected": "Calendrier du ribbon"
+ },
+ {
+  "input": "  Ajouter   un calendrier\nen bas\tdu ribbon  ",
+  "max": 80,
+  "expected": "Ajouter un calendrier en bas du ribbon"
+ },
+ {
+  "input": "Une fonctionnalite de [[Gardening]] des idees",
+  "max": 80,
+  "expected": "Une fonctionnalite de Gardening des idees"
+ },
+ {
+  "input": "Voir [[Notes/Gardening|le jardin]] et [la doc](https://example.com/#a)",
+  "max": 80,
+  "expected": "Voir le jardin et la doc"
+ },
+ {
+  "input": "★ Context engine",
+  "max": 80,
+  "expected": "Context engine"
+ },
+ {
+  "input": "🗑️Promotion sur Reddit",
+  "max": 80,
+  "expected": "Promotion sur Reddit"
+ },
+ {
+  "input": "Tag #idea et ^bloc | pipe \\ back [x]",
+  "max": 80,
+  "expected": "Tag idea et bloc pipe back x"
+ },
+ {
+  "input": "Question ? oui : non / ok · F1",
+  "max": 80,
+  "expected": "Question ? oui : non / ok · F1"
+ },
+ {
+  "input": "",
+  "max": 80,
+  "expected": ""
+ },
+ {
+  "input": "#### ",
+  "max": 80,
+  "expected": ""
+ },
+ {
+  "input": "新しいノートアプリに移行する",
+  "max": 80,
+  "expected": "新しいノートアプリに移行する"
+ },
+ {
+  "input": "Avoir une gestion des idée similaires a decision ou prediction, avec possibilité de créer un projet a partir d'une idée",
+  "max": 60,
+  "expected": "Avoir une gestion des idée similaires a decision ou"
+ },
+ {
+  "input": "Avoir une gestion des idée similaires a decision ou prediction, avec possibilité de créer un projet a partir d'une idée",
+  "max": 80,
+  "expected": "Avoir une gestion des idée similaires a decision ou prediction, avec possibilité"
+ },
+ {
+  "input": "abcdefghij klmnop",
+  "max": 10,
+  "expected": "abcdefghij"
+ },
+ {
+  "input": "abcdefghijklmnopqrstuvwxyz",
+  "max": 10,
+  "expected": "abcdefghij"
+ }
+]
