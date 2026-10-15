@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
 	badgeFor,
 	classifyLine,
+	cleanAnswer,
 	closeEntry,
 	convertToEntry,
 	countDue,
@@ -32,6 +33,7 @@ describe("parseJournalLine", () => {
 			kind: "decision",
 			status: "open",
 			statement: "Switch the team to a four-day week",
+			answer: null,
 			confidence: 60,
 			created: "2026-08-25",
 			due: "2026-09-25",
@@ -331,5 +333,80 @@ describe("badgeFor", () => {
 		expect(badge("Decision: x")).toEqual({ text: "⚖ Track as decision", action: "track", kind: "decision" });
 		expect(badge("Prédiction : x").text).toBe("◔ Track as prediction");
 		expect(badge("Plain #decision").action).toBe("track");
+	});
+});
+
+describe("question answers", () => {
+	const Q = { ...OPTIONS, answer: "yes, in January", confidence: 70 };
+
+	it("writes the answer before the confidence, on a fresh line", () => {
+		expect(convertToEntry("- [ ] Should I move to Lyon?", Q)).toBe(
+			"- [ ] Should I move to Lyon? #decision [answer: yes, in January] [confidence: 70%] ➕ 2026-10-09 📅 2027-01-09",
+		);
+		expect(convertToEntry("Prediction: who wins the league?", { ...Q, kind: "prediction", answer: "Lens", confidence: 40 })).toBe(
+			"- [ ] Who wins the league? #prediction [answer: Lens] [confidence: 40%] ➕ 2026-10-09 📅 2027-01-09",
+		);
+	});
+
+	it("converts a prose decision with an answer and no confidence", () => {
+		expect(convertToEntry("Decision: Should I move to Lyon?", { ...OPTIONS, answer: "yes" })).toBe(
+			"- [ ] Should I move to Lyon? #decision [answer: yes] ➕ 2026-10-09 📅 2027-01-09",
+		);
+	});
+
+	it("writes nothing for an empty or missing answer", () => {
+		const plain = "- [ ] Move #decision ➕ 2026-10-09 📅 2027-01-09";
+		expect(convertToEntry("- [ ] Move", { ...OPTIONS, answer: "  " })).toBe(plain);
+		expect(convertToEntry("- [ ] Move", { ...OPTIONS, answer: null })).toBe(plain);
+		expect(convertToEntry("- [ ] Move", OPTIONS)).toBe(plain);
+	});
+
+	it("puts a new answer before the confidence already on the line", () => {
+		expect(convertToEntry("- [ ] Should I? #decision [confidence: 60%]", { ...OPTIONS, answer: "no" })).toBe(
+			"- [ ] Should I? #decision [answer: no] [confidence: 60%] ➕ 2026-10-09 📅 2027-01-09",
+		);
+	});
+
+	it("keeps an existing answer when the input is empty and replaces it otherwise", () => {
+		const line = "- [ ] Should I? #decision [answer: yes] [confidence: 60%]";
+		expect(convertToEntry(line, { ...OPTIONS, answer: "" })).toBe("- [ ] Should I? #decision [answer: yes] [confidence: 60%] ➕ 2026-10-09 📅 2027-01-09");
+		expect(convertToEntry(line, { ...OPTIONS, answer: "no" })).toBe("- [ ] Should I? #decision [answer: no] [confidence: 60%] ➕ 2026-10-09 📅 2027-01-09");
+	});
+
+	it("cleans the text: one line, trimmed, brackets turned into parentheses", () => {
+		expect(cleanAnswer("  yes,\n  [maybe]  later ")).toBe("yes, (maybe) later");
+		const line = convertToEntry("- [ ] Should I?", { ...OPTIONS, answer: "a [b] c" });
+		expect(line).toBe("- [ ] Should I? #decision [answer: a (b) c] ➕ 2026-10-09 📅 2027-01-09");
+	});
+
+	it("parses the answer, and the statement does not include it", () => {
+		const e = entry("- [ ] Should I move to Lyon? #decision [answer: yes, in January] [confidence: 70%] ➕ 2026-10-15 📅 2027-01-15");
+		expect(e.answer).toBe("yes, in January");
+		expect(e.statement).toBe("Should I move to Lyon?");
+		expect(e.confidence).toBe(70);
+		expect(e.due).toBe("2027-01-15");
+		expect(entry("- [ ] Move #decision [confidence: 70%]").answer).toBeNull();
+		expect(entry("- [ ] Move #decision [answer: ] [confidence: 70%]").answer).toBeNull();
+	});
+
+	it("round-trips awkward answers", () => {
+		const answers = [
+			"see #plan: then 📅 2027-01-01",
+			"https://example.com/a?b=c#d",
+			"non, on reste à Paris : c'est décidé",
+			"来月引っ越す 📅 ✅ ➕",
+			"key: value, other: thing",
+			"`code` and *bold*",
+			"#decision",
+		];
+		for (const answer of answers) {
+			const line = convertToEntry("- [ ] Should I?", { ...OPTIONS, kind: "prediction", answer, confidence: 55 });
+			const e = entry(line);
+			expect(e.answer, answer).toBe(answer);
+			expect(e.statement, answer).toBe("Should I?");
+			expect(e.confidence, answer).toBe(55);
+			expect(e.due, answer).toBe("2027-01-09");
+			expect(e.created, answer).toBe("2026-10-09");
+		}
 	});
 });

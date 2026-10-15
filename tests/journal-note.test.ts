@@ -167,6 +167,13 @@ describe("newEntryLines", () => {
 		]);
 	});
 
+	it("writes the answer before the confidence, with the extras", () => {
+		expect(newEntryLines({ ...base, statement: "Should I move?", answer: "yes [soon]", extras: [["Why", "x"]] })).toEqual([
+			"- [ ] Should I move? #decision [answer: yes (soon)] [confidence: 70%] ➕ 2026-10-09 📅 2027-01-09",
+			"    - Why: x",
+		]);
+	});
+
 	it("builds a prediction without sub-items and with the tab indentation", () => {
 		expect(newEntryLines({ ...base, kind: "prediction", statement: "It rains", extras: [], tabs: true })).toEqual([
 			"- [ ] It rains #prediction [confidence: 70%] ➕ 2026-10-09 📅 2027-01-09",

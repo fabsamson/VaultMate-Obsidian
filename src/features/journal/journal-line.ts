@@ -14,6 +14,7 @@ import {
 	getTaskDate,
 	hasTag,
 	parseTaskLine,
+	removeInlineField,
 	serializeTaskLine,
 	setInlineField,
 	setTaskDate,
@@ -42,6 +43,8 @@ export interface JournalEntry {
 	status: JournalStatus;
 	/** The description without tags, inline fields and emojis. */
 	statement: string;
+	/** The `[answer: …]` text for a statement written as a question, or null when absent or empty. */
+	answer: string | null;
 	/** 0 to 100, or null when absent or invalid. */
 	confidence: number | null;
 	/** `YYYY-MM-DD` texts, or null. */
@@ -74,6 +77,11 @@ export function tagOf(kind: JournalKind, tags: JournalTags): string {
 function tagKind(body: string, tags: JournalTags): JournalKind | null {
 	if (hasTag(body, tags.decisionTag)) return "decision";
 	return hasTag(body, tags.predictionTag) ? "prediction" : null;
+}
+
+/** The text of an `[answer: …]` field: one line, trimmed, brackets turned into parentheses (a `]` would end the field). */
+export function cleanAnswer(text: string): string {
+	return text.replace(/\s+/g, " ").replace(/\[/g, "(").replace(/\]/g, ")").trim();
 }
 
 /** 0 to 100 from "70%", "70", "0.7" or "70 %"; a bare number up to 1 is a fraction. Null when invalid. */
@@ -126,6 +134,7 @@ function buildEntry(kind: JournalKind, statusChar: string, body: string): Journa
 		kind,
 		status: checkboxState(statusChar),
 		statement: getDescription(body),
+		answer: getInlineField(body, "answer") || null,
 		confidence: parseConfidence(getInlineField(body, "confidence")),
 		created: getTaskDate(body, "created"),
 		due: getTaskDate(body, "due"),
@@ -145,6 +154,8 @@ export interface ConvertOptions {
 	today: string;
 	/** Review date, `YYYY-MM-DD`. */
 	due: string;
+	/** Written as `[answer: …]` (before the confidence on a new line) when not empty; an existing field is kept otherwise. */
+	answer?: string | null;
 	/** Written as `[confidence: NN%]` when not null; an existing field is kept otherwise. */
 	confidence: number | null;
 }
@@ -164,6 +175,14 @@ export function convertToEntry(line: string, options: ConvertOptions): string {
 	}
 	let { body } = toTaskLine(parsed);
 	body = ensureTag(body, tagOf(options.kind, options.tags));
+	const answer = cleanAnswer(options.answer ?? "");
+	if (answer) {
+		// A new answer goes before an existing confidence (contract order): lift the confidence and put it back after.
+		const confidence = getInlineField(body, "answer") === null ? getInlineField(body, "confidence") : null;
+		if (confidence !== null) body = removeInlineField(body, "confidence");
+		body = setInlineField(body, "answer", answer);
+		if (confidence !== null) body = setInlineField(body, "confidence", confidence);
+	}
 	if (options.confidence !== null) body = setInlineField(body, "confidence", `${options.confidence}%`);
 	if (!getTaskDate(body, "created")) body = setTaskDate(body, "created", options.today);
 	body = setTaskDate(body, "due", options.due);

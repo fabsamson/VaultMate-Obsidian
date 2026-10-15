@@ -134,6 +134,8 @@ export interface NewEntryInput {
 	today: string;
 	due: string;
 	confidence: number | null;
+	/** Optional `[answer: …]` for a statement written as a question. */
+	answer?: string;
 	statement: string;
 	/** Optional sub-items as [label, value]; empty values are skipped ("Why", "Expected"…). */
 	extras: ReadonlyArray<readonly [string, string]>;
