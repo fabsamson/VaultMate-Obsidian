@@ -38,6 +38,7 @@ export interface IdeaBadgeInfo {
 export const RESULT_LABELS: Record<IdeaResult, string> = {
 	"new-note": "New note",
 	added: "Added",
+	track: "Track",
 	decision: "Decision",
 	prediction: "Prediction",
 	dropped: "Dropped",
@@ -58,7 +59,7 @@ export function ideaBadge(idea: OpenOrProcessed, today: Date, target: string | n
 		return { text, action: "portal", label: `Process this idea. ${text}` };
 	}
 	const word = resultLabel(entry.result);
-	if (target !== null && (entry.result === "added" || entry.result === "new-note")) {
+	if (target !== null && (entry.result === "added" || entry.result === "new-note" || entry.result === "track")) {
 		const text = `${word} · ${target}`;
 		return { text, action: "note", label: `Open ${target}. ${text}` };
 	}
@@ -126,6 +127,7 @@ export const PROCESSED_FILTERS: ReadonlyArray<{ value: ProcessedFilter; label: s
 	{ value: "all", label: "All" },
 	{ value: "new-note", label: "New note" },
 	{ value: "added", label: "Added" },
+	{ value: "track", label: "Track" },
 	{ value: "decision", label: "Decision" },
 	{ value: "prediction", label: "Prediction" },
 	{ value: "dropped", label: "Dropped" },
@@ -161,6 +163,7 @@ export function monthSummary(items: readonly IdeaItem[], today: Date): string {
 	const results: Array<[IdeaResult, (n: number) => string]> = [
 		["new-note", (n) => plural(n, "new note")],
 		["added", (n) => `${n} added`],
+		["track", (n) => plural(n, "track")],
 		["decision", (n) => plural(n, "decision")],
 		["prediction", (n) => plural(n, "prediction")],
 		["dropped", (n) => `${n} dropped`],

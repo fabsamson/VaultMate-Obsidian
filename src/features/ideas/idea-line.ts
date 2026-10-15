@@ -24,7 +24,7 @@ import {
 } from "../../core/task-line";
 import { getChildren } from "../journal/journal-note";
 
-export const IDEA_RESULTS = ["dropped", "new-note", "added", "decision", "prediction"] as const;
+export const IDEA_RESULTS = ["dropped", "new-note", "added", "track", "decision", "prediction"] as const;
 export type IdeaResult = (typeof IDEA_RESULTS)[number];
 export type IdeaStatus = "open" | "done" | "cancelled";
 
@@ -114,22 +114,23 @@ export function closeIdea(line: string, tag: string, result: IdeaResult, today: 
 }
 
 /**
- * The result sub-item, without list marker: `New note: [[X]]`, `Added to [[X]]`, `Dropped: <note>`, with
- * an optional note appended (`Added to [[X]]: why`). Null when there is nothing to write: a drop without
- * a note, a missing link, and decisions and predictions (their sub-item is the journal line itself).
+ * The result sub-item, without list marker: `New note: [[X]]`, `Added to [[X]]`, `Track in [[P]]: <short
+ * name>`, `Dropped: <note>`, with an optional note appended (`Added to [[X]]: why`; for a track the "note"
+ * is the short name). Null when there is nothing to write: a drop without a note, a missing link, and
+ * decisions and predictions (their sub-item is the journal line itself).
  */
 export function resultItemText(result: IdeaResult, linkText: string | null, note: string): string | null {
 	const text = note.replace(/\s+/g, " ").trim();
 	if (result === "dropped") return text ? `Dropped: ${text}` : null;
-	if (!linkText || (result !== "new-note" && result !== "added")) return null;
-	const head = `${result === "added" ? "Added to" : "New note:"} [[${linkText}]]`;
+	if (!linkText || (result !== "new-note" && result !== "added" && result !== "track")) return null;
+	const head = `${result === "added" ? "Added to" : result === "track" ? "Track in" : "New note:"} [[${linkText}]]`;
 	return text ? `${head}: ${text}` : head;
 }
 
-/** The note an idea was sent to: the first wikilink of a `New note:` or `Added to` sub-item, without alias, heading or block. */
+/** The note an idea was sent to: the first wikilink of a `New note:`, `Added to` or `Track in` sub-item, without alias, heading or block. */
 export function resultLinkTarget(children: readonly string[]): string | null {
 	for (const child of children) {
-		if (!/^(?:New note:|Added to)/i.test(child)) continue;
+		if (!/^(?:New note:|Added to|Track in)/i.test(child)) continue;
 		const link = /\[\[([^\]]+)\]\]/.exec(child)?.[1];
 		const target = link?.split("|")[0]?.split(/[#^]/)[0]?.trim();
 		if (target) return target;

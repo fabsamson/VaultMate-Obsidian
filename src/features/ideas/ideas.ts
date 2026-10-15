@@ -36,7 +36,7 @@ export class IdeasFeature {
 	}
 
 	/**
-	 * Per note path, how many result sub-items (`Added to [[X]]`, `New note: [[X]]`) point to each resolved
+	 * Per note path, how many result sub-items (`Added to [[X]]`, `New note: [[X]]`, `Track in [[P]]: name`) point to each resolved
 	 * target path. Those links only record where an idea went: the context finder does not count them as
 	 * citations. Empty when the feature is off.
 	 */

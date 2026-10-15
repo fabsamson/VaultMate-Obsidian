@@ -20,7 +20,7 @@ export interface NoteMeta {
 	links: string[];
 	/**
 	 * The links that cite the target: `links` without those that only record where an idea was sent (the
-	 * `Added to [[X]]` sub-item). Two notes cited by one note are tied; two notes it merely recorded are not.
+	 * `Added to [[X]]` and `Track in [[P]]` sub-items). Two notes cited by one note are tied; two notes it merely recorded are not.
 	 */
 	citations: string[];
 	/** Lowercase tags without `#`. */
