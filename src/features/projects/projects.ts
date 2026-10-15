@@ -12,7 +12,7 @@ import { StatusModal, TaskModal } from "./project-modals";
 import { readProject, TRACK_STATUSES, type ProjectIdea, type ProjectTrack, type TrackStatus } from "./project-note";
 import { addTrackTask, dropIdea, promoteIdea, setTrackStatus, undoDropIdea, type NewTask } from "./project-write";
 import { createProjectsPage, PROJECTS_PAGE_ID } from "./projects-page";
-import { lineIn, moveTargets } from "./projects-model";
+import { lineIn, moveTargets, projectTags } from "./projects-model";
 
 export class ProjectsFeature {
 	public readonly index: ProjectIndex;
@@ -68,7 +68,7 @@ export class ProjectsFeature {
 	private async read(path: string): Promise<ProjectContent | null> {
 		const lines = await readNoteLines(this.plugin.app, path);
 		const file = this.plugin.app.vault.getFileByPath(path);
-		return lines && file ? { path, name: file.basename, lines, model: readProject(lines) } : null;
+		return lines && file ? { path, name: file.basename, lines, model: readProject(lines, projectTags(this.plugin.settings)) } : null;
 	}
 
 	private open(path: string, line: number): void {
@@ -134,7 +134,7 @@ export class ProjectsFeature {
 	private context(editor: Editor, ctx: MarkdownView | MarkdownFileInfo): { path: string; lines: string[]; model: ReturnType<typeof readProject>; line: number } | null {
 		if (!ctx.file || !this.enabled()) return null;
 		const lines = Array.from({ length: editor.lineCount() }, (_, index) => editor.getLine(index));
-		return { path: ctx.file.path, lines, model: readProject(lines), line: editor.getCursor().line };
+		return { path: ctx.file.path, lines, model: readProject(lines, projectTags(this.plugin.settings)), line: editor.getCursor().line };
 	}
 
 	private addCommands(): void {

@@ -1,6 +1,12 @@
 // What the Projects page shows, decided without the DOM: the tile summary, the columns, the buttons of a
 // card. Pure: no Obsidian import, so Vitest tests it.
-import { STATUS_INFO, TRACK_STATUSES, openTasks, type ProjectTrack, type TrackStatus } from "./project-note";
+import type { VaultMateSettings } from "../../core/settings-model";
+import { STATUS_INFO, TRACK_STATUSES, openTasks, type ProjectTags, type ProjectTrack, type TrackStatus } from "./project-note";
+
+/** The tags the settings give to ideas, decisions, predictions and project seeds: what `readProject` needs. */
+export function projectTags(settings: Pick<VaultMateSettings, "ideas" | "journal">): ProjectTags {
+	return { idea: settings.ideas.tag, decision: settings.journal.decisionTag, prediction: settings.journal.predictionTag, seed: settings.ideas.seedSubtag };
+}
 
 /** What the tile needs to know about a project note. */
 export interface ProjectCounts {

@@ -5,7 +5,7 @@ import { debounce, TFile, type EventRef } from "obsidian";
 
 import type VaultMatePlugin from "../../main";
 import { hasTracksSection, readProject, trackCounts, type ProjectModel } from "./project-note";
-import type { ProjectCounts } from "./projects-model";
+import { projectTags, type ProjectCounts } from "./projects-model";
 
 export interface ProjectNote extends ProjectCounts {
 	path: string;
@@ -87,7 +87,7 @@ export class ProjectIndex {
 		const file = this.plugin.app.vault.getFileByPath(path);
 		if (!file) return null;
 		const lines = (await this.plugin.app.vault.cachedRead(file)).split(/\r?\n/);
-		return { path: file.path, name: file.basename, lines, model: readProject(lines) };
+		return { path: file.path, name: file.basename, lines, model: readProject(lines, projectTags(this.plugin.settings)) };
 	}
 
 	/** Reads the note when its cached headings show a Tracks section, to count its tracks and ideas. */
@@ -102,7 +102,7 @@ export class ProjectIndex {
 		}
 		const lines = (await this.plugin.app.vault.cachedRead(file)).split(/\r?\n/);
 		if (this.versions.get(file.path) !== version) return; // a newer pass owns this note
-		const model = readProject(lines);
+		const model = readProject(lines, projectTags(this.plugin.settings));
 		if (!model.tracksSection) {
 			if (this.byPath.delete(file.path) && notify) this.notify();
 			return;

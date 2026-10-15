@@ -1,8 +1,9 @@
 // Reading a project note: its sections, the ideas of the Ideas section and the tracks of the Tracks
 // section. Pure: no Obsidian import, so Vitest tests it. The data contract is plan §2 "Projets : idées et
 // pistes". Lines are given without their line break.
-import { checkboxState, getDescription, getTaskDate, parseTaskLine } from "../../core/task-line";
+import { checkboxState, getDescription, getTaskDate, hasTag, parseTaskLine } from "../../core/task-line";
 import { findHeadings, lastNonBlank, type Heading } from "../ai-actions/insertion";
+import { classifyIdeaLine, isProjectSeed } from "../ideas/idea-line";
 import { getChildren } from "../journal/journal-note";
 
 // ---- Statuses and markers -----------------------------------------------------------------------------
@@ -177,11 +178,24 @@ export function fenceMask(lines: readonly string[]): boolean[] {
 	return mask;
 }
 
+/** The tag names (without `#`) that tell the lines of a project note apart. */
+export interface ProjectTags {
+	idea: string;
+	decision: string;
+	prediction: string;
+	/** Sub-tag of the project seeds (`idea/<seed>`); empty when the setting is off. */
+	seed: string;
+}
+
+/** A bullet is a plain list item of the Ideas section; a tagged idea is an open line with the idea tag, wherever it is. */
+export type IdeaKind = "bullet" | "tagged";
+
 export interface ProjectIdea {
+	kind: IdeaKind;
 	/** Index of the item's line. */
 	line: number;
 	raw: string;
-	/** The item's text without its list marker. */
+	/** The item's text without its list marker (a tagged idea: its description, without checkbox, tags, fields and Tasks emojis). */
 	text: string;
 	/** Index after the item's last more-indented line. */
 	end: number;
@@ -191,15 +205,44 @@ export interface ProjectIdea {
 
 const ITEM_RE = /^(?:[-*+]|\d{1,9}[.)])[ \t]+\S/;
 
-/** Top-level list items that are not tasks, in lines [from, to), outside fenced code, with their more-indented lines. */
-export function scanIdeas(lines: readonly string[], from: number, to: number, fence: readonly boolean[]): ProjectIdea[] {
+/**
+ * Top-level list items that are not tasks, in lines [from, to), outside fenced code, with their more-indented
+ * lines. With `tags`, an item that carries the idea tag is left to `scanTaggedIdeas`.
+ */
+export function scanIdeas(lines: readonly string[], from: number, to: number, fence: readonly boolean[], tags?: ProjectTags): ProjectIdea[] {
 	const ideas: ProjectIdea[] = [];
 	for (let i = from; i < to; i++) {
 		const raw = lines[i] ?? "";
 		if (fence[i] || !ITEM_RE.test(raw) || parseTaskLine(raw).status !== null) continue;
 		const end = Math.min(getChildren(lines, i).end + 1, to);
-		ideas.push({ line: i, raw, text: parseTaskLine(raw).body.trim(), end, children: lines.slice(i + 1, end) });
+		if (!(tags && hasTag(parseTaskLine(raw).body, tags.idea))) ideas.push({ kind: "bullet", line: i, raw, text: parseTaskLine(raw).body.trim(), end, children: lines.slice(i + 1, end) });
 		i = end - 1;
+	}
+	return ideas;
+}
+
+/** The first line after the frontmatter, where the Markdown body starts. */
+function bodyStart(lines: readonly string[]): number {
+	if (lines[0]?.trim() !== "---") return 0;
+	const end = lines.findIndex((line, index) => index > 0 && line.trim() === "---");
+	return end > 0 ? end + 1 : 0;
+}
+
+/**
+ * The open ideas written with the idea tag, anywhere in the note outside fenced code: task lines and
+ * tagged lines that are not tasks. Closed and cancelled ideas and project seeds are left out.
+ */
+export function scanTaggedIdeas(lines: readonly string[], fence: readonly boolean[], tags: ProjectTags): ProjectIdea[] {
+	const ideas: ProjectIdea[] = [];
+	for (let i = bodyStart(lines); i < lines.length; i++) {
+		const raw = lines[i] ?? "";
+		if (fence[i]) continue;
+		const idea = classifyIdeaLine(raw, tags.idea);
+		if (idea?.type !== "task" && idea?.type !== "plain") continue;
+		const end = getChildren(lines, i).end + 1;
+		const open = idea.type === "plain" || idea.entry.status === "open";
+		if (open && !isProjectSeed(raw, tags.idea, tags.seed)) ideas.push({ kind: "tagged", line: i, raw, text: idea.type === "task" ? idea.entry.statement : idea.statement, end, children: lines.slice(i + 1, end) });
+		i = end - 1; // the sub-items belong to the idea
 	}
 	return ideas;
 }
@@ -247,19 +290,31 @@ function firstOfKind(sections: readonly Section[], kind: SectionKind): Section |
 	return sections.find((section) => section.kind === kind) ?? null;
 }
 
-function readTasks(lines: readonly string[], from: number, to: number, fence: readonly boolean[]): TrackTask[] {
+/** `question` is the tag the README recommends for the questions of a note, whatever the settings. */
+const QUESTION_TAG = "question";
+
+/**
+ * The task lines of a block. A track's tasks are all of them except the lines tagged with the idea,
+ * decision or prediction tag (`tags`) or `question`: those are ideas, reviews and questions, not work.
+ */
+function readTasks(lines: readonly string[], from: number, to: number, fence: readonly boolean[], tags?: ProjectTags): TrackTask[] {
 	const tasks: TrackTask[] = [];
+	const aside = [QUESTION_TAG, ...(tags ? [tags.idea, tags.decision, tags.prediction] : [])];
 	for (let i = from; i < to; i++) {
 		const raw = lines[i] ?? "";
 		const parsed = parseTaskLine(raw);
-		if (fence[i] || parsed.marker === "" || parsed.status === null) continue;
+		if (fence[i] || parsed.marker === "" || parsed.status === null || aside.some((tag) => hasTag(parsed.body, tag))) continue;
 		tasks.push({ line: i, raw, state: checkboxState(parsed.status), text: getDescription(parsed.body), due: getTaskDate(parsed.body, "due") });
 	}
 	return tasks;
 }
 
-/** Reads a project note. A note without a Tracks section has `tracksSection` null and no tracks. */
-export function readProject(lines: readonly string[]): ProjectModel {
+/**
+ * Reads a project note. A note without a Tracks section has `tracksSection` null and no tracks. With
+ * `tags`, the ideas also hold the note's open tagged ideas (see `scanTaggedIdeas`), and a track's tasks
+ * leave out the idea, decision and prediction lines.
+ */
+export function readProject(lines: readonly string[], tags?: ProjectTags): ProjectModel {
 	const headings = findHeadings([...lines]);
 	const { level, sections } = findSections(headings, lines.length);
 	const ideasSection = firstOfKind(sections, "ideas");
@@ -271,7 +326,7 @@ export function readProject(lines: readonly string[]): ProjectModel {
 			if (heading.line <= tracksSection.line || heading.line >= tracksSection.end || heading.level !== level + 1) continue;
 			const { status, title } = parseTrackHeading(heading.text);
 			const end = endOfBlock(headings, heading, lines.length);
-			tracks.push({ status, title, line: heading.line, raw: lines[heading.line] ?? "", level: heading.level, end, tasks: readTasks(lines, heading.line + 1, end, fence) });
+			tracks.push({ status, title, line: heading.line, raw: lines[heading.line] ?? "", level: heading.level, end, tasks: readTasks(lines, heading.line + 1, end, fence, tags) });
 		}
 	}
 	return {
@@ -280,7 +335,7 @@ export function readProject(lines: readonly string[]): ProjectModel {
 		ideasSection,
 		tracksSection,
 		doneSection: firstOfKind(sections, "done"),
-		ideas: ideasSection ? scanIdeas(lines, ideasSection.line + 1, ideasSection.end, fence) : [],
+		ideas: [...(ideasSection ? scanIdeas(lines, ideasSection.line + 1, ideasSection.end, fence, tags) : []), ...(tags ? scanTaggedIdeas(lines, fence, tags) : [])].sort((a, b) => a.line - b.line),
 		tracks,
 	};
 }
