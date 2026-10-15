@@ -11,13 +11,10 @@ import {
 	ensureTag,
 	getDescription,
 	getInlineField,
-	getTags,
 	getTaskDate,
 	hasTag,
-	isTagOrSubtag,
 	parseTaskLine,
 	removeInlineField,
-	replaceTag,
 	serializeTaskLine,
 	setInlineField,
 	setTaskDate,
@@ -126,22 +123,6 @@ export function classifyLine(line: string, tags: JournalTags): LineClass | null 
 	return kind ? { type: "plain", kind, statement: getDescription(body) } : null;
 }
 
-export function otherKind(kind: JournalKind): JournalKind {
-	return kind === "decision" ? "prediction" : "decision";
-}
-
-/**
- * The body with the tag of `kind`: a tag of the other kind is turned into it in place, sub-tag kept
- * (`#decision/work` tracked as a prediction becomes `#prediction/work`); otherwise the tag is added.
- */
-function swapKindTag(body: string, kind: JournalKind, tags: JournalTags): string {
-	const own = tagOf(kind, tags);
-	const other = tagOf(otherKind(kind), tags);
-	const found = hasTag(body, own) ? undefined : getTags(body).find((name) => isTagOrSubtag(name, other));
-	if (found === undefined) return ensureTag(body, own);
-	return replaceTag(body, other, `${own}${found.slice(other.replace(/^#/, "").length)}`) ?? ensureTag(body, own);
-}
-
 /**
  * What the index keeps for a line: a journal task, or a line that only carries the tag (`- Move to Lyon
  * #decision`), read as an open entry with no dates until it is tracked. Null for anything else.
@@ -156,6 +137,17 @@ export function indexedEntry(line: string, tags: JournalTags): { entry: JournalE
 /** An open entry with no review date, or a plain tagged line: it is offered to be tracked. */
 export function isUntracked(entry: JournalEntry): boolean {
 	return entry.status === "open" && entry.due === null;
+}
+
+/**
+ * Whether a line can be tracked as `kind`. A line tagged (or prefixed) as a decision is tracked as a decision
+ * only, a prediction as a prediction only; a line without either can become one or the other.
+ */
+export function canTrackAs(line: string, kind: JournalKind, tags: JournalTags): boolean {
+	if (line.trim() === "") return false;
+	const cls = classifyLine(line, tags);
+	if (cls === null) return true;
+	return cls.type === "entry" ? isUntracked(cls.entry) && cls.entry.kind === kind : cls.kind === kind;
 }
 
 /** The entry on a line, or null when the line is not a task with the decision or prediction tag. */
@@ -209,7 +201,7 @@ export function convertToEntry(line: string, options: ConvertOptions): string {
 		parsed = { ...parsed, body: parsed.body.slice(prose?.[0].length ?? 0).replace(/^\p{Ll}/u, (c) => c.toUpperCase()) };
 	}
 	let { body } = toTaskLine(parsed);
-	body = swapKindTag(body, options.kind, options.tags);
+	body = ensureTag(body, tagOf(options.kind, options.tags));
 	const answer = cleanAnswer(options.answer ?? "");
 	if (answer) {
 		// A new answer goes before an existing confidence (contract order): lift the confidence and put it back after.

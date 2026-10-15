@@ -1,9 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { convertToEntry, groupByDue, indexedEntry, isUntracked, type ConvertOptions, type JournalTags } from "../src/features/journal/journal-line";
+import { canTrackAs, groupByDue, indexedEntry, isUntracked, type JournalTags } from "../src/features/journal/journal-line";
 
 const TAGS: JournalTags = { decisionTag: "decision", predictionTag: "prediction" };
-const OPTIONS: ConvertOptions = { kind: "prediction", tags: TAGS, today: "2026-10-16", due: "2027-01-16", confidence: 60 };
 
 describe("indexedEntry", () => {
 	it("keeps a plain tagged line as an open, undated entry to track", () => {
@@ -34,22 +33,26 @@ describe("indexedEntry", () => {
 	});
 });
 
-describe("convertToEntry as the other kind", () => {
-	it("turns the decision tag of a plain line into the prediction tag", () => {
-		expect(convertToEntry("- Rent will go up next year #decision", OPTIONS)).toBe("- [ ] Rent will go up next year #prediction [confidence: 60%] ➕ 2026-10-16 📅 2027-01-16");
+describe("canTrackAs", () => {
+	it("tracks a decision line as a decision only, and a prediction line as a prediction only", () => {
+		for (const line of ["- Rent will go up #decision", "- [ ] Move the book club #decision", "Decision: switch the backup"]) {
+			expect(canTrackAs(line, "decision", TAGS)).toBe(true);
+			expect(canTrackAs(line, "prediction", TAGS)).toBe(false);
+		}
+		for (const line of ["- The bakery reopens #prediction", "- [ ] It rains on Sunday #prediction/weather", "Prediction: it rains"]) {
+			expect(canTrackAs(line, "prediction", TAGS)).toBe(true);
+			expect(canTrackAs(line, "decision", TAGS)).toBe(false);
+		}
 	});
 
-	it("keeps the sub-tag and the place of the tag", () => {
-		expect(convertToEntry("- [ ] The client signs #decision/work before Friday", OPTIONS)).toBe(
-			"- [ ] The client signs #prediction/work before Friday [confidence: 60%] ➕ 2026-10-16 📅 2027-01-16",
-		);
+	it("lets a line without the tags become either kind", () => {
+		expect(canTrackAs("- Book the train", "decision", TAGS)).toBe(true);
+		expect(canTrackAs("- Book the train", "prediction", TAGS)).toBe(true);
 	});
 
-	it("tracks a prediction line as a decision the same way", () => {
-		expect(convertToEntry("- Take the train #prediction", { ...OPTIONS, kind: "decision", confidence: null })).toBe("- [ ] Take the train #decision ➕ 2026-10-16 📅 2027-01-16");
-	});
-
-	it("leaves a line that already has the tag of the kind as it was", () => {
-		expect(convertToEntry("- Take the train #decision", { ...OPTIONS, kind: "decision", confidence: null })).toBe("- [ ] Take the train #decision ➕ 2026-10-16 📅 2027-01-16");
+	it("refuses empty lines and entries already tracked or closed", () => {
+		expect(canTrackAs("   ", "decision", TAGS)).toBe(false);
+		expect(canTrackAs("- [ ] Move to Lyon #decision ➕ 2026-10-08 📅 2027-01-08", "decision", TAGS)).toBe(false);
+		expect(canTrackAs("- [x] Move to Lyon #decision", "decision", TAGS)).toBe(false);
 	});
 });

@@ -17,8 +17,8 @@ import {
 	closeEntry,
 	convertToEntry,
 	countDue,
+	canTrackAs,
 	dueFrom,
-	isUntracked,
 	kindName,
 	markNotReviewable,
 	parseConfidence,
@@ -69,7 +69,7 @@ export class JournalFeature {
 				openReview: (item) => this.openReview(item),
 				addOutcome: (item) => this.openLateReview(item),
 				notReviewable: (item) => void this.markNotReviewable(item),
-				track: (item, kind) => this.trackLine(item.path, item.line, item.raw, kind),
+				track: (item) => this.trackLine(item.path, item.line, item.raw, item.entry.kind),
 			}),
 		);
 		plugin.registerEditorSuggest(new CaptureSuggest(plugin.app, this));
@@ -77,7 +77,7 @@ export class JournalFeature {
 			createBadgeExtension({
 				enabled: () => this.enabled(),
 				tags: () => this.tags(),
-				activate: (view, line, action, kind) => this.activateBadge(view, line, action, kind),
+				activate: (view, line, action) => this.activateBadge(view, line, action),
 			}),
 		);
 		this.addCommands();
@@ -145,11 +145,7 @@ export class JournalFeature {
 	}
 
 	private canTrack(editor: Editor, kind: JournalKind): boolean {
-		const line = editor.getLine(editor.getCursor().line);
-		if (line.trim() === "") return false;
-		const cls = classifyLine(line, this.tags());
-		// An untracked line can be tracked as either kind: the tag is swapped when it changes.
-		return cls?.type !== "entry" || isUntracked(cls.entry);
+		return canTrackAs(editor.getLine(editor.getCursor().line), kind, this.tags());
 	}
 
 	/** The entry on a line of the editor (cursor line by default), or null. */
@@ -298,7 +294,7 @@ export class JournalFeature {
 
 	// ---- Badge, hub ---------------------------------------------------------------------------------
 
-	private activateBadge(view: EditorView, line: number, action: "review" | "track", kind: JournalKind): void {
+	private activateBadge(view: EditorView, line: number, action: "review" | "track"): void {
 		const active = this.plugin.app.workspace.getActiveViewOfType(MarkdownView);
 		const path = active?.file?.path;
 		if (!active || !path || active.editor.getLine(line) !== view.state.doc.line(line + 1).text) return;
@@ -308,7 +304,7 @@ export class JournalFeature {
 			const item = this.openEntryAt(active.editor, path, line);
 			if (item) this.openReview(item);
 		} else {
-			this.openTrack(active.editor, path, line, kind);
+			this.openTrack(active.editor, path, line, cls.type === "entry" ? cls.entry.kind : cls.kind);
 		}
 	}
 

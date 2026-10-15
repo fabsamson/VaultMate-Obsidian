@@ -4,15 +4,15 @@ import { createPanel } from "../../ui/components";
 import { createSprite } from "../../ui/pixel";
 import { SPRITES } from "../../ui/sprites";
 import type { JournalItem } from "./journal-index";
-import { groupByDue, kindName, otherKind, type JournalKind } from "./journal-line";
+import { groupByDue, kindName } from "./journal-line";
 
 export interface ReviewsHost {
 	decisionTag(): string;
 	/** Opens the note at the entry's line. */
 	openItem(item: JournalItem): void;
 	openReview(item: JournalItem): void;
-	/** Tracks an undated or plain line as `kind`: the review form of a new entry, then the line is rewritten. */
-	track(item: JournalItem, kind: JournalKind): void;
+	/** Tracks an undated or plain line as the kind of its tag: the track form, then the line is rewritten. */
+	track(item: JournalItem): void;
 }
 
 const UPCOMING_SHOWN = 5;
@@ -38,11 +38,8 @@ export function createReviewsBlock(host: ReviewsHost): (body: HTMLElement, items
 		main.createSpan({ cls: "vaultmate-muted", text: `${noteName(item.path)} · ${due ? dueLabel(due, today) : "no review date"}` });
 		main.addEventListener("click", () => host.openItem(item));
 		if (untracked) {
-			// The tag says which kind the line was written as; the other one is offered too.
-			for (const kind of [entry.kind, otherKind(entry.kind)]) {
-				const track = row.createEl("button", { cls: "vaultmate-button", text: `Track as ${kindName(kind)}`, attr: { type: "button", "aria-label": `Track as ${kindName(kind)}: ${entry.statement}` } });
-				track.addEventListener("click", () => host.track(item, kind));
-			}
+			const track = row.createEl("button", { cls: "vaultmate-button", text: `Track as ${kindName(entry.kind)}`, attr: { type: "button", "aria-label": `Track as ${kindName(entry.kind)}: ${entry.statement}` } });
+			track.addEventListener("click", () => host.track(item));
 			return;
 		}
 		const review = row.createEl("button", { cls: "vaultmate-button", text: "Review", attr: { type: "button", "aria-label": `Review ${kindName(entry.kind)}: ${entry.statement}` } });

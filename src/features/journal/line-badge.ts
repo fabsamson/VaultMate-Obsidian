@@ -4,13 +4,13 @@ import { RangeSetBuilder, type Extension } from "@codemirror/state";
 import { Decoration, ViewPlugin, WidgetType, type DecorationSet, type EditorView, type ViewUpdate } from "@codemirror/view";
 
 import { startOfDay } from "../../core/dates";
-import { badgeFor, classifyLine, kindName, otherKind, type BadgeInfo, type JournalKind, type JournalTags } from "./journal-line";
+import { badgeFor, classifyLine, kindName, type BadgeInfo, type JournalTags } from "./journal-line";
 
 export interface BadgeHost {
 	enabled(): boolean;
 	tags(): JournalTags;
-	/** A badge was clicked on 0-based line `line`; `kind` is the kind to review or to track the line as. */
-	activate(view: EditorView, line: number, action: "review" | "track", kind: JournalKind): void;
+	/** A badge was clicked on 0-based line `line`. */
+	activate(view: EditorView, line: number, action: "review" | "track"): void;
 }
 
 class BadgeWidget extends WidgetType {
@@ -28,23 +28,13 @@ class BadgeWidget extends WidgetType {
 	public toDOM(view: EditorView): HTMLElement {
 		const { info } = this;
 		if (info.action === "none") return createSpan({ cls: "vaultmate-badge", text: info.text });
-		if (info.action === "review") return this.button(view, info.text, `Review this ${kindName(info.kind)}. ${info.text}`, "review", info.kind);
-		// A line to track is offered as either kind, the kind of its tag first.
-		const group = createSpan();
-		const other = otherKind(info.kind);
-		group.append(
-			this.button(view, info.text, `Track this line as a ${kindName(info.kind)}. ${info.text}`, "track", info.kind),
-			this.button(view, `${other === "decision" ? "⚖" : "◔"} Track as ${kindName(other)}`, `Track this line as a ${kindName(other)}`, "track", other),
-		);
-		return group;
-	}
-
-	private button(view: EditorView, text: string, label: string, action: "review" | "track", kind: JournalKind): HTMLElement {
-		const button = createEl("button", { cls: "vaultmate-badge is-action", text, attr: { type: "button", "aria-label": label } });
+		const label = info.action === "review" ? `Review this ${kindName(info.kind)}` : `Track this line as a ${kindName(info.kind)}`;
+		const button = createEl("button", { cls: "vaultmate-badge is-action", text: info.text, attr: { type: "button", "aria-label": `${label}. ${info.text}` } });
+		const action = info.action;
 		button.addEventListener("click", (event) => {
 			event.preventDefault();
 			const line = view.state.doc.lineAt(view.posAtDOM(button)).number - 1;
-			this.host.activate(view, line, action, kind);
+			this.host.activate(view, line, action);
 		});
 		return button;
 	}
