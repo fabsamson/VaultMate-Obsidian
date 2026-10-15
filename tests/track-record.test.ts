@@ -131,7 +131,9 @@ describe("computeTrackRecord", () => {
 
 	it("counts the entries ticked without a review, not the cancelled or open ones", () => {
 		const lines = ["- [x] A #decision [outcome: better]", "- [x] B #prediction", "- [-] C #prediction", "- [ ] D #decision", "- [x] E #decision [outcome: better] [quality: good]"];
-		expect(computeTrackRecord(lines.map((line) => item(line))).unreviewed).toBe(2);
+		const record = computeTrackRecord(lines.map((line) => item(line)));
+		expect(record.unreviewed).toBe(2);
+		expect(record.reviewsDone).toBe(1);
 	});
 
 	it("is empty without entries", () => {

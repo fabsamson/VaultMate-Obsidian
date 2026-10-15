@@ -52,7 +52,7 @@ export interface TrackRecord<T> {
 	decisions: DecisionStats;
 	/** Every lesson, most recent review first. */
 	lessons: Lesson<T>[];
-	/** Closed entries, decisions and predictions. */
+	/** Reviewed entries, decisions and predictions: done with the outcome a review writes. */
 	reviewsDone: number;
 	/** Done entries without the outcome a review writes: they are in no statistic. */
 	unreviewed: number;
@@ -135,7 +135,7 @@ export function computeTrackRecord<T extends { entry: JournalEntry; children: st
 		predictions: predictionStats(entries),
 		decisions: decisionStats(entries),
 		lessons,
-		reviewsDone: entries.filter((entry) => entry.status === "done").length,
+		reviewsDone: entries.filter((entry) => entry.status === "done" && !closedWithoutReview(entry)).length,
 		unreviewed: entries.filter(closedWithoutReview).length,
 	};
 }

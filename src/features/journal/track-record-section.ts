@@ -122,6 +122,7 @@ export function createTrackRecordBlock(host: TrackRecordHost): (body: HTMLElemen
 			createSprite(panel, SPRITES.mascotTea, 96);
 			panel.createEl("p", { cls: "vaultmate-empty-title", text: "No reviews yet" });
 			panel.createEl("p", { cls: "vaultmate-muted", text: shownKind === "prediction" ? `Your track record builds up as you resolve predictions; ${MIN_SCORED} resolved predictions unlock calibration.` : "Your track record builds up as you close decisions." });
+			renderUnreviewed(body, record);
 			return;
 		}
 		renderStamps(body, record, shownKind);
