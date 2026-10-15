@@ -8,6 +8,10 @@ import type { VaultMateSettings } from "../../core/settings-model";
 import { baseName } from "../context/note-meta";
 import { applyPlan, type InsertPlan } from "../ai-actions/insertion";
 import { applyToEditor } from "../ai-actions/insert-write";
+import { writeProject } from "../projects/project-apply";
+import type { TrackStatus } from "../projects/project-note";
+import { newTrackInNote, promoteIdea } from "../projects/project-write";
+import { projectTags } from "../projects/projects-model";
 import type { JournalKind } from "../journal/journal-line";
 import type { NewEntryResult } from "../journal/journal-modals";
 import { CHANGED, editorLines, writeEntryLine } from "../journal/journal-write";
@@ -17,7 +21,7 @@ import { closeParts, DEFAULT_NEW_NOTE, ideaChildren, ideaText, indentUnit, neare
 /** What the writers need: the Obsidian app and the settings (`VaultMatePlugin` fits). */
 export interface IdeaWriteHost {
 	app: App;
-	settings: Pick<VaultMateSettings, "ideas" | "journal">;
+	settings: Pick<VaultMateSettings, "ideas" | "journal" | "projects">;
 }
 
 /**
@@ -115,24 +119,33 @@ async function readSource(app: App, item: IdeaItem): Promise<string[] | null> {
 	return lines;
 }
 
-/** Applies a plan made from the note's current lines: through the Editor when the note is open there, else `Vault.process`. */
-async function insertInto(app: App, file: TFile, plan: (lines: string[]) => InsertPlan): Promise<void> {
+/**
+ * Applies a plan made from the note's current lines: through the Editor when the note is open there, else
+ * `Vault.process`. A plan that returns null writes nothing; the result says whether anything was written.
+ */
+async function insertInto(app: App, file: TFile, plan: (lines: string[]) => InsertPlan | null): Promise<boolean> {
 	const editor = activeEditor(app, file.path);
 	if (editor) {
-		applyToEditor(editor, plan(editorLines(editor)));
-		return;
+		const made = plan(editorLines(editor));
+		if (made) applyToEditor(editor, made);
+		return made !== null;
 	}
+	let written = false;
 	await app.vault.process(file, (text) => {
 		const lines = text.split(/\r?\n/);
-		return applyPlan(lines, plan(lines)).join(text.includes("\r\n") ? "\r\n" : "\n");
+		const made = plan(lines);
+		written = made !== null;
+		return made ? applyPlan(lines, made).join(text.includes("\r\n") ? "\r\n" : "\n") : text;
 	});
+	return written;
 }
 
 /**
  * Sends the idea to `target` as plain text (`- <statement>` and its sub-bullets, no tag, checkbox, fields
  * or emojis), under `heading` or at the end of the note, then closes it as `added` with an `Added to
- * [[…]]` sub-item. The target is written first. Returns whether the idea was closed; when the target was
- * written but the idea line changed in between, it says so in a notice and returns false.
+ * [[…]]` sub-item. The target is written first; a `heading` that is no longer in it refuses the write
+ * (nothing is created). Returns whether the idea was closed; when the target was written but the idea line
+ * changed in between, it says so in a notice and returns false.
  */
 export async function addIdeaToNote(host: IdeaWriteHost, item: IdeaItem, target: TFile, heading: string | null, note: string): Promise<boolean> {
 	const { app } = host;
@@ -148,12 +161,62 @@ export async function addIdeaToNote(host: IdeaWriteHost, item: IdeaItem, target:
 	const source = await readSource(app, item);
 	if (!source) return false;
 	const children = ideaChildren(source, item.line);
-	await insertInto(app, target, (lines) => planAddIdea(lines, heading, statement, children));
+	if (!(await insertInto(app, target, (lines) => planAddIdea(lines, heading, statement, children)))) {
+		new Notice(`The heading is no longer in ${target.basename}. Nothing was written.`);
+		return false;
+	}
 
 	const linkText = app.metadataCache.fileToLinktext(target, item.path, true);
 	const { line, subItem } = closeParts(item, host.settings.ideas.tag, "added", formatDate(startOfDay()), linkText, note);
 	if (await writeEntryLine(app, item, line, subItem, undefined, null)) return true;
 	new Notice(`Added to ${linkText}, but the idea line changed: mark it yourself.`);
+	return false;
+}
+
+// ---- A new track from an idea -------------------------------------------------------------------------
+
+export interface NewTrackChoice {
+	status: TrackStatus;
+	/** The heading, cleaned with `shortName`. */
+	shortName: string;
+	/** Added as the first task when the status is In progress; `due` is `YYYY-MM-DD` or empty. */
+	firstTask?: { text: string; due: string };
+}
+
+/**
+ * Turns the idea into a track of the project note `project` (a note with a Tracks section).
+ *
+ * In the idea's own note the idea is moved (one edit: the line and its sub-items go, the track is appended).
+ * In another project note the track is written first (refused when that note no longer has a Tracks
+ * section), then the idea is closed as `track` with a `Track in [[…]]: <name>` sub-item; its sub-items are
+ * copied. Returns whether everything was written; when the track was written but the idea line changed in
+ * between, a notice asks to mark the idea by hand and it returns false.
+ */
+export async function newTrackFromIdea(host: IdeaWriteHost, item: IdeaItem, project: TFile, choice: NewTrackChoice): Promise<boolean> {
+	const { app, settings } = host;
+	const statement = statementOf(item);
+	if (statement === "") {
+		new Notice("This idea has no text yet.");
+		return false;
+	}
+	const today = formatDate(startOfDay());
+	const firstTask = choice.firstTask ? { text: choice.firstTask.text, today, ...(choice.firstTask.due ? { due: choice.firstTask.due } : {}) } : undefined;
+	const tracksTitle = settings.projects.tracksTitle;
+	if (project.path === item.path) {
+		return writeProject(app, item.path, (lines) =>
+			promoteIdea(lines, item, { status: choice.status, shortName: choice.shortName, tracksTitle, tags: projectTags(settings), ...(firstTask ? { firstTask } : {}) }),
+		);
+	}
+	const source = await readSource(app, item);
+	if (!source) return false;
+	const children = ideaChildren(source, item.line);
+	const track = { name: choice.shortName, status: choice.status, text: statement, children, ...(firstTask ? { firstTask } : {}) };
+	if (!(await writeProject(app, project.path, (lines) => newTrackInNote(lines, track, { tracksTitle, requireTracks: true })))) return false;
+
+	const linkText = app.metadataCache.fileToLinktext(project, item.path, true);
+	const { line, subItem } = closeParts(item, settings.ideas.tag, "track", today, linkText, choice.shortName);
+	if (await writeEntryLine(app, item, line, subItem, undefined, null)) return true;
+	new Notice(`Track added to ${linkText}, but the idea line changed: mark it yourself.`);
 	return false;
 }
 

@@ -6,6 +6,7 @@ import { findHeadings, lastNonBlank, planHeadingInsert, type Heading, type Inser
 import { dueFrom, type JournalKind, type JournalTags } from "../journal/journal-line";
 import type { NewEntryResult } from "../journal/journal-modals";
 import { getChildren, newEntryLines, splitLine, usesTabs, width, type AppendedLines } from "../journal/journal-note";
+import { readProject } from "../projects/project-note";
 import { closeIdea, resultItemText, type IdeaItem, type IdeaResult } from "./idea-line";
 
 
@@ -82,6 +83,16 @@ export function listHeadings(lines: string[]): Heading[] {
 	return findHeadings(lines);
 }
 
+/**
+ * The headings for the "Under heading" menu: the tracks of the note first when it is a project note
+ * (adding under a track merges into it), then every other heading, each group in note order.
+ */
+export function orderedHeadings(lines: string[]): Heading[] {
+	const tracks = new Set(readProject(lines).tracks.map((track) => track.line));
+	const headings = findHeadings(lines);
+	return [...headings.filter((heading) => tracks.has(heading.line)), ...headings.filter((heading) => !tracks.has(heading.line))];
+}
+
 function fold(text: string): string {
 	return text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/[*_~=`]/g, "");
 }
@@ -96,15 +107,18 @@ export function defaultIdeaHeading(headings: ReadonlyArray<Pick<Heading, "text">
 
 /**
  * Where `- <statement>` and the idea's sub-items go in the target note: the end of the section under
- * `heading` (exact text as listed), or the end of the note when `heading` is null.
+ * `heading` (exact text as listed), or the end of the note when `heading` is null. Null when the heading
+ * is no longer in the note: the caller refuses instead of creating a section.
  */
-export function planAddIdea(lines: string[], heading: string | null, statement: string, children: readonly ChildLine[]): InsertPlan {
+export function planAddIdea(lines: string[], heading: string | null, statement: string, children: readonly ChildLine[]): InsertPlan | null {
 	const rendered = [`- ${statement}`, ...childLines(children, indentUnit(lines), 1)];
-	if (heading !== null) {
-		const plan = planHeadingInsert(lines, heading, rendered, false);
-		if (plan) return plan;
-	}
+	if (heading !== null) return hasHeading(lines, heading) ? planHeadingInsert(lines, heading, rendered, false) : null;
 	return { at: lastNonBlank(lines, 0, lines.length) + 1, remove: 0, lines: rendered };
+}
+
+function hasHeading(lines: string[], heading: string): boolean {
+	const wanted = heading.trim().toLowerCase();
+	return findHeadings(lines).some((candidate) => candidate.text.toLowerCase() === wanted);
 }
 
 // ---- A new note from an idea --------------------------------------------------------------------------

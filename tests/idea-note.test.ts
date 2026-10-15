@@ -4,7 +4,7 @@ import { startOfDay } from "../src/core/dates";
 import { classifyLine, type JournalTags } from "../src/features/journal/journal-line";
 import { planRewrite } from "../src/features/journal/journal-note";
 import { buildIdeaItem, classifyIdeaLine, type IdeaItem } from "../src/features/ideas/idea-line";
-import { applyPlan } from "../src/features/ai-actions/insertion";
+import { applyPlan, type InsertPlan } from "../src/features/ai-actions/insertion";
 import {
 	childLines,
 	closeParts,
@@ -151,36 +151,48 @@ describe("listHeadings and defaultIdeaHeading", () => {
 	});
 });
 
+function planned(lines: string[], heading: string | null, statement: string, children: Array<{ level: number; text: string }>): InsertPlan {
+	const plan = planAddIdea(lines, heading, statement, children);
+	if (!plan) throw new Error("refused");
+	return plan;
+}
+
 describe("planAddIdea", () => {
 	const children = [{ level: 0, text: "- first" }, { level: 1, text: "- deeper" }];
 
 	it("goes to the end of the note without a heading, before trailing blank lines", () => {
 		const lines = ["# Sprint planning", "", "- existing", "", ""];
-		const plan = planAddIdea(lines, null, "Kitchen sprint", children);
+		const plan = planned(lines, null, "Kitchen sprint", children);
 		expect(plan).toEqual({ at: 3, remove: 0, lines: ["- Kitchen sprint", "    - first", "        - deeper"] });
 		expect(applyPlan(lines, plan)).toEqual(["# Sprint planning", "", "- existing", "- Kitchen sprint", "    - first", "        - deeper", "", ""]);
 	});
 
 	it("fills an empty note", () => {
-		expect(planAddIdea([""], null, "x", [])).toEqual({ at: 0, remove: 0, lines: ["- x"] });
-		expect(planAddIdea([], null, "x", [])).toEqual({ at: 0, remove: 0, lines: ["- x"] });
+		expect(planned([""], null, "x", [])).toEqual({ at: 0, remove: 0, lines: ["- x"] });
+		expect(planned([], null, "x", [])).toEqual({ at: 0, remove: 0, lines: ["- x"] });
 	});
 
 	it("goes to the end of the section under the heading, tabs following the note", () => {
 		const lines = ["# Ideas", "- old", "\t- sub", "", "# Other", "- keep"];
-		const plan = planAddIdea(lines, "Ideas", "New", children);
+		const plan = planned(lines, "Ideas", "New", children);
 		expect(plan.at).toBe(3);
 		expect(plan.lines).toEqual(["- New", "\t- first", "\t\t- deeper"]);
 	});
 
 	it("keeps lines the section already holds", () => {
 		const lines = ["## Ideas", "- first", "- New"];
-		expect(planAddIdea(lines, "Ideas", "New", [{ level: 0, text: "- first" }]).lines).toEqual(["- New", "    - first"]);
+		expect(planned(lines, "Ideas", "New", [{ level: 0, text: "- first" }]).lines).toEqual(["- New", "    - first"]);
 	});
 
-	it("starts the section when the heading is gone", () => {
-		const plan = planAddIdea(["text"], "Ideas", "New", []);
-		expect(plan).toEqual({ at: 1, remove: 0, lines: ["", "## Ideas", "- New"] });
+	it("refuses when the chosen heading is gone, instead of creating it", () => {
+		expect(planAddIdea(["text"], "Ideas", "New", [])).toBeNull();
+		expect(planAddIdea(["# Ideas", "- a"], "Other", "New", [])).toBeNull();
+		expect(planAddIdea(["# Ideas", "- a"], " ideas ", "New", [])).not.toBeNull();
+	});
+
+	it("goes under a track like under any heading", () => {
+		const lines = ["# Tracks", "## 🔨 Work", "- [ ] task", "## ★ Other"];
+		expect(planned(lines, "🔨 Work", "New", [])).toEqual({ at: 3, remove: 0, lines: ["- New"] });
 	});
 });
 

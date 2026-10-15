@@ -4,13 +4,14 @@
 // other, through the Editor (`applyToEditor`) or `Vault.process` (`applyEdits`). Each gesture checks that
 // the line it targets still has the text the caller read and refuses otherwise.
 import { applyPlan, lastNonBlank, type InsertPlan } from "../ai-actions/insertion";
+import { childLines, indentUnit, type ChildLine } from "../ideas/idea-note";
 import { splitLine, width } from "../journal/journal-note";
 import { appendPoint, readProject, STATUS_INFO, withMarker, type ProjectIdea, type ProjectModel, type ProjectTags, type ProjectTrack, type TrackStatus } from "./project-note";
 
 export type Edit = InsertPlan;
 
 /** Why a gesture was refused: the note changed since it was read, or the target is not in it. */
-export type Refusal = "changed" | "not-found" | "empty-text" | "empty-name";
+export type Refusal = "changed" | "not-found" | "empty-text" | "empty-name" | "not-a-project";
 
 export type WritePlan = { ok: true; edits: Edit[] } | { ok: false; reason: Refusal };
 
@@ -27,6 +28,7 @@ const REFUSAL_MESSAGES: Record<Refusal, string> = {
 	"not-found": "VaultMate could not find this item in the note. Nothing was written.",
 	"empty-text": "Write the task first.",
 	"empty-name": "Write a short name first.",
+	"not-a-project": "This note is no longer a project note (it has no Tracks section). Nothing was written.",
 };
 
 export function refusalMessage(reason: Refusal): string {
@@ -192,6 +194,33 @@ export function promoteIdea(lines: readonly string[], ref: LineRef, options: Pro
 	const track = trackFromIdea(model.level + 1, status, idea, name, task);
 	const remove: Edit = { at: idea.line, remove: idea.end - idea.line, lines: [] };
 	return { ok: true, edits: byLineDescending([remove, appendTrackEdit(lines, model, track, options.tracksTitle)]) };
+}
+
+export interface NewTrack {
+	/** The heading text; the caller cleans it (`shortName`). */
+	name: string;
+	status: TrackStatus;
+	/** The full text of the idea. */
+	text: string;
+	/** The idea's sub-items, copied below the text. */
+	children: readonly ChildLine[];
+	/** Added as the first task when the status is In progress. */
+	firstTask?: NewTask;
+}
+
+/**
+ * Appends a track from an idea written in another note at the end of this note's Tracks section (a
+ * missing section is created, with `tracksTitle`). `requireTracks` refuses a note that has no Tracks
+ * section: the target was a project note when it was chosen, and no longer is.
+ */
+export function newTrackInNote(lines: readonly string[], track: NewTrack, options: { tracksTitle?: string; requireTracks?: boolean } = {}): WritePlan {
+	const model = readProject(lines);
+	if (options.requireTracks && !model.tracksSection) return refuse("not-a-project");
+	const name = track.name.replace(/\s+/g, " ").trim();
+	if (name === "") return refuse("empty-name");
+	const task = track.status === "progress" && track.firstTask ? trackTaskLine(track.firstTask.text, track.firstTask.today, track.firstTask.due) : null;
+	const block = trackFromIdea((model.level ?? 1) + 1, track.status, { text: track.text, children: childLines(track.children, indentUnit([...lines])) }, name, task);
+	return { ok: true, edits: [appendTrackEdit(lines, model, block, options.tracksTitle)] };
 }
 
 /**
