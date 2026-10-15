@@ -1,23 +1,12 @@
 // Where and how the chosen questions are written into a note. Pure planning: the plan is a splice of
-// the note's lines, applied through the Editor or Vault.process by the caller.
+// the note's lines, applied by the write gateway (`core/note-write`).
+import type { NoteEdit } from "../../core/note-edit";
 
-export interface InsertPlan {
-	/** Index of the first line to replace, or of the line to insert before (may equal the line count). */
-	at: number;
-	/** Lines replaced starting at `at`; 0 for a pure insertion. */
-	remove: number;
-	lines: string[];
-}
+export type InsertPlan = NoteEdit;
 
 /** One line from the template; every `{{text}}` is replaced. */
 export function renderLine(template: string, text: string): string {
 	return template.replaceAll("{{text}}", text);
-}
-
-export function applyPlan(lines: string[], plan: InsertPlan): string[] {
-	const next = [...lines];
-	next.splice(plan.at, plan.remove, ...plan.lines);
-	return next;
 }
 
 export interface Heading {

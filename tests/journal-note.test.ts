@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { JournalTags } from "../src/features/journal/journal-line";
-import { getChildren, linePrefix, newEntryLines, planRewrite, replaceEmptyLineText, reviewItemText, rewriteText, usesTabs } from "../src/features/journal/journal-note";
+import { getChildren, linePrefix, newEntryLines, planRewrite, replaceEmptyLineText, reviewItemText, usesTabs } from "../src/features/journal/journal-note";
 
 const TAGS: JournalTags = { decisionTag: "decision", predictionTag: "prediction" };
 
@@ -126,33 +126,6 @@ describe("planRewrite", () => {
 		expect(planRewrite([`${OPEN} edited`], 0, OPEN, CLOSED, SUB)).toEqual({ ok: false });
 		expect(planRewrite(["inserted", OPEN], 0, OPEN, CLOSED, SUB)).toEqual({ ok: false });
 		expect(planRewrite([], 3, OPEN, CLOSED, SUB)).toEqual({ ok: false });
-	});
-});
-
-describe("rewriteText", () => {
-	it("rewrites an LF note", () => {
-		const text = `# Title\n${OPEN}\n    - Why: cheaper\n\nEnd\n`;
-		expect(rewriteText(text, 1, OPEN, CLOSED, SUB)).toEqual({ ok: true, text: `# Title\n${CLOSED}\n    - Why: cheaper\n    - ${SUB}\n\nEnd\n` });
-	});
-
-	it("keeps CRLF line breaks and finds children in a CRLF note", () => {
-		const text = `# Title\r\n${OPEN}\r\n    - Why: cheaper\r\n\r\nEnd`;
-		expect(rewriteText(text, 1, OPEN, CLOSED, SUB)).toEqual({ ok: true, text: `# Title\r\n${CLOSED}\r\n    - Why: cheaper\r\n    - ${SUB}\r\n\r\nEnd` });
-	});
-
-	it("refuses a changed line and a CRLF note alike", () => {
-		expect(rewriteText(`${OPEN}!\n`, 0, OPEN, CLOSED, SUB)).toEqual({ ok: false });
-		expect(rewriteText(`${OPEN}!\r\n`, 0, OPEN, CLOSED, SUB)).toEqual({ ok: false });
-	});
-
-	it("appends ready-made lines, keeping CRLF", () => {
-		const text = `${OPEN}\r\n    - Why: x\r\nEnd`;
-		const appended = (prefix: string): string[] => [`${prefix}- sub-task`];
-		expect(rewriteText(text, 0, OPEN, "NEW", null, appended)).toEqual({ ok: true, text: "NEW\r\n    - Why: x\r\n    - sub-task\r\nEnd" });
-	});
-
-	it("writes a line without a sub-item", () => {
-		expect(rewriteText(`${OPEN}\n`, 0, OPEN, "NEW", null)).toEqual({ ok: true, text: "NEW\n" });
 	});
 });
 

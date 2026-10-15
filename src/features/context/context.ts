@@ -3,8 +3,9 @@
 // For other code: `plugin.context.connections(file, limit)` returns `Connection[]`, `plugin.context.building`
 // is the build progress while the first query indexes the vault, and `plugin.context.stats` has the
 // numbers for measuring (see `ContextStats`).
-import { debounce, Keymap, MarkdownView, Notice, type Editor, type TFile } from "obsidian";
+import { debounce, Keymap, Notice, type TFile } from "obsidian";
 
+import { editorFor } from "../../core/note-write";
 import type VaultMatePlugin from "../../main";
 import { ContextIndex, type BuildProgress, type ContextStats } from "./context-index";
 import { CONTEXT_PAGE_ID, createContextPage } from "./context-page";
@@ -84,9 +85,9 @@ export class ContextFeature {
 					const target = plugin.app.vault.getFileByPath(path);
 					if (target) void plugin.app.workspace.getLeaf(Keymap.isModEvent(event)).openFile(target);
 				},
-				canInsert: (file) => this.editorOf(file) !== null,
+				canInsert: (file) => editorFor(this.plugin.app, file.path) !== null,
 				insertLink: (file, path) => {
-					const editor = this.editorOf(file);
+					const editor = editorFor(this.plugin.app, file.path);
 					const link = this.linkTo(file, path);
 					if (editor && link) editor.replaceSelection(link);
 					else new Notice("Open the note to insert a link.");
@@ -150,15 +151,6 @@ export class ContextFeature {
 			8000,
 		);
 		plugin.refreshHubs(CONTEXT_PAGE_ID);
-	}
-
-	/** The editor (source mode) showing `file`, or null. The hub has focus, so the active editor is not the place to look. */
-	private editorOf(file: TFile): Editor | null {
-		for (const leaf of this.plugin.app.workspace.getLeavesOfType("markdown")) {
-			const { view } = leaf;
-			if (view instanceof MarkdownView && view.file?.path === file.path && view.getMode() === "source") return view.editor;
-		}
-		return null;
 	}
 
 	private linkTo(source: TFile, targetPath: string): string | null {

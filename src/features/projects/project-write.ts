@@ -1,9 +1,9 @@
 // What the project gestures write: a status change, a promoted or dropped idea, a track task. Pure
 // planning: every plan is a list of splices of the note's lines (`InsertPlan`, positions in the lines the
 // plan was made from), ordered from the end of the note to its start so that they apply one after the
-// other, through the Editor (`applyToEditor`) or `Vault.process` (`applyEdits`). Each gesture checks that
+// other, by the write gateway (`core/note-write`). Each gesture checks that
 // the line it targets still has the text the caller read and refuses otherwise.
-import { applyPlan, lastNonBlank, type InsertPlan } from "../ai-actions/insertion";
+import { lastNonBlank, type InsertPlan } from "../ai-actions/insertion";
 import { childLines, indentUnit, type ChildLine } from "../ideas/idea-note";
 import { splitLine, width } from "../journal/journal-note";
 import { appendPoint, readProject, STATUS_INFO, withMarker, type ProjectIdea, type ProjectModel, type ProjectTags, type ProjectTrack, type TrackStatus } from "./project-note";
@@ -33,11 +33,6 @@ const REFUSAL_MESSAGES: Record<Refusal, string> = {
 
 export function refusalMessage(reason: Refusal): string {
 	return REFUSAL_MESSAGES[reason];
-}
-
-/** Applies edits made by a plan (in the order the plan gave them). */
-export function applyEdits(lines: string[], edits: readonly Edit[]): string[] {
-	return edits.reduce((current, edit) => applyPlan(current, edit), lines);
 }
 
 function byLineDescending(edits: Edit[]): Edit[] {

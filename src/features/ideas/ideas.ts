@@ -4,7 +4,7 @@ import type { EditorView } from "@codemirror/view";
 
 import { formatDate, startOfDay } from "../../core/dates";
 import type VaultMatePlugin from "../../main";
-import { editorLines } from "../journal/journal-write";
+import { editorLines } from "../../core/note-edit";
 import { IdeaCaptureSuggest, plantIdea } from "./capture-suggest";
 import { createIdeaBadgeExtension } from "./idea-badge";
 import { IdeaIndex } from "./idea-index";

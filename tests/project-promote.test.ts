@@ -1,7 +1,8 @@
+import { applyEdits } from "../src/core/note-edit";
 import { describe, expect, it } from "vitest";
 
 import { readProject, type ProjectTags, type TrackStatus } from "../src/features/projects/project-note";
-import { applyEdits, dropIdea, promoteIdea, trackFromIdea, type WritePlan } from "../src/features/projects/project-write";
+import { dropIdea, promoteIdea, trackFromIdea, type WritePlan } from "../src/features/projects/project-write";
 
 const TAGS: ProjectTags = { idea: "idea", decision: "decision", prediction: "prediction", seed: "projet" };
 

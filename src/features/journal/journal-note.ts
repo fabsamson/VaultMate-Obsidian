@@ -1,7 +1,7 @@
 // Working on the lines of a note around a journal entry: its sub-items, the review sub-item, the checked
 // rewrite and the lines of a new entry. Pure: no Obsidian import, so Vitest tests it.
 //
-// Lines are given without their line break. `rewriteText` handles LF and CRLF files.
+// Lines are given without their line break.
 import { convertToEntry, type JournalKind, type JournalTags } from "./journal-line";
 
 const QUOTE_RE = /^(?:[ \t]*>[ \t]?)*/;
@@ -106,18 +106,6 @@ export function planRewrite(
 	const prefix = `${own.quote}${children.indent ?? own.indent + unit}`;
 	const added = [...(subItem === null ? [] : [`${prefix}- ${subItem}`]), ...(appended?.(prefix, unit) ?? [])];
 	return { ok: true, from: index, to: children.end, replacement: [newLine, ...lines.slice(index + 1, children.end + 1), ...added] };
-}
-
-export type RewriteResult = { ok: true; text: string } | { ok: false };
-
-/** `planRewrite` applied to the whole text of a note, keeping its line breaks. */
-export function rewriteText(text: string, index: number, expected: string, newLine: string, subItem: string | null, appended?: AppendedLines): RewriteResult {
-	const eol = text.includes("\r\n") ? "\r\n" : "\n";
-	const lines = text.split(/\r?\n/);
-	const plan = planRewrite(lines, index, expected, newLine, subItem, appended);
-	if (!plan.ok) return plan;
-	lines.splice(plan.from, plan.to - plan.from + 1, ...plan.replacement);
-	return { ok: true, text: lines.join(eol) };
 }
 
 // ---- New entries ------------------------------------------------------------------------------------

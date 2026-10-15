@@ -1,20 +1,20 @@
 // Writing what processing an idea produces. The note the idea lives in is rewritten through the journal's
 // checked rewrite (Editor for the active note, Vault.process otherwise): the line must still be the one
 // the index read, else the write is refused with a notice. Planning is in `idea-note`.
-import { MarkdownView, normalizePath, Notice, type App, type Editor, type TFile } from "obsidian";
+import { normalizePath, Notice, type App, type TFile } from "obsidian";
 
 import { formatDate, startOfDay } from "../../core/dates";
+import { readNoteLines, writeNote } from "../../core/note-write";
 import type { VaultMateSettings } from "../../core/settings-model";
 import { baseName } from "../context/note-meta";
-import { applyPlan, type InsertPlan } from "../ai-actions/insertion";
-import { applyToEditor } from "../ai-actions/insert-write";
+import type { InsertPlan } from "../ai-actions/insertion";
 import { writeProject } from "../projects/project-apply";
 import type { TrackStatus } from "../projects/project-note";
 import { newTrackInNote, promoteIdea } from "../projects/project-write";
 import { projectTags } from "../projects/projects-model";
 import type { JournalKind } from "../journal/journal-line";
 import type { NewEntryResult } from "../journal/journal-modals";
-import { CHANGED, editorLines, writeEntryLine } from "../journal/journal-write";
+import { CHANGED, writeEntryLine } from "../journal/journal-write";
 import { retagAsSeed, type IdeaItem } from "./idea-line";
 import { closeParts, DEFAULT_NEW_NOTE, ideaChildren, ideaText, indentUnit, nearestLine, newNotePath, planAddIdea, renderNewNote, trackedLines } from "./idea-note";
 
@@ -73,27 +73,13 @@ function statementOf(item: IdeaItem): string {
 	return item.idea.type === "task" ? item.idea.entry.statement : item.idea.statement;
 }
 
-function activeEditor(app: App, path: string): Editor | null {
-	const view = app.workspace.getActiveViewOfType(MarkdownView);
-	// Not in reading view: it keeps its own copy of the text, and an edit through its hidden editor is never saved.
-	return view?.file?.path === path && view.getMode() === "source" ? view.editor : null;
-}
-
-/** The lines of a note, from the editor when it is open there. */
-async function readLines(app: App, path: string): Promise<string[] | null> {
-	const editor = activeEditor(app, path);
-	if (editor) return editorLines(editor);
-	const file = app.vault.getFileByPath(path);
-	return file ? (await app.vault.read(file)).split(/\r?\n/) : null;
-}
-
 /**
  * The idea with `line` set to where its text is now: the line equal to `item.raw` nearest to `item.line`.
  * Call it right before a writer, since an earlier write can move the line. Null after a notice when the
  * note or the line is gone.
  */
 export async function locateIdea(host: Pick<IdeaWriteHost, "app">, item: IdeaItem): Promise<IdeaItem | null> {
-	const lines = await readLines(host.app, item.path);
+	const lines = await readNoteLines(host.app, item.path);
 	if (!lines) {
 		new Notice("VaultMate could not find this note.");
 		return null;
@@ -108,7 +94,7 @@ export async function locateIdea(host: Pick<IdeaWriteHost, "app">, item: IdeaIte
 
 /** The lines of the idea's note when the idea line is still the one that was read, else null after a notice. */
 async function readSource(app: App, item: IdeaItem): Promise<string[] | null> {
-	const lines = await readLines(app, item.path);
+	const lines = await readNoteLines(app, item.path);
 	if (!lines) {
 		new Notice("VaultMate could not find this note.");
 		return null;
@@ -121,24 +107,15 @@ async function readSource(app: App, item: IdeaItem): Promise<string[] | null> {
 }
 
 /**
- * Applies a plan made from the note's current lines: through the Editor when the note is open there, else
- * `Vault.process`. A plan that returns null writes nothing; the result says whether anything was written.
+ * Applies a plan made from the note's current lines through the write gateway. A plan that returns null
+ * writes nothing; the result says whether anything was written.
  */
 async function insertInto(app: App, file: TFile, plan: (lines: string[]) => InsertPlan | null): Promise<boolean> {
-	const editor = activeEditor(app, file.path);
-	if (editor) {
-		const made = plan(editorLines(editor));
-		if (made) applyToEditor(editor, made);
-		return made !== null;
-	}
-	let written = false;
-	await app.vault.process(file, (text) => {
-		const lines = text.split(/\r?\n/);
+	const result = await writeNote(app, file.path, (lines) => {
 		const made = plan(lines);
-		written = made !== null;
-		return made ? applyPlan(lines, made).join(text.includes("\r\n") ? "\r\n" : "\n") : text;
+		return made ? { ok: true, edits: [made] } : { ok: false, reason: null };
 	});
-	return written;
+	return result.status === "written";
 }
 
 /**

@@ -1,6 +1,7 @@
+import { applyEdits } from "../src/core/note-edit";
 import { describe, expect, it } from "vitest";
 
-import { addTrackTask, applyEdits, dedentChildren, dropIdea, promoteIdea, refusalMessage, setTrackStatus, trackTaskLine, undoDropIdea, type WritePlan } from "../src/features/projects/project-write";
+import { addTrackTask, dedentChildren, dropIdea, promoteIdea, refusalMessage, setTrackStatus, trackTaskLine, undoDropIdea, type WritePlan } from "../src/features/projects/project-write";
 import { readProject } from "../src/features/projects/project-note";
 
 const NOTE = [

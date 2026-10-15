@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import { isConfirmed, withConfirmation } from "../src/features/ai-actions/confirmation";
-import { applyPlan, planCursorInsert, planHeadingInsert, renderLine } from "../src/features/ai-actions/insertion";
+import { applyEdits } from "../src/core/note-edit";
+import { planCursorInsert, planHeadingInsert, renderLine } from "../src/features/ai-actions/insertion";
 
 const lines = (text: string): string[] => text.split("\n");
 const insertUnder = (text: string, heading: string, rendered: string[]): string | null => {
 	const plan = planHeadingInsert(lines(text), heading, rendered);
-	return plan ? applyPlan(lines(text), plan).join("\n") : null;
+	return plan ? applyEdits(lines(text), [plan]).join("\n") : null;
 };
 
 describe("renderLine", () => {
@@ -70,13 +71,13 @@ describe("planCursorInsert", () => {
 	it("inserts after the cursor line", () => {
 		const note = lines("one\ntwo\nthree");
 		const plan = planCursorInsert(note, 1, ["- A?"]);
-		expect(plan && applyPlan(note, plan).join("\n")).toBe("one\ntwo\n- A?\nthree");
+		expect(plan && applyEdits(note, [plan]).join("\n")).toBe("one\ntwo\n- A?\nthree");
 	});
 
 	it("replaces an empty cursor line", () => {
 		const note = lines("one\n\nthree");
 		const plan = planCursorInsert(note, 1, ["- A?", "- B?"]);
-		expect(plan && applyPlan(note, plan).join("\n")).toBe("one\n- A?\n- B?\nthree");
+		expect(plan && applyEdits(note, [plan]).join("\n")).toBe("one\n- A?\n- B?\nthree");
 	});
 
 	it("skips lines already in the note and returns null when none is new", () => {
@@ -87,7 +88,7 @@ describe("planCursorInsert", () => {
 
 	it("works on an empty note and clamps the cursor", () => {
 		const plan = planCursorInsert([""], 5, ["- A?"]);
-		expect(plan && applyPlan([""], plan)).toEqual(["- A?"]);
+		expect(plan && applyEdits([""], [plan])).toEqual(["- A?"]);
 	});
 });
 

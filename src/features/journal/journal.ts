@@ -3,6 +3,7 @@ import { debounce, MarkdownView, Notice, TFile, type Editor, type MarkdownFileIn
 import type { EditorView } from "@codemirror/view";
 
 import { formatDate, startOfDay } from "../../core/dates";
+import { editorLines } from "../../core/note-edit";
 import { getDescription, getInlineField, parseTaskLine } from "../../core/task-line";
 import type VaultMatePlugin from "../../main";
 import { CaptureSuggest } from "./capture-suggest";
@@ -24,10 +25,6 @@ import { getChildren, isEmptyLine, newEntryLines, replaceEmptyLineText, reviewIt
 import { writeEntryLine } from "./journal-write";
 import { createBadgeExtension } from "./line-badge";
 import { createJournalPage } from "./journal-page";
-
-function editorLines(editor: Editor): string[] {
-	return Array.from({ length: editor.lineCount() }, (_, index) => editor.getLine(index));
-}
 
 export class JournalFeature {
 	public readonly index: JournalIndex;

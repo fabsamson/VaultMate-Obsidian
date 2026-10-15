@@ -3,11 +3,13 @@
 import { debounce, Notice, type Editor, type MarkdownFileInfo, type MarkdownView } from "obsidian";
 
 import { formatDate, startOfDay } from "../../core/dates";
+import { applyEditsToEditor } from "../../core/note-edit";
+import { readNoteLines } from "../../core/note-write";
 import type VaultMatePlugin from "../../main";
 import { buildIdeaItem } from "../ideas/idea-line";
 import { noticeWithButton } from "../ideas/idea-modal";
 import { dropIdea as dropTaggedIdea, locateIdea, undoDrop } from "../ideas/idea-write";
-import { applyEditsToEditor, readNoteLines, writeProject } from "./project-apply";
+import { writeProject } from "./project-apply";
 import { convertProject, diffEdit } from "./project-convert";
 import { ProjectIndex, type ProjectContent } from "./project-index";
 import { PromoteModal, StatusModal, TaskModal } from "./project-modals";

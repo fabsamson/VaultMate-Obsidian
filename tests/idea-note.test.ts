@@ -4,7 +4,8 @@ import { startOfDay } from "../src/core/dates";
 import { classifyLine, type JournalTags } from "../src/features/journal/journal-line";
 import { planRewrite } from "../src/features/journal/journal-note";
 import { buildIdeaItem, classifyIdeaLine, type IdeaItem } from "../src/features/ideas/idea-line";
-import { applyPlan, type InsertPlan } from "../src/features/ai-actions/insertion";
+import { applyEdits } from "../src/core/note-edit";
+import type { InsertPlan } from "../src/features/ai-actions/insertion";
 import {
 	childLines,
 	closeParts,
@@ -164,7 +165,7 @@ describe("planAddIdea", () => {
 		const lines = ["# Sprint planning", "", "- existing", "", ""];
 		const plan = planned(lines, null, "Kitchen sprint", children);
 		expect(plan).toEqual({ at: 3, remove: 0, lines: ["- Kitchen sprint", "    - first", "        - deeper"] });
-		expect(applyPlan(lines, plan)).toEqual(["# Sprint planning", "", "- existing", "- Kitchen sprint", "    - first", "        - deeper", "", ""]);
+		expect(applyEdits(lines, [plan])).toEqual(["# Sprint planning", "", "- existing", "- Kitchen sprint", "    - first", "        - deeper", "", ""]);
 	});
 
 	it("fills an empty note", () => {

@@ -1,8 +1,8 @@
+import { applyEdits } from "../src/core/note-edit";
 import { describe, expect, it } from "vitest";
 
 import { convertProject, diffEdit } from "../src/features/projects/project-convert";
 import { readProject } from "../src/features/projects/project-note";
-import { applyEdits } from "../src/features/projects/project-write";
 
 const LEGACY = [
 	"# 🎯 Objectif",
