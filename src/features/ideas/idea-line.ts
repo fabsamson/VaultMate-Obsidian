@@ -15,6 +15,7 @@ import {
 	getTaskDate,
 	hasTag,
 	parseTaskLine,
+	replaceTag,
 	serializeTaskLine,
 	setInlineField,
 	setTaskDate,
@@ -134,6 +135,23 @@ export function resultLinkTarget(children: readonly string[]): string | null {
 		if (target) return target;
 	}
 	return null;
+}
+
+/** Whether a line is a project seed: its tag is `<ideaTag>/<subtag>` or a sub-tag of it. Never with an empty sub-tag. */
+export function isProjectSeed(line: string, ideaTag: string, subtag: string): boolean {
+	return subtag !== "" && hasTag(parseTaskLine(line).body, `${ideaTag.replace(/^#/, "")}/${subtag}`);
+}
+
+/**
+ * The line of an open idea with its idea tag turned into `#<ideaTag>/<subtag>`: the line is otherwise
+ * unchanged and stays open. Null when there is nothing to do: no sub-tag, not an open idea, or already a seed.
+ */
+export function retagAsSeed(line: string, ideaTag: string, subtag: string): string | null {
+	const idea = classifyIdeaLine(line, ideaTag);
+	if (subtag === "" || (idea?.type !== "plain" && (idea?.type !== "task" || idea.entry.status !== "open")) || isProjectSeed(line, ideaTag, subtag)) return null;
+	const parsed = parseTaskLine(line);
+	const body = replaceTag(parsed.body, ideaTag, `${ideaTag.replace(/^#/, "")}/${subtag}`);
+	return body === null ? null : serializeTaskLine({ ...parsed, body });
 }
 
 // ---- Capture ----------------------------------------------------------------------------------------

@@ -170,6 +170,14 @@ export function isTagOrSubtag(name: string, wanted: string): boolean {
 	return lower === parent || lower.startsWith(`${parent}/`);
 }
 
+/** The body with the first tag that is `wanted` or one of its subtags replaced by `#replacement`; null when it has none. */
+export function replaceTag(body: string, wanted: string, replacement: string): string | null {
+	const { main, block, tail } = splitBody(body);
+	const tag = findTags(main).find((candidate) => isTagOrSubtag(candidate.name, wanted));
+	if (!tag) return null;
+	return `${main.slice(0, tag.start)}#${stripHash(replacement)}${main.slice(tag.start + 1 + tag.name.length)}${block}${tail}`;
+}
+
 /** Case-insensitive, like Obsidian; a nested tag (`decision/work`) counts for its parent (`decision`). */
 export function hasTag(body: string, tag: string): boolean {
 	return getTags(body).some((name) => isTagOrSubtag(name, tag));

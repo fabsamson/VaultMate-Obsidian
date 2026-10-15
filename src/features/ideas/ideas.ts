@@ -30,6 +30,11 @@ export class IdeasFeature {
 		return this.plugin.settings.ideas.tag;
 	}
 
+	/** The project seed sub-tag, without `#`; empty when seeds are off. */
+	public seedSubtag(): string {
+		return this.plugin.settings.ideas.seedSubtag;
+	}
+
 	/**
 	 * Per note path, how many result sub-items (`Added to [[X]]`, `New note: [[X]]`) point to each resolved
 	 * target path. Those links only record where an idea went: the context finder does not count them as
@@ -81,6 +86,7 @@ export class IdeasFeature {
 			createIdeasPage({
 				enabled: () => this.enabled(),
 				tag: () => this.tag().replace(/^#/, ""),
+				seedSubtag: () => this.seedSubtag(),
 				items: () => this.index.items(),
 				activeNote: () => plugin.contextFile()?.path ?? null,
 				markdownPaths: () => plugin.app.vault.getMarkdownFiles().map((file) => file.path),
@@ -224,7 +230,7 @@ export class IdeasFeature {
 	}
 
 	/** Tend mode over `items`, else over every fresh idea of the vault, oldest first. */
-	public tend(items: IdeaItem[] = tendQueue(this.index.items(), startOfDay())): void {
+	public tend(items: IdeaItem[] = tendQueue(this.index.items(), startOfDay(), { tag: this.tag().replace(/^#/, ""), subtag: this.seedSubtag() })): void {
 		if (items.length === 0) {
 			new Notice("No fresh ideas to tend.");
 			return;

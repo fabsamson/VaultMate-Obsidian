@@ -1,7 +1,7 @@
 // What the idea badge, the portal and the hub page show: labels, grouping, filtering and counts.
 // Pure: no Obsidian import, so Vitest tests it.
 import { formatDate } from "../../core/dates";
-import { ageGroup, ideaAge, type AgeGroup, type IdeaClass, type IdeaItem, type IdeaResult } from "./idea-line";
+import { ageGroup, ideaAge, isProjectSeed, type AgeGroup, type IdeaClass, type IdeaItem, type IdeaResult } from "./idea-line";
 
 type OpenOrProcessed = Extract<IdeaClass, { type: "task" | "plain" }>;
 
@@ -76,25 +76,42 @@ function byAge(a: IdeaItem, b: IdeaItem): number {
 	return a.date.localeCompare(b.date) || a.path.localeCompare(b.path) || a.line - b.line;
 }
 
+/** The project seeds: open ideas tagged `#<tag>/<subtag>`. Seeds wait for a project, so they are not tended. */
+export interface SeedFilter {
+	/** The idea tag, without #. */
+	tag: string;
+	/** The seed sub-tag; empty = no seeds. */
+	subtag: string;
+}
+
+function isOpenSeed(item: IdeaItem, seed: SeedFilter | undefined): boolean {
+	return seed !== undefined && isOpenIdea(item.idea) && isProjectSeed(item.raw, seed.tag, seed.subtag);
+}
+
+/** How many project seeds wait in these items. */
+export function seedCount(items: readonly IdeaItem[], seed: SeedFilter): number {
+	return items.filter((item) => isOpenSeed(item, seed)).length;
+}
+
 export type OpenGroups = Record<AgeGroup, IdeaItem[]>;
 
-/** The open ideas by age group, the oldest first in each. */
-export function groupOpen(items: readonly IdeaItem[], today: Date): OpenGroups {
+/** The open ideas by age group, the oldest first in each; project seeds (when `seed` is given) are left out. */
+export function groupOpen(items: readonly IdeaItem[], today: Date, seed?: SeedFilter): OpenGroups {
 	const groups: OpenGroups = { fresh: [], waiting: [], wilting: [] };
 	for (const item of [...items].sort(byAge)) {
-		if (isOpenIdea(item.idea)) groups[ageGroup(item.date, today)].push(item);
+		if (isOpenIdea(item.idea) && !isOpenSeed(item, seed)) groups[ageGroup(item.date, today)].push(item);
 	}
 	return groups;
 }
 
 /** The fresh ideas, oldest first: what Tend mode goes through. */
-export function tendQueue(items: readonly IdeaItem[], today: Date): IdeaItem[] {
-	return groupOpen(items, today).fresh;
+export function tendQueue(items: readonly IdeaItem[], today: Date, seed?: SeedFilter): IdeaItem[] {
+	return groupOpen(items, today, seed).fresh;
 }
 
 /** `3 fresh · 2 waiting · 5 wilting` (zero parts left out), or `Nothing to tend`. */
-export function tendSummary(items: readonly IdeaItem[], today: Date): string {
-	const groups = groupOpen(items, today);
+export function tendSummary(items: readonly IdeaItem[], today: Date, seed?: SeedFilter): string {
+	const groups = groupOpen(items, today, seed);
 	const parts = [
 		groups.fresh.length > 0 ? `${groups.fresh.length} fresh` : "",
 		groups.waiting.length > 0 ? `${groups.waiting.length} waiting` : "",

@@ -20,6 +20,8 @@ export interface IdeasSettings {
 	newNoteFolder: string;
 	/** Path of the template note for those notes; empty = none. */
 	newNoteTemplate: string;
+	/** Sub-tag of the idea tag that marks a project seed (`idea/<subtag>`), without #; empty = no project seeds. */
+	seedSubtag: string;
 }
 
 export interface ProjectsSettings {
@@ -105,7 +107,7 @@ export interface VaultMateSettings {
 export const DEFAULT_SETTINGS: VaultMateSettings = {
 	journal: { enabled: true, decisionTag: "decision", predictionTag: "prediction" },
 	journalState: { lastNoticeDate: "" },
-	ideas: { enabled: true, tag: "idea", newNoteFolder: "", newNoteTemplate: "" },
+	ideas: { enabled: true, tag: "idea", newNoteFolder: "", newNoteTemplate: "", seedSubtag: "" },
 	projects: { enabled: true, tracksTitle: "\u{1F9ED} Tracks" },
 	ai: { enabled: true, baseUrl: "https://api.openai.com/v1", model: "gpt-5.6-luna", apiKeySecret: "", actionsFolder: "VaultMate/AI actions" },
 	aiState: { confirmed: {}, notInterested: {} },
@@ -125,6 +127,19 @@ export function validateTag(tag: string): string | undefined {
 	if (!TAG_RE.test(tag)) return "Use letters, numbers, underscores, hyphens and slashes only.";
 	if (!/\D/.test(tag)) return "A tag needs at least one non-numeric character.";
 	return undefined;
+}
+
+/** A project seed sub-tag as stored: without `#`, slashes or spaces at either end. */
+export function cleanSeedSubtag(text: string): string {
+	return text.replace(/^[#/\s]+|[#/\s]+$/g, "");
+}
+
+/** Error message for a project seed sub-tag as typed, or undefined when it is valid (an empty one turns seeds off). */
+export function validateSeedSubtag(text: string): string | undefined {
+	const subtag = cleanSeedSubtag(text);
+	if (subtag === "") return undefined;
+	if (/\s/.test(subtag)) return "A tag cannot contain spaces.";
+	return TAG_RE.test(subtag) ? undefined : "Use letters, numbers, underscores, hyphens and slashes only.";
 }
 
 function sameTag(a: string, b: string): boolean {
@@ -289,6 +304,7 @@ export function normalizeSettings(value: unknown): VaultMateSettings {
 			tag: ideaTag,
 			newNoteFolder: typeof ideas.newNoteFolder === "string" ? cleanFolderPath(ideas.newNoteFolder) : ideaDefaults.newNoteFolder,
 			newNoteTemplate: typeof ideas.newNoteTemplate === "string" ? cleanFolderPath(ideas.newNoteTemplate) : ideaDefaults.newNoteTemplate,
+			seedSubtag: typeof ideas.seedSubtag === "string" && validateSeedSubtag(ideas.seedSubtag) === undefined ? cleanSeedSubtag(ideas.seedSubtag) : ideaDefaults.seedSubtag,
 		},
 	};
 }

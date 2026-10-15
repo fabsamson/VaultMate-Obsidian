@@ -31,6 +31,8 @@ export interface IdeasPageHost {
 	enabled(): boolean;
 	/** The tag ideas carry, without `#`. */
 	tag(): string;
+	/** The project seed sub-tag; empty when seeds are off. */
+	seedSubtag(): string;
 	items(): IdeaItem[];
 	/** Path of the active Markdown note, else the most recent one, or null. */
 	activeNote(): string | null;
@@ -80,7 +82,7 @@ export function createIdeasPage(host: IdeasPageHost): HubPage {
 
 	const renderToTend = (parent: HTMLElement, items: IdeaItem[], today: Date): void => {
 		createSectionHeader(parent, "To tend");
-		const groups = groupOpen(items, today);
+		const groups = groupOpen(items, today, { tag: host.tag(), subtag: host.seedSubtag() });
 		if (groups.fresh.length + groups.waiting.length + groups.wilting.length === 0) {
 			parent.createEl("p", { cls: "vaultmate-muted", text: "Nothing to tend." });
 			return;
@@ -154,7 +156,7 @@ export function createIdeasPage(host: IdeasPageHost): HubPage {
 		title: "Ideas",
 		sprite: SPRITES.moduleIdea,
 		enabled: () => host.enabled(),
-		summary: () => tendSummary(host.items(), startOfDay()),
+		summary: () => tendSummary(host.items(), startOfDay(), { tag: host.tag(), subtag: host.seedSubtag() }),
 		render: (body, ctx) => {
 			if (host.items().length === 0) {
 				renderEmpty(body);

@@ -11,7 +11,7 @@ import { applyToEditor } from "../ai-actions/insert-write";
 import type { JournalKind } from "../journal/journal-line";
 import type { NewEntryResult } from "../journal/journal-modals";
 import { CHANGED, editorLines, writeEntryLine } from "../journal/journal-write";
-import type { IdeaItem } from "./idea-line";
+import { retagAsSeed, type IdeaItem } from "./idea-line";
 import { closeParts, DEFAULT_NEW_NOTE, ideaChildren, ideaText, indentUnit, nearestLine, newNotePath, planAddIdea, renderNewNote, trackedLines } from "./idea-note";
 
 /** What the writers need: the Obsidian app and the settings (`VaultMatePlugin` fits). */
@@ -32,6 +32,20 @@ export async function dropIdea(host: IdeaWriteHost, item: IdeaItem, note: string
 /** Puts the original line back after a drop without note, if the line still equals `closedLine`. Returns whether it wrote. */
 export function undoDrop(host: IdeaWriteHost, item: IdeaItem, closedLine: string): Promise<boolean> {
 	return writeEntryLine(host.app, { path: item.path, line: item.line, raw: closedLine }, item.raw, null);
+}
+
+/**
+ * Makes the idea a project seed: its tag becomes `#<tag>/<seed sub-tag>` and the line stays open. The
+ * line must still be the one that was read. Returns whether it wrote.
+ */
+export function makeProjectSeed(host: IdeaWriteHost, item: IdeaItem): Promise<boolean> {
+	const { tag, seedSubtag } = host.settings.ideas;
+	const line = retagAsSeed(item.raw, tag, seedSubtag);
+	if (line === null) {
+		new Notice("This idea cannot become a project seed.");
+		return Promise.resolve(false);
+	}
+	return writeEntryLine(host.app, item, line, null);
 }
 
 /**

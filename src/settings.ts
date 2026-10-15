@@ -1,7 +1,7 @@
 import { Notice, PluginSettingTab, SecretComponent, type Setting, type SettingDefinitionItem } from "obsidian";
 
 import { validateBaseUrl } from "./core/ai/endpoint";
-import { DEFAULT_SETTINGS, MAX_CONNECTIONS, validateActionsFolder, validateDistinctCollectionProperties, validateDistinctIdeaTag, validateDistinctProperties, validateDistinctTags, validatePropertyList, validatePropertyName, validateTag, validateTracksTitle, parseList, cleanFolderPath } from "./core/settings-model";
+import { DEFAULT_SETTINGS, MAX_CONNECTIONS, validateActionsFolder, validateDistinctCollectionProperties, validateDistinctIdeaTag, validateDistinctProperties, validateDistinctTags, validateSeedSubtag, cleanSeedSubtag, validatePropertyList, validatePropertyName, validateTag, validateTracksTitle, parseList, cleanFolderPath } from "./core/settings-model";
 import { createDefaultActions } from "./features/ai-actions/default-actions";
 import type VaultMatePlugin from "./main";
 
@@ -73,6 +73,11 @@ export class VaultMateSettingTab extends PluginSettingTab {
 							placeholder: DEFAULT_SETTINGS.ideas.tag,
 							validate: (value) => validateTag(value) ?? validateDistinctIdeaTag(value, journal.decisionTag) ?? validateDistinctIdeaTag(value, journal.predictionTag),
 						},
+					},
+					{
+						name: "Project seed sub-tag",
+						desc: "Sub-tag of the idea tag for ideas that wait to become a project, such as projet for #idea/projet. Seeds leave the lists of ideas to tend and the project notes. Enter it without #. Leave empty to turn project seeds off.",
+						control: { type: "text", key: "ideas.seedSubtag", placeholder: "No project seeds", validate: validateSeedSubtag },
 					},
 					{
 						name: "New note folder",
@@ -260,6 +265,7 @@ export class VaultMateSettingTab extends PluginSettingTab {
 		const settings = this.featureSettings(feature);
 		if (!settings) return;
 		if (NUMBER_KEYS.has(key)) settings[name] = Number(value);
+		else if (key === "ideas.seedSubtag" && typeof value === "string") settings[name] = cleanSeedSubtag(value);
 		else settings[name] = LIST_KEYS.has(key) && typeof value === "string" ? parseList(value).map(key === "context.excludedFolders" ? cleanFolderPath : (item) => item).filter((item) => item !== "") : value;
 		await this.plugin.saveSettings();
 		this.plugin.onSettingsChanged();

@@ -11,7 +11,7 @@ describe("validateDistinctIdeaTag", () => {
 
 describe("normalizeSettings for ideas", () => {
 	it("defaults to ideas on with the idea tag and no folder or template", () => {
-		expect(DEFAULT_SETTINGS.ideas).toEqual({ enabled: true, tag: "idea", newNoteFolder: "", newNoteTemplate: "" });
+		expect(DEFAULT_SETTINGS.ideas).toEqual({ enabled: true, tag: "idea", newNoteFolder: "", newNoteTemplate: "", seedSubtag: "" });
 		for (const data of [undefined, {}, { ideas: null }, { ideas: [] }, { ideas: "x" }]) {
 			expect(normalizeSettings(data).ideas).toEqual(DEFAULT_SETTINGS.ideas);
 		}
