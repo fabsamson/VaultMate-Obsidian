@@ -219,23 +219,29 @@ function summary(entry: JournalEntry): string {
 }
 
 export class ReviewModal extends JournalModal {
-	/** `onSubmit` resolves true when the note was written; the modal then closes. */
+	/**
+	 * `onSubmit` resolves true when the note was written; the modal then closes. In late mode the entry was
+	 * ticked without a review: the form is "Add the outcome", prefilled with what the line already has, and
+	 * it can only close the entry (no intermediate review).
+	 */
 	public constructor(
 		app: App,
 		private readonly item: JournalItem,
 		private readonly onSubmit: (input: ReviewInput) => Promise<boolean>,
+		private readonly late = false,
 	) {
 		super(app);
 	}
 
 	public onOpen(): void {
-		const { contentEl, item } = this;
+		const { contentEl, item, late } = this;
 		const { entry } = item;
 		const decision = entry.kind === "decision";
-		createSectionHeader(contentEl, `Review ${kindName(entry.kind)}`);
+		createSectionHeader(contentEl, late ? "Add the outcome" : `Review ${kindName(entry.kind)}`);
 		contentEl.createEl("p", { cls: "vaultmate-statement", text: entry.statement || "(no text)" });
 		if (entry.answer !== null) contentEl.createEl("p", { cls: "vaultmate-answer", text: `${decision ? "Your decision" : "Your answer"}: ${entry.answer}` });
 		contentEl.createEl("p", { cls: "vaultmate-muted", text: summary(entry) });
+		if (late) contentEl.createEl("p", { cls: "vaultmate-muted", text: `This ${kindName(entry.kind)} was ticked without a review. Only the missing fields are written.` });
 		if (item.children.length > 0) {
 			const list = contentEl.createEl("ul", { cls: "vaultmate-context" });
 			for (const child of item.children) list.createEl("li", { text: child });
@@ -243,9 +249,9 @@ export class ReviewModal extends JournalModal {
 
 		const buttons: HTMLButtonElement[] = [];
 		let closeButton: HTMLButtonElement | undefined;
-		let outcome: Outcome | null = null;
-		let quality: Quality | null = null;
-		let result: PredictionResult | null = null;
+		let outcome: Outcome | null = late ? entry.outcome : null;
+		let quality: Quality | null = late ? entry.quality : null;
+		let result: PredictionResult | null = late ? entry.result : null;
 		const update = (): void => {
 			if (closeButton) closeButton.disabled = decision ? outcome === null || quality === null : result === null;
 		};
@@ -256,7 +262,7 @@ export class ReviewModal extends JournalModal {
 			createSegmentedControl(choiceRow(contentEl, "Outcome"), {
 				label: "Outcome",
 				choices: OUTCOMES.map((value) => ({ value, label: OUTCOME_LABELS[value] })),
-				value: null,
+				value: outcome,
 				onChange: (value) => {
 					outcome = value;
 					update();
@@ -265,7 +271,7 @@ export class ReviewModal extends JournalModal {
 			createSegmentedControl(choiceRow(contentEl, "Quality of the decision"), {
 				label: "Quality of the decision",
 				choices: QUALITIES.map((value) => ({ value, label: QUALITY_LABELS[value] })),
-				value: null,
+				value: quality,
 				onChange: (value) => {
 					quality = value;
 					update();
@@ -276,7 +282,7 @@ export class ReviewModal extends JournalModal {
 			createSegmentedControl(choiceRow(contentEl, "Did it happen?"), {
 				label: "Did it happen?",
 				choices: RESULTS.map((value) => ({ value, label: RESULT_LABELS[value] })),
-				value: null,
+				value: result,
 				onChange: (value) => {
 					result = value;
 					update();
@@ -298,15 +304,17 @@ export class ReviewModal extends JournalModal {
 		const base = (): { happened: string; lesson: string } => ({ happened: happened.value, lesson: lesson?.value ?? "" });
 
 		const actions = contentEl.createDiv({ cls: "vaultmate-actions" });
-		closeButton = this.button(actions, decision ? "Close decision" : "Close prediction", true, () => {
+		closeButton = this.button(actions, late ? "Save outcome" : decision ? "Close decision" : "Close prediction", true, () => {
 			if (decision && outcome && quality) send({ ...base(), type: "close-decision", outcome, quality });
 			else if (!decision && result) send({ ...base(), type: "close-prediction", result });
 		});
-		const again = contentEl.createDiv({ cls: "vaultmate-again" });
-		const interval = intervalField(again, "Or review again in");
-		const againActions = again.createDiv({ cls: "vaultmate-actions" });
-		const againButton = this.button(againActions, "Review again", false, () => send({ ...base(), type: "again", interval: interval() }));
-		buttons.push(closeButton, againButton);
+		buttons.push(closeButton);
+		if (!late) {
+			const again = contentEl.createDiv({ cls: "vaultmate-again" });
+			const interval = intervalField(again, "Or review again in");
+			const againActions = again.createDiv({ cls: "vaultmate-actions" });
+			buttons.push(this.button(againActions, "Review again", false, () => send({ ...base(), type: "again", interval: interval() })));
+		}
 		update();
 		happened.focus();
 	}

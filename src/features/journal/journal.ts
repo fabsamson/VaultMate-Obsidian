@@ -1,20 +1,25 @@
 // The decision journal feature: wires the index, capture, badge, review and hub page together.
-import { debounce, MarkdownView, Notice, TFile, type Editor, type MarkdownFileInfo } from "obsidian";
+import { debounce, MarkdownView, normalizePath, Notice, TFile, type Editor, type MarkdownFileInfo } from "obsidian";
 import type { EditorView } from "@codemirror/view";
 
 import { formatDate, startOfDay } from "../../core/dates";
 import { editorLines } from "../../core/note-edit";
+import { openNoteAtLine, showLine } from "../../core/open-note";
 import { getDescription, getInlineField, parseTaskLine } from "../../core/task-line";
 import type VaultMatePlugin from "../../main";
 import { CaptureSuggest } from "./capture-suggest";
+import { noticeWithButton } from "../ideas/idea-modal";
+import { noteCandidates, parseIdeaLink } from "../ideas/idea-link";
 import { JournalIndex, type JournalItem } from "./journal-index";
 import {
+	addOutcome,
 	classifyLine,
 	closeEntry,
 	convertToEntry,
 	countDue,
 	dueFrom,
 	kindName,
+	markNotReviewable,
 	parseConfidence,
 	reviewAgain,
 	type JournalKind,
@@ -23,6 +28,7 @@ import {
 import { NewEntryModal, ReviewModal, TrackModal, type ReviewInput } from "./journal-modals";
 import { getChildren, isEmptyLine, newEntryLines, replaceEmptyLineText, reviewItemText, usesTabs } from "./journal-note";
 import { writeEntryLine } from "./journal-write";
+import { resolveReviewLine } from "./review-link";
 import { createBadgeExtension } from "./line-badge";
 import { createJournalPage } from "./journal-page";
 
@@ -60,6 +66,8 @@ export class JournalFeature {
 				markdownPaths: () => plugin.app.vault.getMarkdownFiles().map((file) => file.path),
 				openItem: (item) => void this.openAtLine(item),
 				openReview: (item) => this.openReview(item),
+				addOutcome: (item) => this.openLateReview(item),
+				notReviewable: (item) => void this.markNotReviewable(item),
 			}),
 		);
 		plugin.registerEditorSuggest(new CaptureSuggest(plugin.app, this));
@@ -71,6 +79,7 @@ export class JournalFeature {
 			}),
 		);
 		this.addCommands();
+		plugin.registerObsidianProtocolHandler("vaultmate-review", (params) => void this.onReviewLink(params));
 
 		// The due groups depend on today's date: redraw when the day changes.
 		let day = formatDate(startOfDay());
@@ -140,12 +149,18 @@ export class JournalFeature {
 		return cls?.type !== "entry" || (cls.entry.status === "open" && cls.entry.due === null && cls.entry.kind === kind);
 	}
 
-	/** The open entry under the cursor, read from the editor, or null. */
-	private openEntryAt(editor: Editor, path: string, lineNo = editor.getCursor().line): JournalItem | null {
+	/** The entry on a line of the editor (cursor line by default), or null. */
+	private entryAt(editor: Editor, path: string, lineNo = editor.getCursor().line): JournalItem | null {
 		const raw = editor.getLine(lineNo);
 		const cls = classifyLine(raw, this.tags());
-		if (cls?.type !== "entry" || cls.entry.status !== "open") return null;
+		if (cls?.type !== "entry") return null;
 		return { path, line: lineNo, raw, entry: cls.entry, children: getChildren(editorLines(editor), lineNo).items };
+	}
+
+	/** The open entry under the cursor, read from the editor, or null. */
+	private openEntryAt(editor: Editor, path: string, lineNo = editor.getCursor().line): JournalItem | null {
+		const item = this.entryAt(editor, path, lineNo);
+		return item?.entry.status === "open" ? item : null;
 	}
 
 	// ---- New entry ----------------------------------------------------------------------------------
@@ -198,17 +213,30 @@ export class JournalFeature {
 		new ReviewModal(this.plugin.app, item, (input) => this.applyReview(item, input)).open();
 	}
 
-	private async applyReview(item: JournalItem, input: ReviewInput): Promise<boolean> {
+	/** The review form for an entry ticked without a review: it only adds what is missing. */
+	public openLateReview(item: JournalItem): void {
+		new ReviewModal(this.plugin.app, item, (input) => this.applyReview(item, input, true), true).open();
+	}
+
+	/** Turns the entry's `[x]` into `[-]`, so it leaves the list and the statistics; the notice offers to undo. */
+	private async markNotReviewable(item: JournalItem): Promise<void> {
+		const line = markNotReviewable(item.raw);
+		if (!(await writeEntryLine(this.plugin.app, item, line, null))) return;
+		noticeWithButton("Marked as not reviewable.", "Undo", () => void writeEntryLine(this.plugin.app, { path: item.path, line: item.line, raw: line }, item.raw, null));
+	}
+
+	private async applyReview(item: JournalItem, input: ReviewInput, late = false): Promise<boolean> {
 		const today = startOfDay();
 		const todayText = formatDate(today);
 		let line: string;
 		let done: string;
+		const close = late ? addOutcome : closeEntry;
 		if (input.type === "close-decision") {
-			line = closeEntry(item.raw, { kind: "decision", outcome: input.outcome, quality: input.quality, today: todayText });
-			done = "Decision closed.";
+			line = close(item.raw, { kind: "decision", outcome: input.outcome, quality: input.quality, today: todayText });
+			done = late ? "Outcome added." : "Decision closed.";
 		} else if (input.type === "close-prediction") {
-			line = closeEntry(item.raw, { kind: "prediction", result: input.result, today: todayText });
-			done = "Prediction closed.";
+			line = close(item.raw, { kind: "prediction", result: input.result, today: todayText });
+			done = late ? "Outcome added." : "Prediction closed.";
 		} else {
 			const due = dueFrom(today, input.interval);
 			line = reviewAgain(item.raw, due);
@@ -217,6 +245,48 @@ export class JournalFeature {
 		const written = await writeEntryLine(this.plugin.app, item, line, reviewItemText(todayText, input.happened, input.lesson));
 		if (written) new Notice(done);
 		return written;
+	}
+
+	// ---- Review link --------------------------------------------------------------------------------
+
+	/**
+	 * `obsidian://vaultmate-review?file=&line=` (from the Android app): opens the note at the entry, then its
+	 * review form, or "Add the outcome" for an entry ticked without a review. Never writes by itself.
+	 */
+	private async onReviewLink(params: Record<string, string | undefined>): Promise<void> {
+		if (!this.enabled()) {
+			new Notice("VaultMate decisions and predictions are turned off. Turn them on in the settings to use this link.");
+			return;
+		}
+		const target = parseIdeaLink(params);
+		if (!target) {
+			new Notice("This review link is not valid.");
+			return;
+		}
+		const { vault } = this.plugin.app;
+		let file: TFile | null = null;
+		for (const path of noteCandidates(target.file)) file = file ?? vault.getFileByPath(normalizePath(path));
+		if (!file) {
+			new Notice("VaultMate could not find this note.");
+			return;
+		}
+		const view = await openNoteAtLine(this.plugin.app, file, target.line);
+		if (!view) return;
+		const { editor } = view;
+		const lines = editorLines(editor);
+		const wanted = Math.min(target.line, Math.max(0, lines.length - 1));
+		const found = resolveReviewLine(lines, wanted, this.tags());
+		showLine(editor, found.kind === "open" || found.kind === "late" ? found.line : wanted);
+		if (found.kind === "reviewed") {
+			new Notice("This entry is already reviewed or cancelled.");
+		} else if (found.kind === "none") {
+			new Notice("No decision or prediction to review on this line.");
+		} else {
+			const item = this.entryAt(editor, file.path, found.line);
+			if (!item) new Notice("No decision or prediction to review on this line.");
+			else if (found.kind === "open") this.openReview(item);
+			else this.openLateReview(item);
+		}
 	}
 
 	// ---- Badge, hub ---------------------------------------------------------------------------------

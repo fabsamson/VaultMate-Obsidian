@@ -5,11 +5,12 @@ import { createSectionHeader, createSegmentedControl } from "../../ui/components
 import type { HubPage } from "../../ui/hub-view";
 import { SPRITES } from "../../ui/sprites";
 import type { JournalItem } from "./journal-index";
+import { createClosedBlock, type ClosedHost } from "./closed-section";
 import { createReviewsBlock, type ReviewsHost } from "./reviews-section";
 import { addScopeControls } from "./scope-control";
 import { createTrackRecordBlock, type TrackRecordHost } from "./track-record-section";
 
-export interface JournalPageHost extends ReviewsHost, TrackRecordHost {
+export interface JournalPageHost extends ReviewsHost, TrackRecordHost, ClosedHost {
 	enabled(): boolean;
 	entries(): JournalItem[];
 	/** Path of the active Markdown note, else the most recent one, or null. */
@@ -25,6 +26,7 @@ const KINDS = [
 
 export function createJournalPage(host: JournalPageHost): HubPage {
 	const renderReviews = createReviewsBlock(host);
+	const renderClosed = createClosedBlock(host);
 	const renderTrackRecord = createTrackRecordBlock(host);
 
 	return {
@@ -67,8 +69,9 @@ export function createJournalPage(host: JournalPageHost): HubPage {
 				const items = host.entries().filter((item) => item.entry.kind === ctx.state.kind && (allowed === null || allowed.has(item.path)));
 				createSectionHeader(content, "Reviews");
 				renderReviews(content.createDiv({ cls: "vaultmate-hub-section" }), items);
+				const closed = renderClosed(content.createDiv({ cls: "vaultmate-hub-section" }), items);
 				createSectionHeader(content, "Track record");
-				renderTrackRecord(content.createDiv({ cls: "vaultmate-hub-section" }), items, ctx.state.kind);
+				renderTrackRecord(content.createDiv({ cls: "vaultmate-hub-section" }), items, ctx.state.kind, closed ? () => closed.scrollIntoView({ block: "start" }) : null);
 			};
 			renderContent();
 		},

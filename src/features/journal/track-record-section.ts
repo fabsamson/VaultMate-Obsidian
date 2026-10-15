@@ -80,10 +80,11 @@ function renderMatrix(body: HTMLElement, record: TrackRecord<JournalItem>): void
 }
 
 /** Returns the function that draws the track record of `items` (entries of one kind) into a body. */
-export function createTrackRecordBlock(host: TrackRecordHost): (body: HTMLElement, items: JournalItem[], kind: JournalKind) => void {
+export function createTrackRecordBlock(host: TrackRecordHost): (body: HTMLElement, items: JournalItem[], kind: JournalKind, showClosed: (() => void) | null) => void {
 	let showAllLessons = false;
 	let shownItems: JournalItem[] = [];
 	let shownKind: JournalKind = "decision";
+	let showClosedGroup: (() => void) | null = null;
 
 	const renderLessons = (body: HTMLElement, record: TrackRecord<JournalItem>): void => {
 		if (record.lessons.length === 0) return;
@@ -105,6 +106,14 @@ export function createTrackRecordBlock(host: TrackRecordHost): (body: HTMLElemen
 		}
 	};
 
+	const renderUnreviewed = (body: HTMLElement, record: TrackRecord<JournalItem>): void => {
+		if (record.unreviewed === 0) return;
+		const line = body.createEl("p", { cls: "vaultmate-muted", text: `${record.unreviewed} closed without a review, not counted above. ` });
+		if (!showClosedGroup) return;
+		const show = showClosedGroup;
+		line.createEl("button", { cls: "vaultmate-link", text: "Show them", attr: { type: "button" } }).addEventListener("click", show);
+	};
+
 	const renderBody = (body: HTMLElement): void => {
 		const record = computeTrackRecord(shownItems);
 		const { predictions, decisions } = record;
@@ -119,9 +128,11 @@ export function createTrackRecordBlock(host: TrackRecordHost): (body: HTMLElemen
 		if (shownKind === "prediction") renderPredictions(body, record);
 		else renderMatrix(body, record);
 		renderLessons(body, record);
+		renderUnreviewed(body, record);
 	};
 
-	return (body, items, kind) => {
+	return (body, items, kind, showClosed) => {
+		showClosedGroup = showClosed;
 		showAllLessons = false;
 		shownItems = items;
 		shownKind = kind;
