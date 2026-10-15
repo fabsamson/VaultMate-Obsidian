@@ -73,5 +73,15 @@
   "input": "abcdefghijklmnopqrstuvwxyz",
   "max": 10,
   "expected": "abcdefghij"
+ },
+ {
+  "input": "Idée　japonaise ici　",
+  "max": 80,
+  "expected": "Idée japonaise ici"
+ },
+ {
+  "input": " ★ Context　engine",
+  "max": 80,
+  "expected": "Context engine"
  }
 ]
