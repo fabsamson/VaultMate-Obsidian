@@ -8,7 +8,7 @@ import { createSprite } from "../../ui/pixel";
 import { SPRITES } from "../../ui/sprites";
 import { addScopeControls } from "../journal/scope-control";
 import type { ProjectContent, ProjectNote } from "./project-index";
-import { STATUS_INFO, trackCounts, TRACK_STATUSES, type ProjectIdea, type ProjectTrack, type TrackStatus } from "./project-note";
+import { STATUS_INFO, trackCounts, type ProjectIdea, type ProjectTrack, type TrackStatus } from "./project-note";
 import { boardStatuses, headerCounts, moveTargets, needsNextTask, primaryAction, taskSummary, tileSummary } from "./projects-model";
 
 export const PROJECTS_PAGE_ID = "projects";
@@ -23,7 +23,8 @@ export interface ProjectsPageHost {
 	markdownPaths(): string[];
 	/** Opens the note at a 0-based line. */
 	open(path: string, line: number): void;
-	promote(path: string, idea: ProjectIdea, status: TrackStatus): void;
+	/** Opens the Promote form for an idea of the project. */
+	promote(project: ProjectContent, idea: ProjectIdea): void;
 	drop(path: string, idea: ProjectIdea): void;
 	/** Moves the track; Start (to In progress) asks for a first task first. */
 	move(path: string, track: ProjectTrack, status: TrackStatus): void;
@@ -58,11 +59,11 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		const list = box.createEl("ul", { cls: "vaultmate-related-list" });
 		for (const idea of ideas) {
 			const row = list.createEl("li", { cls: "vaultmate-project-idea" });
-			row.createEl("button", { cls: "vaultmate-idea-statement", text: idea.text, attr: { type: "button", "aria-label": `Open the note at this idea: ${idea.text}` } }).addEventListener("click", () => host.open(project.path, idea.line));
+			const text = idea.text || "(no text yet)";
+			row.createEl("button", { cls: "vaultmate-idea-statement", text, attr: { type: "button", "aria-label": `Open the note at this idea: ${text}` } }).addEventListener("click", () => host.open(project.path, idea.line));
 			const actions = row.createDiv({ cls: "vaultmate-related-actions" });
-			const promote = button(actions, "Promote", `Promote idea to a track: ${idea.text}`);
-			promote.addEventListener("click", (event) => statusMenu(event, TRACK_STATUSES, (status) => host.promote(project.path, idea, status)));
-			button(actions, "Drop", `Drop idea: ${idea.text}`).addEventListener("click", () => host.drop(project.path, idea));
+			button(actions, "Promote", `Promote idea to a track: ${text}`).addEventListener("click", () => host.promote(project, idea));
+			button(actions, "Drop", `Drop idea: ${text}`).addEventListener("click", () => host.drop(project.path, idea));
 		}
 	};
 

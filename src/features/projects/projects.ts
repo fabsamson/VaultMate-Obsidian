@@ -10,8 +10,8 @@ import { dropIdea as dropTaggedIdea, locateIdea, undoDrop } from "../ideas/idea-
 import { applyEditsToEditor, readNoteLines, writeProject } from "./project-apply";
 import { convertProject, diffEdit } from "./project-convert";
 import { ProjectIndex, type ProjectContent } from "./project-index";
-import { StatusModal, TaskModal } from "./project-modals";
-import { readProject, TRACK_STATUSES, type ProjectIdea, type ProjectTrack, type TrackStatus } from "./project-note";
+import { PromoteModal, StatusModal, TaskModal } from "./project-modals";
+import { readProject, type ProjectIdea, type ProjectTrack, type TrackStatus } from "./project-note";
 import { addTrackTask, dropIdea, promoteIdea, refusalMessage, setTrackStatus, undoDropIdea, type NewTask } from "./project-write";
 import { createProjectsPage, PROJECTS_PAGE_ID } from "./projects-page";
 import { lineIn, moveTargets, projectTags } from "./projects-model";
@@ -58,7 +58,7 @@ export class ProjectsFeature {
 				activeNote: () => plugin.contextFile()?.path ?? null,
 				markdownPaths: () => plugin.app.vault.getMarkdownFiles().map((file) => file.path),
 				open: (path, line) => this.open(path, line),
-				promote: (path, idea, status) => void this.promoteIdea(path, idea, status),
+				promote: (project, idea) => this.promoteDialog(project.path, project.model.tracks.map((track) => track.title), idea),
 				drop: (path, idea) => void this.dropIdea(path, idea),
 				move: (path, track, status) => this.move(path, track, status),
 				addTask: (path, track) => this.addTask(path, track),
@@ -88,6 +88,11 @@ export class ProjectsFeature {
 
 	private newTask(text: string, due: string): NewTask {
 		return { text, today: formatDate(startOfDay()), ...(due ? { due } : {}) };
+	}
+
+	/** The Promote form: status, short name and a first task; `titles` are the project's track titles. */
+	public promoteDialog(path: string, titles: readonly string[], idea: ProjectIdea): void {
+		new PromoteModal(this.plugin.app, idea.text, titles, ({ status, shortName, firstTask }) => void this.promoteIdea(path, idea, status, { shortName, ...(firstTask ? { firstTask } : {}) })).open();
 	}
 
 	/**
@@ -195,9 +200,10 @@ export class ProjectsFeature {
 			icon: "compass",
 			editorCheckCallback: (checking, editor, ctx) => {
 				const found = this.context(editor, ctx);
-				const idea = found?.model.ideas.find((candidate) => lineIn(found.line, candidate.line, candidate.end));
+				// The innermost idea under the cursor: a tagged idea can sit inside another idea's lines.
+				const idea = found?.model.ideas.filter((candidate) => lineIn(found.line, candidate.line, candidate.end)).pop();
 				if (!found || !idea) return false;
-				if (!checking) new StatusModal(plugin.app, TRACK_STATUSES, "Promote this idea as…", (status) => void this.promoteIdea(found.path, idea, status)).open();
+				if (!checking) this.promoteDialog(found.path, found.model.tracks.map((track) => track.title), idea);
 				return true;
 			},
 		});
