@@ -174,3 +174,8 @@ export function monthSummary(items: readonly IdeaItem[], today: Date): string {
 	}
 	return `This month: ${parts.join(" · ")}`;
 }
+
+/** "3 project seeds waiting", or null when there is none. */
+export function seedLine(count: number): string | null {
+	return count > 0 ? `${plural(count, "project seed")} waiting` : null;
+}

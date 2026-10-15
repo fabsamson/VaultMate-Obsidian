@@ -971,6 +971,44 @@ button.vaultmate-badge:focus-visible {
 	height: auto;
 }
 
+/* The portal is action first: one wrapping row of actions, then only the panel of the chosen one. */
+.vaultmate-portal-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--size-4-2);
+	margin: var(--size-4-4) 0 var(--size-4-2);
+}
+
+.vaultmate-portal-actions > .vaultmate-button {
+	width: auto;
+	height: auto;
+	max-width: 100%;
+}
+
+/* Selected: filled and ticked, so the state never relies on color alone. */
+.vaultmate-portal-actions > .vaultmate-button.is-selected {
+	border-color: var(--vaultmate-border);
+	background-color: var(--vaultmate-primary);
+	color: var(--vaultmate-on-primary);
+}
+
+.vaultmate-portal-actions > .vaultmate-button.is-selected::before {
+	content: "\2713\00a0";
+}
+
+.vaultmate-portal-panel {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.vaultmate-portal-panel .vaultmate-note-link {
+	margin-top: var(--size-4-2);
+}
+
+.vaultmate-track-status {
+	margin: var(--size-4-2) 0;
+}
+
 /* A text-sized button inside a muted line (the idea's note, the note it went to). */
 .vaultmate button.vaultmate-inline-link,
 .is-mobile .vaultmate button.vaultmate-inline-link {

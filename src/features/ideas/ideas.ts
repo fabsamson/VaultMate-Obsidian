@@ -222,6 +222,9 @@ export class IdeasFeature {
 				const file = plugin.app.vault.getFileByPath(path);
 				if (file) void plugin.app.workspace.getLeaf(false).openFile(file, { eState: { line } });
 			},
+			projectsEnabled: () => plugin.projects.enabled(),
+			projectNotes: () => (plugin.projects.enabled() ? plugin.projects.index.notes().map((note) => ({ path: note.path, name: note.name })) : []),
+			trackTitles: async (path) => (await plugin.projects.index.read(path))?.model.tracks.map((track) => track.title) ?? [],
 		};
 	}
 

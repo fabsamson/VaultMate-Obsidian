@@ -18,6 +18,8 @@ import {
 	PROCESSED_FILTERS,
 	processedRows,
 	resultLabel,
+	seedCount,
+	seedLine,
 	tendSummary,
 	type ProcessedFilter,
 } from "./ideas-model";
@@ -176,6 +178,8 @@ export function createIdeasPage(host: IdeasPageHost): HubPage {
 					return;
 				}
 				content.createEl("p", { cls: "vaultmate-muted", text: monthSummary(items, startOfDay()) });
+				const seeds = seedLine(seedCount(items, { tag: host.tag(), subtag: host.seedSubtag() }));
+				if (seeds !== null) content.createEl("p", { cls: "vaultmate-muted", text: seeds });
 				renderToTend(content.createDiv({ cls: "vaultmate-hub-section" }), items, startOfDay());
 				renderProcessed(content.createDiv({ cls: "vaultmate-hub-section" }), items);
 			};
