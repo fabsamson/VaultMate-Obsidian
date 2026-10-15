@@ -4,13 +4,15 @@ import { debounce, Notice, type Editor, type MarkdownFileInfo, type MarkdownView
 
 import { formatDate, startOfDay } from "../../core/dates";
 import type VaultMatePlugin from "../../main";
+import { buildIdeaItem } from "../ideas/idea-line";
 import { noticeWithButton } from "../ideas/idea-modal";
+import { dropIdea as dropTaggedIdea, locateIdea, undoDrop } from "../ideas/idea-write";
 import { applyEditsToEditor, readNoteLines, writeProject } from "./project-apply";
 import { convertProject, diffEdit } from "./project-convert";
 import { ProjectIndex, type ProjectContent } from "./project-index";
 import { StatusModal, TaskModal } from "./project-modals";
 import { readProject, TRACK_STATUSES, type ProjectIdea, type ProjectTrack, type TrackStatus } from "./project-note";
-import { addTrackTask, dropIdea, promoteIdea, setTrackStatus, undoDropIdea, type NewTask } from "./project-write";
+import { addTrackTask, dropIdea, promoteIdea, refusalMessage, setTrackStatus, undoDropIdea, type NewTask } from "./project-write";
 import { createProjectsPage, PROJECTS_PAGE_ID } from "./projects-page";
 import { lineIn, moveTargets, projectTags } from "./projects-model";
 
@@ -56,8 +58,8 @@ export class ProjectsFeature {
 				activeNote: () => plugin.contextFile()?.path ?? null,
 				markdownPaths: () => plugin.app.vault.getMarkdownFiles().map((file) => file.path),
 				open: (path, line) => this.open(path, line),
-				promote: (path, idea, status) => void this.promote(path, idea, status),
-				drop: (path, idea) => void this.drop(path, idea),
+				promote: (path, idea, status) => void this.promoteIdea(path, idea, status),
+				drop: (path, idea) => void this.dropIdea(path, idea),
 				move: (path, track, status) => this.move(path, track, status),
 				addTask: (path, track) => this.addTask(path, track),
 			}),
@@ -88,13 +90,33 @@ export class ProjectsFeature {
 		return { text, today: formatDate(startOfDay()), ...(due ? { due } : {}) };
 	}
 
-	private async promote(path: string, idea: ProjectIdea, status: TrackStatus): Promise<void> {
-		const tracksTitle = this.tracksTitle();
-		await this.written(path, (lines) => promoteIdea(lines, idea, { status, tracksTitle }));
+	/**
+	 * Promotes an idea of the Ideas box to a track: a bullet or a tagged idea of the note is moved to the end
+	 * of the Tracks section. `shortName` is the cleaned heading (default: the whole text); `firstTask` is
+	 * added when the status is In progress.
+	 */
+	public async promoteIdea(path: string, idea: ProjectIdea, status: TrackStatus, options: { shortName?: string; firstTask?: { text: string; due: string } } = {}): Promise<boolean> {
+		const { shortName, firstTask } = options;
+		return this.written(path, (lines) =>
+			promoteIdea(lines, idea, {
+				status,
+				tracksTitle: this.tracksTitle(),
+				tags: projectTags(this.plugin.settings),
+				...(shortName !== undefined ? { shortName } : {}),
+				...(firstTask ? { firstTask: this.newTask(firstTask.text, firstTask.due) } : {}),
+			}),
+		);
 	}
 
-	/** Drops the idea, then offers Undo for a few seconds. */
-	private async drop(path: string, idea: ProjectIdea): Promise<void> {
+	/**
+	 * Drops an idea of the Ideas box, then offers Undo for a few seconds. A bullet is removed; a tagged idea
+	 * is closed as dropped (the F6 drop), whatever section it is in.
+	 */
+	public async dropIdea(path: string, idea: ProjectIdea): Promise<void> {
+		if (idea.kind === "tagged") {
+			await this.dropTagged(path, idea);
+			return;
+		}
 		let after: string | undefined;
 		const ok = await this.written(path, (lines) => {
 			after = lines[idea.end];
@@ -103,6 +125,22 @@ export class ProjectsFeature {
 		if (!ok) return;
 		const lineAfter = after;
 		noticeWithButton("Idea dropped.", "Undo", () => void this.written(path, (lines) => undoDropIdea(lines, idea, lineAfter)));
+	}
+
+	private async dropTagged(path: string, idea: ProjectIdea): Promise<void> {
+		const file = this.plugin.app.vault.getFileByPath(path);
+		const lines = await readNoteLines(this.plugin.app, path);
+		const item = file && lines ? buildIdeaItem(path, file.basename, formatDate(new Date(file.stat.ctime)), idea.line, lines, this.plugin.settings.ideas.tag) : null;
+		if (!item || item.raw !== idea.raw) {
+			new Notice(refusalMessage("changed"));
+			return;
+		}
+		const closed = await dropTaggedIdea(this.plugin, item, "");
+		this.plugin.refreshHubs(PROJECTS_PAGE_ID);
+		if (closed === null) return;
+		noticeWithButton("Idea dropped.", "Undo", () => {
+			void locateIdea(this.plugin, { ...item, raw: closed }).then((at) => (at ? undoDrop(this.plugin, { ...item, line: at.line }, closed) : false));
+		});
 	}
 
 	/** Changes the status; moving to In progress first asks for an optional first task, written in the same edit. */
@@ -159,7 +197,7 @@ export class ProjectsFeature {
 				const found = this.context(editor, ctx);
 				const idea = found?.model.ideas.find((candidate) => lineIn(found.line, candidate.line, candidate.end));
 				if (!found || !idea) return false;
-				if (!checking) new StatusModal(plugin.app, TRACK_STATUSES, "Promote this idea as…", (status) => void this.promote(found.path, idea, status)).open();
+				if (!checking) new StatusModal(plugin.app, TRACK_STATUSES, "Promote this idea as…", (status) => void this.promoteIdea(found.path, idea, status)).open();
 				return true;
 			},
 		});

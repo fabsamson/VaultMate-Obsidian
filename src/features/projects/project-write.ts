@@ -3,14 +3,14 @@
 // plan was made from), ordered from the end of the note to its start so that they apply one after the
 // other, through the Editor (`applyToEditor`) or `Vault.process` (`applyEdits`). Each gesture checks that
 // the line it targets still has the text the caller read and refuses otherwise.
-import { applyPlan, type InsertPlan } from "../ai-actions/insertion";
+import { applyPlan, lastNonBlank, type InsertPlan } from "../ai-actions/insertion";
 import { splitLine, width } from "../journal/journal-note";
-import { appendPoint, readProject, STATUS_INFO, withMarker, type ProjectIdea, type ProjectModel, type ProjectTrack, type TrackStatus } from "./project-note";
+import { appendPoint, readProject, STATUS_INFO, withMarker, type ProjectIdea, type ProjectModel, type ProjectTags, type ProjectTrack, type TrackStatus } from "./project-note";
 
 export type Edit = InsertPlan;
 
 /** Why a gesture was refused: the note changed since it was read, or the target is not in it. */
-export type Refusal = "changed" | "not-found" | "empty-text";
+export type Refusal = "changed" | "not-found" | "empty-text" | "empty-name";
 
 export type WritePlan = { ok: true; edits: Edit[] } | { ok: false; reason: Refusal };
 
@@ -26,6 +26,7 @@ const REFUSAL_MESSAGES: Record<Refusal, string> = {
 	changed: "The note changed since it was read. Nothing was written.",
 	"not-found": "VaultMate could not find this item in the note. Nothing was written.",
 	"empty-text": "Write the task first.",
+	"empty-name": "Write a short name first.",
 };
 
 export function refusalMessage(reason: Refusal): string {
@@ -107,14 +108,14 @@ export function setTrackStatus(lines: readonly string[], ref: LineRef, status: T
 
 // ---- Ideas --------------------------------------------------------------------------------------------
 
-function findIdea(model: ProjectModel, ref: LineRef): ProjectIdea | undefined {
-	return model.ideas.find((idea) => idea.line === ref.line);
+function findIdea(model: ProjectModel, ref: LineRef, kind?: ProjectIdea["kind"]): ProjectIdea | undefined {
+	return model.ideas.find((idea) => idea.line === ref.line && (kind === undefined || idea.kind === kind));
 }
 
-/** Removes the idea and its more-indented lines. */
+/** Removes a bullet idea and its more-indented lines. A tagged idea is not removed but closed: that is the Ideas feature's drop. */
 export function dropIdea(lines: readonly string[], ref: LineRef): WritePlan {
 	if (!checked(lines, ref)) return refuse("changed");
-	const idea = findIdea(readProject(lines), ref);
+	const idea = findIdea(readProject(lines), ref, "bullet");
 	if (!idea) return refuse("not-found");
 	return { ok: true, edits: [{ at: idea.line, remove: idea.end - idea.line, lines: [] }] };
 }
@@ -138,9 +139,18 @@ export function dedentChildren(children: readonly string[]): string[] {
 	return children.map((child) => dedentLine(child, columns));
 }
 
-/** A track block from a list item: the heading `<#…> <marker> <text>`, then the item's lines dedented. */
-export function trackFromIdea(level: number, status: TrackStatus, idea: Pick<ProjectIdea, "text" | "children">): string[] {
-	return [`${"#".repeat(level)} ${STATUS_INFO[status].marker} ${idea.text}`, ...dedentChildren(idea.children)];
+/** A first line that Markdown would read as a heading, quote or list item gets a backslash. */
+const MARKDOWN_START_RE = /^(?:[#>+*-]|\d+[.)])/;
+
+/**
+ * A track block from a list item: the heading `<#…> <marker> <name>`, then the full text as the first line
+ * when `name` differs from it, then the item's lines dedented, then `task` (a task line) if given. Without
+ * `name` the heading is the whole text, as before short names.
+ */
+export function trackFromIdea(level: number, status: TrackStatus, idea: Pick<ProjectIdea, "text" | "children">, name: string = idea.text, task: string | null = null): string[] {
+	const text = idea.text.trim();
+	const first = name.trim() === text ? [] : [MARKDOWN_START_RE.test(text) ? `\\${text}` : text];
+	return [`${"#".repeat(level)} ${STATUS_INFO[status].marker} ${name}`, ...first, ...(idea.children.length > 0 ? dedentChildren(idea.children) : []), ...(task === null ? [] : [task])];
 }
 
 export interface PromoteOptions {
@@ -148,23 +158,40 @@ export interface PromoteOptions {
 	status?: TrackStatus;
 	/** Title of the Tracks section when the note has none yet. */
 	tracksTitle?: string;
+	/** The heading text; defaults to the whole idea text. The caller cleans it (`shortName`). */
+	shortName?: string;
+	/** Added as the track's first task when the status is In progress. */
+	firstTask?: NewTask;
+	/** The tags that tell the ideas of the note apart; needed to promote a tagged idea. */
+	tags?: ProjectTags;
+}
+
+/** The edit that appends `track` (a block) at the end of the Tracks section, creating the section when the note has none. */
+function appendTrackEdit(lines: readonly string[], model: ProjectModel, track: string[], tracksTitle: string | undefined): Edit {
+	const { tracksSection, ideasSection } = model;
+	if (tracksSection) return { at: appendPoint(lines, tracksSection.line + 1, tracksSection.end), remove: 0, lines: ["", ...track] };
+	const heading = `${"#".repeat(model.level ?? 1)} ${tracksTitle?.trim() || DEFAULT_TRACKS_TITLE}`;
+	const at = ideasSection ? appendPoint(lines, ideasSection.line + 1, ideasSection.end) : lastNonBlank([...lines], 0, lines.length) + 1;
+	return { at, remove: 0, lines: ["", heading, "", ...track] };
 }
 
 /**
  * Moves an idea to the end of the Tracks section as a track (blank line, heading, dedented lines). A
- * note without a Tracks section gets one just after the Ideas block.
+ * note without a Tracks section gets one just after the Ideas block. A tagged idea (`options.tags`) moves
+ * like a bullet; its text is its description.
  */
 export function promoteIdea(lines: readonly string[], ref: LineRef, options: PromoteOptions = {}): WritePlan {
 	if (!checked(lines, ref)) return refuse("changed");
-	const model = readProject(lines);
+	const model = readProject(lines, options.tags);
 	const idea = findIdea(model, ref);
-	if (!idea || model.level === null || !model.ideasSection) return refuse("not-found");
-	const track = trackFromIdea(model.level + 1, options.status ?? "explore", idea);
+	if (!idea || model.level === null) return refuse("not-found");
+	const status = options.status ?? "explore";
+	if (options.shortName !== undefined && options.shortName.trim() === "") return refuse("empty-name");
+	const name = options.shortName?.replace(/\s+/g, " ").trim();
+	const task = status === "progress" && options.firstTask ? trackTaskLine(options.firstTask.text, options.firstTask.today, options.firstTask.due) : null;
+	const track = trackFromIdea(model.level + 1, status, idea, name, task);
 	const remove: Edit = { at: idea.line, remove: idea.end - idea.line, lines: [] };
-	const { tracksSection, ideasSection } = model;
-	if (tracksSection) return { ok: true, edits: byLineDescending([remove, { at: appendPoint(lines, tracksSection.line + 1, tracksSection.end), remove: 0, lines: ["", ...track] }]) };
-	const heading = `${"#".repeat(model.level)} ${options.tracksTitle?.trim() || DEFAULT_TRACKS_TITLE}`;
-	return { ok: true, edits: byLineDescending([remove, { at: appendPoint(lines, ideasSection.line + 1, ideasSection.end), remove: 0, lines: ["", heading, "", ...track] }]) };
+	return { ok: true, edits: byLineDescending([remove, appendTrackEdit(lines, model, track, options.tracksTitle)]) };
 }
 
 /**

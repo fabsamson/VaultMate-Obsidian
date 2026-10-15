@@ -1,0 +1,29 @@
+[
+ {
+  "name": "short name equal to the text: same output as before L11",
+  "markdown": "# 💡 Idées\n- Calendrier du ribbon\n# 🧭 Pistes\n## ★ Achievement Engine\nTexte\n",
+  "ideaLine": 1,
+  "status": "explore",
+  "shortName": "Calendrier du ribbon",
+  "tracksTitle": "🧭 Pistes",
+  "expected": "# 💡 Idées\n# 🧭 Pistes\n## ★ Achievement Engine\nTexte\n\n## ★ Calendrier du ribbon\n"
+ },
+ {
+  "name": "short name differs: the full text becomes the first line, children dedented",
+  "markdown": "# 💡 Idées\n- Ajouter un calendrier en bas du ribbon plugin avec les évènements.\n    - lire les daily notes\n    - [ ] maquette\n# 🧭 Pistes\n## 🔨 Decision Journal · F1\n",
+  "ideaLine": 1,
+  "status": "backlog",
+  "shortName": "Calendrier du ribbon",
+  "tracksTitle": "🧭 Pistes",
+  "expected": "# 💡 Idées\n# 🧭 Pistes\n## 🔨 Decision Journal · F1\n\n## 📥 Calendrier du ribbon\nAjouter un calendrier en bas du ribbon plugin avec les évènements.\n- lire les daily notes\n- [ ] maquette\n"
+ },
+ {
+  "name": "no Tracks section yet, and a full text that starts with a Markdown marker gets a backslash",
+  "markdown": "# 🎯 Objectif\n# 💡 Idées\n- #3 refaire le menu\n- autre idée\n# 📝 Notes\n",
+  "ideaLine": 2,
+  "status": "explore",
+  "shortName": "Refaire le menu",
+  "tracksTitle": "🧭 Pistes",
+  "expected": "# 🎯 Objectif\n# 💡 Idées\n- autre idée\n\n# 🧭 Pistes\n\n## ★ Refaire le menu\n\\#3 refaire le menu\n# 📝 Notes\n"
+ }
+]
