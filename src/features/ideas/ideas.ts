@@ -1,10 +1,11 @@
 // The ideas feature: wires the idea index, the capture, the badge, the portal, Tend mode, the commands and the hub page.
-import { debounce, MarkdownView, normalizePath, Notice, type Editor, type MarkdownFileInfo, type TFile, type WorkspaceLeaf } from "obsidian";
+import { debounce, MarkdownView, normalizePath, Notice, type Editor, type MarkdownFileInfo, type TFile } from "obsidian";
 import type { EditorView } from "@codemirror/view";
 
 import { formatDate, startOfDay } from "../../core/dates";
 import type VaultMatePlugin from "../../main";
 import { editorLines } from "../../core/note-edit";
+import { openNoteAtLine, showLine } from "../../core/open-note";
 import { IdeaCaptureSuggest, plantIdea } from "./capture-suggest";
 import { createIdeaBadgeExtension } from "./idea-badge";
 import { IdeaIndex } from "./idea-index";
@@ -168,7 +169,7 @@ export class IdeasFeature {
 			new Notice("VaultMate could not find this note.");
 			return;
 		}
-		const view = await this.openNote(file, target.line);
+		const view = await openNoteAtLine(this.plugin.app, file, target.line);
 		if (!view) return;
 		const editor = view.editor;
 		const lines = editorLines(editor);
@@ -176,7 +177,7 @@ export class IdeasFeature {
 		const wanted = Math.min(target.line, last);
 		const found = resolveIdeaLine(lines, wanted, this.tag());
 		const line = found.kind === "open" ? found.line : wanted;
-		this.showLine(editor, line);
+		showLine(editor, line);
 		if (found.kind === "processed") new Notice("This idea is already processed.");
 		else if (found.kind === "none") new Notice("This idea is no longer on this line.");
 		else {
@@ -184,31 +185,6 @@ export class IdeasFeature {
 			if (item && isOpenIdea(item.idea)) this.openPortal(item);
 			else new Notice("This idea is no longer on this line.");
 		}
-	}
-
-	/** Opens the note in a leaf already showing it, else in the current leaf; resolves with its view once the editor has the text. */
-	private async openNote(file: TFile, line: number): Promise<MarkdownView | null> {
-		const { workspace } = this.plugin.app;
-		const shown: WorkspaceLeaf | undefined = workspace.getLeavesOfType("markdown").find((leaf) => leaf.view instanceof MarkdownView && leaf.view.file?.path === file.path);
-		const leaf = shown ?? workspace.getLeaf(false);
-		await leaf.openFile(file, { eState: { line } });
-		await workspace.revealLeaf(leaf);
-		const { view } = leaf;
-		if (!(view instanceof MarkdownView) || view.file?.path !== file.path) {
-			new Notice("VaultMate could not open this note.");
-			return null;
-		}
-		// On mobile the editor may still be loading the text when `openFile` resolves.
-		for (let wait = 0; wait < 20 && view.editor.getValue() === "" && file.stat.size > 0; wait++) {
-			await new Promise((resolve) => window.setTimeout(resolve, 50));
-		}
-		return view;
-	}
-
-	private showLine(editor: Editor, line: number): void {
-		const from = { line, ch: 0 };
-		editor.setCursor(from);
-		editor.scrollIntoView({ from, to: { line, ch: editor.getLine(line).length } }, true);
 	}
 
 	// ---- Portal and Tend mode -----------------------------------------------------------------------
