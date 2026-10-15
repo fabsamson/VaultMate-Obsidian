@@ -27,6 +27,7 @@ export function trackedLines(kind: JournalKind, entry: NewEntryResult, tags: Jou
 			today: formatDate(today),
 			due: dueFrom(today, entry.interval),
 			confidence: entry.confidence,
+			answer: entry.answer,
 			statement: entry.statement,
 			extras: entry.extras,
 			currentLine: prefix,

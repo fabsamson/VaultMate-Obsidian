@@ -161,6 +161,7 @@ export class JournalFeature {
 				today: formatDate(today),
 				due: dueFrom(today, result.interval),
 				confidence: result.confidence,
+				answer: result.answer,
 				statement: result.statement,
 				extras: result.extras,
 				currentLine: current,
@@ -181,9 +182,10 @@ export class JournalFeature {
 		const cls = classifyLine(raw, this.tags());
 		const statement = cls ? (cls.type === "entry" ? cls.entry.statement : cls.statement) : getDescription(parseTaskLine(raw).body);
 		const confidence = cls?.type === "entry" ? cls.entry.confidence : parseConfidence(getInlineField(parseTaskLine(raw).body, "confidence"));
-		new TrackModal(this.plugin.app, kind, statement, confidence, (result) => {
+		const answer = getInlineField(parseTaskLine(raw).body, "answer") || null;
+		new TrackModal(this.plugin.app, kind, statement, answer, confidence, (result) => {
 			const today = startOfDay();
-			const line = convertToEntry(raw, { kind, tags: this.tags(), today: formatDate(today), due: dueFrom(today, result.interval), confidence: result.confidence });
+			const line = convertToEntry(raw, { kind, tags: this.tags(), today: formatDate(today), due: dueFrom(today, result.interval), answer: result.answer, confidence: result.confidence });
 			void writeEntryLine(this.plugin.app, { path, line: lineNo, raw }, line, null).then((written) => {
 				if (written) new Notice(`Tracking as ${kindName(kind)}.`);
 			});

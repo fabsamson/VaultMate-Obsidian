@@ -219,6 +219,11 @@
 	font-weight: 700;
 }
 
+.vaultmate-answer {
+	margin: var(--size-4-1) 0 0;
+	color: var(--vaultmate-text);
+}
+
 .vaultmate-context {
 	margin: var(--size-4-2) 0;
 	padding: var(--size-4-2) var(--size-4-2) var(--size-4-2) var(--size-4-6);

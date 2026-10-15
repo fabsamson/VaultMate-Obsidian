@@ -31,6 +31,7 @@ export function createReviewsBlock(host: ReviewsHost): (body: HTMLElement, items
 		createSprite(row, entry.kind === "decision" ? SPRITES.moduleDecision : SPRITES.modulePrediction, 24);
 		const main = row.createEl("button", { cls: "vaultmate-review-main", attr: { type: "button" } });
 		main.createSpan({ cls: "vaultmate-review-statement", text: entry.statement || "(no text)" });
+		if (entry.answer !== null) main.createSpan({ cls: "vaultmate-muted", text: `${entry.kind === "decision" ? "Your decision" : "Your answer"}: ${entry.answer}` });
 		const due = entry.due === null ? null : parseDate(entry.due);
 		main.createSpan({ cls: "vaultmate-muted", text: `${noteName(item.path)} · ${due ? dueLabel(due, today) : "no review date"}` });
 		main.addEventListener("click", () => host.openItem(item));

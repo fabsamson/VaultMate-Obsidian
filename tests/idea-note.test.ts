@@ -53,7 +53,7 @@ describe("closeParts", () => {
 });
 
 describe("trackedLines", () => {
-	const entry = { statement: "Run a sprint", confidence: 70, interval: "3m" as const, extras: [["Why", "faster"], ["Expected", ""], ["Signals", "less rework"]] as Array<[string, string]> };
+	const entry = { statement: "Run a sprint", answer: "", confidence: 70, interval: "3m" as const, extras: [["Why", "faster"], ["Expected", ""], ["Signals", "less rework"]] as Array<[string, string]> };
 	const today = startOfDay(new Date(2026, 9, 15));
 
 	it("builds the decision sub-task after the idea's children, with its sub-items one level deeper", () => {
@@ -73,6 +73,17 @@ describe("trackedLines", () => {
 				"        - Signals: less rework",
 			],
 		});
+	});
+
+	it("writes the answer of a question before the confidence", () => {
+		const lines = ["- [ ] Sprint like a kitchen #idea ➕ 2026-10-13"];
+		const item = itemAt(lines, 0);
+		const { line, subItem } = closeParts(item, "idea", "decision", TODAY, null, "");
+		const plan = planRewrite(lines, 0, item.raw, line, subItem, trackedLines("decision", { ...entry, statement: "Should we sprint?", answer: "yes, [soon]", extras: [] }, JOURNAL, today));
+		if (!plan.ok) throw new Error("refused");
+		const task = plan.replacement[1] ?? "";
+		expect(task).toBe("    - [ ] Should we sprint? #decision [answer: yes, (soon)] [confidence: 70%] ➕ 2026-10-15 📅 2027-01-15");
+		expect(classifyLine(task, JOURNAL)).toMatchObject({ type: "entry", entry: { statement: "Should we sprint?", answer: "yes, (soon)", confidence: 70 } });
 	});
 
 	it("writes entries the journal and the idea models both read, with tabs and a quote prefix", () => {

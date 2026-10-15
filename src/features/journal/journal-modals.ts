@@ -85,6 +85,10 @@ export abstract class JournalModal extends Modal {
 	}
 }
 
+function answerField(parent: HTMLElement, kind: JournalKind): Field {
+	return textField(parent, "Answer (optional)", { placeholder: kind === "decision" ? "Your decision, if the line is a question" : "Your answer, if the line is a question" });
+}
+
 function confidenceLabel(kind: JournalKind): string {
 	return kind === "decision" ? "Confidence in percent (optional)" : "Probability in percent";
 }
@@ -93,6 +97,7 @@ function confidenceLabel(kind: JournalKind): string {
 
 export interface NewEntryResult {
 	statement: string;
+	answer: string;
 	confidence: number | null;
 	interval: ReviewInterval;
 	/** [label, value] pairs in order; some values are empty. */
@@ -115,6 +120,7 @@ export class NewEntryModal extends JournalModal {
 		createSectionHeader(contentEl, `New ${kindName(kind)}`);
 		const statement = textField(contentEl, capitalize(kindName(kind)), { placeholder: kind === "decision" ? "What did you decide?" : "What do you expect to happen?" });
 		statement.value = this.initialStatement;
+		const answer = answerField(contentEl, kind);
 		const confidence = textField(contentEl, confidenceLabel(kind), { placeholder: "70", numeric: true });
 		const interval = intervalField(contentEl, "Review in");
 		const labels = kind === "decision" ? ["Why", "Options", "Expected", "Signals"] : ["Why", "Signals"];
@@ -125,14 +131,14 @@ export class NewEntryModal extends JournalModal {
 		const valid = (): boolean => statement.value.trim() !== "" && (confidence.value.trim() === "" ? kind === "decision" : percent() !== null);
 		const submit = (): void => {
 			if (!valid()) return;
-			this.onSubmit({ statement: statement.value, confidence: percent(), interval: interval(), extras: extras.map(({ label, input }) => [label, input.value]) });
+			this.onSubmit({ statement: statement.value, answer: answer.value, confidence: percent(), interval: interval(), extras: extras.map(({ label, input }) => [label, input.value]) });
 			this.close();
 		};
 		const add = this.button(actions, `Add ${kindName(kind)}`, true, submit);
 		const update = (): void => {
 			add.disabled = !valid();
 		};
-		for (const input of [statement, confidence, ...extras.map((extra) => extra.input)]) {
+		for (const input of [statement, answer, confidence, ...extras.map((extra) => extra.input)]) {
 			input.addEventListener("input", update);
 			this.submitOnEnter(input, submit);
 		}
@@ -144,16 +150,18 @@ export class NewEntryModal extends JournalModal {
 // ---- Track an existing line -------------------------------------------------------------------------
 
 export interface TrackResult {
+	answer: string;
 	confidence: number | null;
 	interval: ReviewInterval;
 }
 
 export class TrackModal extends JournalModal {
-	/** `confidence` prefills the field with the value already on the line. */
+	/** `answer` and `confidence` prefill the fields with the values already on the line. */
 	public constructor(
 		app: App,
 		private readonly kind: JournalKind,
 		private readonly statement: string,
+		private readonly answer: string | null,
 		private readonly confidence: number | null,
 		private readonly onSubmit: (result: TrackResult) => void,
 	) {
@@ -164,6 +172,8 @@ export class TrackModal extends JournalModal {
 		const { contentEl, kind } = this;
 		createSectionHeader(contentEl, `Track as ${kindName(kind)}`);
 		contentEl.createEl("p", { cls: "vaultmate-statement", text: this.statement || "(no text yet)" });
+		const answer = answerField(contentEl, kind);
+		if (this.answer !== null) answer.value = this.answer;
 		const confidence = textField(contentEl, confidenceLabel(kind), { placeholder: "70", numeric: true });
 		if (this.confidence !== null) confidence.value = String(this.confidence);
 		const interval = intervalField(contentEl, "Review in");
@@ -173,7 +183,7 @@ export class TrackModal extends JournalModal {
 		const valid = (): boolean => (confidence.value.trim() === "" ? kind === "decision" : percent() !== null);
 		const submit = (): void => {
 			if (!valid()) return;
-			this.onSubmit({ confidence: percent(), interval: interval() });
+			this.onSubmit({ answer: answer.value, confidence: percent(), interval: interval() });
 			this.close();
 		};
 		const track = this.button(actions, `Track ${kindName(kind)}`, true, submit);
@@ -181,6 +191,7 @@ export class TrackModal extends JournalModal {
 			track.disabled = !valid();
 		};
 		confidence.addEventListener("input", update);
+		this.submitOnEnter(answer, submit);
 		this.submitOnEnter(confidence, submit);
 		update();
 		confidence.focus();
@@ -223,6 +234,7 @@ export class ReviewModal extends JournalModal {
 		const decision = entry.kind === "decision";
 		createSectionHeader(contentEl, `Review ${kindName(entry.kind)}`);
 		contentEl.createEl("p", { cls: "vaultmate-statement", text: entry.statement || "(no text)" });
+		if (entry.answer !== null) contentEl.createEl("p", { cls: "vaultmate-answer", text: `${decision ? "Your decision" : "Your answer"}: ${entry.answer}` });
 		contentEl.createEl("p", { cls: "vaultmate-muted", text: summary(entry) });
 		if (item.children.length > 0) {
 			const list = contentEl.createEl("ul", { cls: "vaultmate-context" });
