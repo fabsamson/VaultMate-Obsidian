@@ -50,6 +50,12 @@ export default class VaultMatePlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
+	/** data.json was changed outside Obsidian (Syncthing from another device): read it again and refresh what depends on it. */
+	public async onExternalSettingsChange(): Promise<void> {
+		this.settings = normalizeSettings(await this.loadData());
+		this.onSettingsChanged();
+	}
+
 	/**
 	 * Called after a setting changed. Features read `this.settings` when they run, so the only thing
 	 * left to refresh is what is already on screen.
