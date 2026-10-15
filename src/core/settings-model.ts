@@ -30,12 +30,6 @@ export interface ProjectsSettings {
 	tracksTitle: string;
 }
 
-/** Small state a feature keeps next to its settings (shared between devices by Syncthing, rarely written). */
-export interface JournalState {
-	/** Day (`YYYY-MM-DD`) of the last "reviews due" notice; empty until one was shown. */
-	lastNoticeDate: string;
-}
-
 export interface AiSettings {
 	enabled: boolean;
 	/** OpenAI-compatible base URL; HTTPS except for a local server. */
@@ -93,7 +87,6 @@ export interface ContextState {
 /** Nested per feature; a feature's settings live under its own key. */
 export interface VaultMateSettings {
 	journal: JournalSettings;
-	journalState: JournalState;
 	ideas: IdeasSettings;
 	projects: ProjectsSettings;
 	ai: AiSettings;
@@ -106,7 +99,6 @@ export interface VaultMateSettings {
 
 export const DEFAULT_SETTINGS: VaultMateSettings = {
 	journal: { enabled: true, decisionTag: "decision", predictionTag: "prediction" },
-	journalState: { lastNoticeDate: "" },
 	ideas: { enabled: true, tag: "idea", newNoteFolder: "", newNoteTemplate: "", seedSubtag: "" },
 	projects: { enabled: true, tracksTitle: "\u{1F9ED} Tracks" },
 	ai: { enabled: true, baseUrl: "https://api.openai.com/v1", model: "gpt-5.6-luna", apiKeySecret: "", actionsFolder: "VaultMate/AI actions" },
@@ -237,8 +229,6 @@ export function normalizeSettings(value: unknown): VaultMateSettings {
 	}
 	const projects = isRecord(value) && isRecord(value.projects) ? value.projects : {};
 	const projectDefaults = DEFAULT_SETTINGS.projects;
-	const state = isRecord(value) && isRecord(value.journalState) ? value.journalState : {};
-	const lastNoticeDate = typeof state.lastNoticeDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(state.lastNoticeDate) ? state.lastNoticeDate : "";
 	const ai = isRecord(value) && isRecord(value.ai) ? value.ai : {};
 	const aiDefaults = DEFAULT_SETTINGS.ai;
 	const confirmedRaw = isRecord(value) && isRecord(value.aiState) && isRecord(value.aiState.confirmed) ? value.aiState.confirmed : {};
@@ -294,7 +284,6 @@ export function normalizeSettings(value: unknown): VaultMateSettings {
 		aiState: { confirmed, notInterested },
 		collections: { folder: typeof col.folder === "string" ? cleanFolderPath(col.folder) : colDefaults.folder, typeProperty, ratingProperty },
 		journal: { enabled: typeof journal.enabled === "boolean" ? journal.enabled : defaults.enabled, decisionTag, predictionTag },
-		journalState: { lastNoticeDate },
 		projects: {
 			enabled: typeof projects.enabled === "boolean" ? projects.enabled : projectDefaults.enabled,
 			tracksTitle: typeof projects.tracksTitle === "string" && validateTracksTitle(projects.tracksTitle) === undefined ? projects.tracksTitle.trim() : projectDefaults.tracksTitle,

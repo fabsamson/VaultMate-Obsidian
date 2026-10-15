@@ -26,6 +26,9 @@ import { writeEntryLine } from "./journal-write";
 import { createBadgeExtension } from "./line-badge";
 import { createJournalPage } from "./journal-page";
 
+/** Per-device storage key of the day of the last "reviews due" notice. */
+const NOTICE_DATE_KEY = "vaultmate-last-notice-date";
+
 export class JournalFeature {
 	public readonly index: JournalIndex;
 
@@ -237,17 +240,16 @@ export class JournalFeature {
 		if (file instanceof TFile) await this.plugin.app.workspace.getLeaf(false).openFile(file, { eState: { line: item.line } });
 	}
 
-	/** Once a day at most: "VaultMate: 2 reviews due". The day is stored only when the notice shows. */
+	/** Once a day at most: "VaultMate: 2 reviews due". The day is kept on this device, not in data.json, which every device shares; it is stored only when the notice shows. */
 	private showDailyNotice(): void {
 		const today = startOfDay();
 		const todayText = formatDate(today);
-		if (!this.enabled() || this.plugin.settings.journalState.lastNoticeDate === todayText) return;
+		if (!this.enabled() || this.plugin.app.loadLocalStorage(NOTICE_DATE_KEY) === todayText) return;
 		const due = countDue(this.index.entries(), today);
 		if (due === 0) return;
 		const notice = new Notice(`VaultMate: ${due} review${due === 1 ? "" : "s"} due. Click to open.`, 8000);
 		notice.messageEl.addClass("vaultmate-notice");
 		notice.messageEl.addEventListener("click", () => void this.plugin.openHub());
-		this.plugin.settings.journalState.lastNoticeDate = todayText;
-		void this.plugin.saveSettings();
+		this.plugin.app.saveLocalStorage(NOTICE_DATE_KEY, todayText);
 	}
 }

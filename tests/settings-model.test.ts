@@ -42,7 +42,6 @@ describe("normalizeSettings", () => {
 	it("keeps valid values", () => {
 		const saved = {
 			journal: { enabled: false, decisionTag: "choix", predictionTag: "pari" },
-			journalState: { lastNoticeDate: "2026-10-09" },
 			ideas: { enabled: false, tag: "idee", newNoteFolder: "Ideas", newNoteTemplate: "Templates/Idea.md", seedSubtag: "projet" },
 			projects: { enabled: false, tracksTitle: "🧭 Pistes" },
 			ai: { enabled: false, baseUrl: "http://localhost:1234/v1", model: "local", apiKeySecret: "kotoba-key", actionsFolder: "Prompts/AI" },
@@ -65,10 +64,10 @@ describe("normalizeSettings", () => {
 		expect(loaded.journal).toMatchObject({ decisionTag: "decision", predictionTag: "prediction" });
 	});
 
-	it("drops an invalid notice date", () => {
-		for (const bad of ["yesterday", 5, null, "2026-1-9"]) {
-			expect(normalizeSettings({ journalState: { lastNoticeDate: bad } }).journalState.lastNoticeDate).toBe("");
-		}
+	it("drops the notice date that used to be saved here: it is kept per device now", () => {
+		const loaded = normalizeSettings({ journalState: { lastNoticeDate: "2026-10-09" } });
+		expect(loaded).toEqual(DEFAULT_SETTINGS);
+		expect(loaded).not.toHaveProperty("journalState");
 	});
 
 	it("drops unknown keys and does not share the defaults object", () => {
