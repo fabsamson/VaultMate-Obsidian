@@ -16,6 +16,7 @@ import { PromoteModal, StatusModal, TaskModal } from "./project-modals";
 import { readProject, type ProjectIdea, type ProjectTrack, type TrackStatus } from "./project-note";
 import { addTrackTask, dropIdea, promoteIdea, refusalMessage, setTrackStatus, undoDropIdea, type NewTask } from "./project-write";
 import { createProjectsPage, PROJECTS_PAGE_ID } from "./projects-page";
+import { hasProjectTag, withProjectTag } from "./project-tag";
 import { lineIn, moveTargets, projectTags } from "./projects-model";
 
 export class ProjectsFeature {
@@ -185,6 +186,27 @@ export class ProjectsFeature {
 
 	private addCommands(): void {
 		const { plugin } = this;
+		plugin.addCommand({
+			id: "make-project",
+			name: "Make this note a project",
+			icon: "compass",
+			checkCallback: (checking) => {
+				const file = plugin.app.workspace.getActiveFile();
+				const { tag } = plugin.settings.projects;
+				if (!file || file.extension !== "md" || !this.enabled() || hasProjectTag(plugin.app.metadataCache.getFileCache(file)?.frontmatter, tag)) return false;
+				if (!checking) {
+					void plugin.app.fileManager
+						.processFrontMatter(file, (frontmatter: Record<string, unknown>) => {
+							frontmatter.tags = withProjectTag(frontmatter, tag);
+						})
+						.then(
+							() => new Notice(`Added #${tag} to this note's tags.`),
+							() => new Notice("VaultMate could not change the tags of this note."),
+						);
+				}
+				return true;
+			},
+		});
 		plugin.addCommand({
 			id: "move-track",
 			name: "Move this track…",

@@ -36,7 +36,7 @@ Write an idea anywhere in a note and sort it later. An idea is a task-style line
 
 ## Projects
 
-A note is a project when its `tags` property contains the **Project tag** (`project` by default; set it in the settings under Projects). The tag is compared exactly, ignoring case, in a list or in a text value (`projet, work`); a leading `#` is ignored. A subtag such as `project/finance`, a `#project` written in the text and the `tag` property do not count. No section is needed. A project note can keep its raw ideas in an **Ideas** section and its work in a **Tracks** section. Each track is a heading one level below the Tracks section, and the first character of the heading is its status: `★` Explore, `📥` Backlog, `🔨` In progress, `✅` Done, `🗑️` Dropped. Changing the status changes that character; the track's block never moves.
+A note is a project when its `tags` property contains the **Project tag** (`project` by default; set it in the settings under Projects). The tag is compared exactly, ignoring case, in a list or in a text value (`projet, work`); a leading `#` is ignored. A subtag such as `project/finance`, a `#project` written in the text and the `tag` property do not count. No section is needed; the **Make this note a project** command adds the tag to the note you are editing (a missing `tags` property is created, a text value becomes a list). A project note can keep its raw ideas in an **Ideas** section and its work in a **Tracks** section. Each track is a heading one level below the Tracks section, and the first character of the heading is its status: `★` Explore, `📥` Backlog, `🔨` In progress, `✅` Done, `🗑️` Dropped. Changing the status changes that character; the track's block never moves.
 
 ```markdown
 # 💡 Ideas

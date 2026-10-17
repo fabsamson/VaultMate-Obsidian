@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { hasProjectTag, propertyTags } from "../src/features/projects/project-tag";
+import { hasProjectTag, propertyTags, withProjectTag } from "../src/features/projects/project-tag";
 
 // The cases shared with the Android app (tag `projet`).
 describe("hasProjectTag", () => {
@@ -39,5 +39,14 @@ describe("propertyTags", () => {
 	it("splits text on commas and blanks and drops # and empty values", () => {
 		expect(propertyTags({ tags: "#a,  b\tc ,," })).toEqual(["a", "b", "c"]);
 		expect(propertyTags({ tags: ["#x", " ", "y "] })).toEqual(["x", "y"]);
+	});
+});
+
+describe("withProjectTag", () => {
+	it("creates, extends or converts the tags value", () => {
+		expect(withProjectTag({}, "project")).toEqual(["project"]);
+		expect(withProjectTag({ tags: ["a"] }, "project")).toEqual(["a", "project"]);
+		expect(withProjectTag({ tags: "a, #b c" }, "project")).toEqual(["a", "b", "c", "project"]);
+		expect(withProjectTag({ tags: null }, "project")).toEqual(["project"]);
 	});
 });

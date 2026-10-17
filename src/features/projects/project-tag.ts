@@ -14,3 +14,10 @@ export function hasProjectTag(frontmatter: Record<string, unknown> | null | unde
 	const wanted = projectTag.toLowerCase();
 	return propertyTags(frontmatter).some((tag) => tag.toLowerCase() === wanted);
 }
+
+/** The `tags` value to write so that it holds `projectTag`: missing -> `[tag]`, a list -> the list plus the tag, text -> its values plus the tag. */
+export function withProjectTag(frontmatter: Record<string, unknown>, projectTag: string): unknown[] {
+	const value = frontmatter.tags;
+	const kept: unknown[] = Array.isArray(value) ? (value as unknown[]) : propertyTags(frontmatter);
+	return [...kept, projectTag];
+}
