@@ -28,7 +28,7 @@ const REFUSAL_MESSAGES: Record<Refusal, string> = {
 	"not-found": "VaultMate could not find this item in the note. Nothing was written.",
 	"empty-text": "Write the task first.",
 	"empty-name": "Write a short name first.",
-	"not-a-project": "This note is no longer a project note (it has no Tracks section). Nothing was written.",
+	"not-a-project": "This note no longer has the project tag in its tags property. Nothing was written.",
 };
 
 export function refusalMessage(reason: Refusal): string {
@@ -181,12 +181,12 @@ export function promoteIdea(lines: readonly string[], ref: LineRef, options: Pro
 	if (!checked(lines, ref)) return refuse("changed");
 	const model = readProject(lines, options.tags);
 	const idea = findIdea(model, ref);
-	if (!idea || model.level === null) return refuse("not-found");
+	if (!idea) return refuse("not-found");
 	const status = options.status ?? "explore";
 	if (options.shortName !== undefined && options.shortName.trim() === "") return refuse("empty-name");
 	const name = options.shortName?.replace(/\s+/g, " ").trim();
 	const task = status === "progress" && options.firstTask ? trackTaskLine(options.firstTask.text, options.firstTask.today, options.firstTask.due) : null;
-	const track = trackFromIdea(model.level + 1, status, idea, name, task);
+	const track = trackFromIdea((model.level ?? 1) + 1, status, idea, name, task);
 	const remove: Edit = { at: idea.line, remove: idea.end - idea.line, lines: [] };
 	return { ok: true, edits: byLineDescending([remove, appendTrackEdit(lines, model, track, options.tracksTitle)]) };
 }
@@ -205,12 +205,10 @@ export interface NewTrack {
 
 /**
  * Appends a track from an idea written in another note at the end of this note's Tracks section (a
- * missing section is created, with `tracksTitle`). `requireTracks` refuses a note that has no Tracks
- * section: the target was a project note when it was chosen, and no longer is.
+ * missing section is created, with `tracksTitle`).
  */
-export function newTrackInNote(lines: readonly string[], track: NewTrack, options: { tracksTitle?: string; requireTracks?: boolean } = {}): WritePlan {
+export function newTrackInNote(lines: readonly string[], track: NewTrack, options: { tracksTitle?: string } = {}): WritePlan {
 	const model = readProject(lines);
-	if (options.requireTracks && !model.tracksSection) return refuse("not-a-project");
 	const name = track.name.replace(/\s+/g, " ").trim();
 	if (name === "") return refuse("empty-name");
 	const task = track.status === "progress" && track.firstTask ? trackTaskLine(track.firstTask.text, track.firstTask.today, track.firstTask.due) : null;

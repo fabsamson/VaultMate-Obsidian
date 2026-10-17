@@ -15,6 +15,8 @@ export const PROJECTS_PAGE_ID = "projects";
 
 export interface ProjectsPageHost {
 	enabled(): boolean;
+	/** The project tag, as shown to the user (`#project`). */
+	projectTag(): string;
 	notes(): ProjectNote[];
 	/** The note's lines parsed; from the editor when the note is open there. Null when the note is gone. */
 	read(path: string): Promise<ProjectContent | null>;
@@ -112,7 +114,7 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 				const panel = createPanel(body, "vaultmate-empty");
 				createSprite(panel, SPRITES.mascotSleep, 96);
 				panel.createEl("p", { cls: "vaultmate-empty-title", text: "No projects yet" });
-				panel.createEl("p", { cls: "vaultmate-muted", text: "A project note is a note with a section of tracks. Use the convert command on an older project note to create one." });
+				panel.createEl("p", { cls: "vaultmate-muted", text: `A project is a note with ${host.projectTag()} in its tags property. Run Make this note a project on a note, or Convert this note to tracks on an older project note.` });
 				return;
 			}
 			const controls = body.createDiv({ cls: "vaultmate-switcher" });

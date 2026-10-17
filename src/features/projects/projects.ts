@@ -44,7 +44,7 @@ export class ProjectsFeature {
 
 	/** Call after a setting changed: the index follows the on/off switch. */
 	public onSettingsChanged(): void {
-		if (this.enabled() !== this.index.ready) void this.index.sync();
+		if (this.enabled() !== this.index.ready || this.index.stale) void this.index.sync();
 	}
 
 	// ---- Hub page -----------------------------------------------------------------------------------
@@ -55,6 +55,7 @@ export class ProjectsFeature {
 		plugin.registerHubPage(
 			createProjectsPage({
 				enabled: () => this.enabled(),
+				projectTag: () => `#${this.plugin.settings.projects.tag}`,
 				notes: () => this.index.notes(),
 				read: (path) => this.read(path),
 				activeNote: () => plugin.contextFile()?.path ?? null,

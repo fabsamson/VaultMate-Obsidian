@@ -21,7 +21,7 @@ export interface IdeaPortalHost extends IdeaWriteHost {
 	openAtLine(path: string, line: number): void;
 	/** Whether the Projects feature is on (New track needs it). */
 	projectsEnabled(): boolean;
-	/** The project notes (notes with a Tracks section); empty when the feature is off. */
+	/** The project notes (notes with the project tag); empty when the feature is off. */
 	projectNotes(): ProjectChoice[];
 	/** The titles of the tracks of a project note, to warn about a repeated name. */
 	trackTitles(path: string): Promise<string[]>;

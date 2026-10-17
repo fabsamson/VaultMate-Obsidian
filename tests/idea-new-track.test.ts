@@ -66,11 +66,14 @@ describe("newTrackInNote (an idea of another note)", () => {
 		expect(next).toContain("\\- not a bullet");
 	});
 
-	it("refuses an empty name, and a note that is no longer a project note when asked to", () => {
+	it("refuses an empty name", () => {
 		expect(newTrackInNote(PROJECT, track({ name: "  " }))).toEqual({ ok: false, reason: "empty-name" });
-		const plain = ["# Ideas", "- raw"];
-		expect(newTrackInNote(plain, track(), { requireTracks: true })).toEqual({ ok: false, reason: "not-a-project" });
-		expect(newTrackInNote(PROJECT, track(), { requireTracks: true }).ok).toBe(true);
+	});
+
+	it("writes into a note with no section at all, at level 1", () => {
+		const plain = ["Some text", "", "More text"];
+		const next = apply(plain, newTrackInNote(plain, track({ children: [] })));
+		expect(next).toEqual(["Some text", "", "More text", "", "# 🧭 Tracks", "", "## ★ Brief du soir", "Brief du soir dans l'app"]);
 	});
 
 	it("creates the Tracks section with the given title when allowed", () => {

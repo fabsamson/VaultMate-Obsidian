@@ -1,7 +1,7 @@
 import { Notice, PluginSettingTab, SecretComponent, type Setting, type SettingDefinitionItem } from "obsidian";
 
 import { validateBaseUrl } from "./core/ai/endpoint";
-import { DEFAULT_SETTINGS, MAX_CONNECTIONS, validateActionsFolder, validateDistinctCollectionProperties, validateDistinctIdeaTag, validateDistinctProperties, validateDistinctTags, validateSeedSubtag, cleanSeedSubtag, validatePropertyList, validatePropertyName, validateTag, validateTracksTitle, parseList, cleanFolderPath } from "./core/settings-model";
+import { DEFAULT_SETTINGS, MAX_CONNECTIONS, validateActionsFolder, validateDistinctCollectionProperties, validateDistinctIdeaTag, validateDistinctProperties, validateDistinctTags, validateSeedSubtag, cleanSeedSubtag, cleanProjectTag, validateProjectTag, validatePropertyList, validatePropertyName, validateTag, validateTracksTitle, parseList, cleanFolderPath } from "./core/settings-model";
 import { createDefaultActions } from "./features/ai-actions/default-actions";
 import type VaultMatePlugin from "./main";
 
@@ -99,6 +99,11 @@ export class VaultMateSettingTab extends PluginSettingTab {
 						name: "Enable projects",
 						desc: "Move the tracks of a project note between statuses (explore, backlog, in progress, done, dropped), promote its ideas to tracks and convert older notes.",
 						control: { type: "toggle", key: "projects.enabled" },
+					},
+					{
+						name: "Project tag",
+						desc: "A note is a project when this tag is in its tags property. Text tags and subtags do not count.",
+						control: { type: "text", key: "projects.tag", placeholder: DEFAULT_SETTINGS.projects.tag, validate: validateProjectTag },
 					},
 					{
 						name: "Tracks section title",
@@ -265,6 +270,7 @@ export class VaultMateSettingTab extends PluginSettingTab {
 		const settings = this.featureSettings(feature);
 		if (!settings) return;
 		if (NUMBER_KEYS.has(key)) settings[name] = Number(value);
+		else if (key === "projects.tag" && typeof value === "string") settings[name] = cleanProjectTag(value);
 		else if (key === "ideas.seedSubtag" && typeof value === "string") settings[name] = cleanSeedSubtag(value);
 		else settings[name] = LIST_KEYS.has(key) && typeof value === "string" ? parseList(value).map(key === "context.excludedFolders" ? cleanFolderPath : (item) => item).filter((item) => item !== "") : value;
 		await this.plugin.saveSettings();

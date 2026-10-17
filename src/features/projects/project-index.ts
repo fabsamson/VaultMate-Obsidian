@@ -1,10 +1,11 @@
-// The project-note index: the notes whose cached headings include a Tracks section. It is built from the
-// metadata cache alone (no note is read), so it stays cheap; a note is read and parsed only on demand.
-// No folder or tag is hard-coded: a project note is a note that has a Tracks section.
+// The project-note index: the notes whose `tags` property holds the project tag (a setting). The test is
+// made on the metadata cache's frontmatter; a project note is read only to count its tracks and ideas, and
+// may have no section at all. No folder is hard-coded.
 import { debounce, TFile, type EventRef } from "obsidian";
 
 import type VaultMatePlugin from "../../main";
-import { hasTracksSection, readProject, trackCounts, type ProjectModel } from "./project-note";
+import { readProject, trackCounts, type ProjectModel } from "./project-note";
+import { hasProjectTag } from "./project-tag";
 import { projectTags, type ProjectCounts } from "./projects-model";
 
 export interface ProjectNote extends ProjectCounts {
@@ -26,6 +27,8 @@ export class ProjectIndex {
 	private readonly listeners = new Set<() => void>();
 	private readonly versions = new Map<string, number>();
 	private built = false;
+	/** The project tag the index was built for. */
+	private builtTag = "";
 	private readonly notify = debounce(() => this.listeners.forEach((listener) => listener()), 200, true);
 
 	public constructor(private readonly plugin: VaultMatePlugin) {}
@@ -33,6 +36,11 @@ export class ProjectIndex {
 	/** True once the first full pass finished (after the layout is ready). */
 	public get ready(): boolean {
 		return this.built;
+	}
+
+	/** Whether the project tag setting changed since the last build, so the index must be rebuilt. */
+	public get stale(): boolean {
+		return this.built && this.builtTag !== this.plugin.settings.projects.tag;
 	}
 
 	/** Registers the vault events; the index stays empty until `sync` runs. */
@@ -60,6 +68,7 @@ export class ProjectIndex {
 	public async sync(): Promise<void> {
 		this.byPath.clear();
 		this.built = false;
+		this.builtTag = this.plugin.settings.projects.tag;
 		if (this.plugin.settings.projects.enabled) {
 			await Promise.all(this.plugin.app.vault.getMarkdownFiles().map((file) => this.update(file, false)));
 			this.built = true;
@@ -90,23 +99,18 @@ export class ProjectIndex {
 		return { path: file.path, name: file.basename, lines, model: readProject(lines, projectTags(this.plugin.settings)) };
 	}
 
-	/** Reads the note when its cached headings show a Tracks section, to count its tracks and ideas. */
+	/** Reads the note when its frontmatter holds the project tag, to count its tracks and ideas. */
 	private async update(file: TFile, notify: boolean): Promise<void> {
 		if (!this.plugin.settings.projects.enabled || (notify && !this.built) || file.extension !== "md") return;
 		const version = (this.versions.get(file.path) ?? 0) + 1;
 		this.versions.set(file.path, version);
-		const headings = this.plugin.app.metadataCache.getFileCache(file)?.headings ?? [];
-		if (!hasTracksSection(headings.map((heading) => ({ text: heading.heading, level: heading.level })))) {
+		if (!hasProjectTag(this.plugin.app.metadataCache.getFileCache(file)?.frontmatter, this.plugin.settings.projects.tag)) {
 			if (this.byPath.delete(file.path) && notify) this.notify();
 			return;
 		}
 		const lines = (await this.plugin.app.vault.cachedRead(file)).split(/\r?\n/);
 		if (this.versions.get(file.path) !== version) return; // a newer pass owns this note
 		const model = readProject(lines, projectTags(this.plugin.settings));
-		if (!model.tracksSection) {
-			if (this.byPath.delete(file.path) && notify) this.notify();
-			return;
-		}
 		this.byPath.set(file.path, { path: file.path, name: file.basename, tracks: trackCounts(model.tracks), ideas: model.ideas.length });
 		if (notify) this.notify();
 	}

@@ -26,6 +26,8 @@ export interface IdeasSettings {
 
 export interface ProjectsSettings {
 	enabled: boolean;
+	/** Tag in a note's `tags` property that makes it a project, without `#`. */
+	tag: string;
 	/** Heading text of the Tracks section the plugin creates (reading recognizes more forms). */
 	tracksTitle: string;
 }
@@ -100,7 +102,7 @@ export interface VaultMateSettings {
 export const DEFAULT_SETTINGS: VaultMateSettings = {
 	journal: { enabled: true, decisionTag: "decision", predictionTag: "prediction" },
 	ideas: { enabled: true, tag: "idea", newNoteFolder: "", newNoteTemplate: "", seedSubtag: "" },
-	projects: { enabled: true, tracksTitle: "\u{1F9ED} Tracks" },
+	projects: { enabled: true, tag: "project", tracksTitle: "\u{1F9ED} Tracks" },
 	ai: { enabled: true, baseUrl: "https://api.openai.com/v1", model: "gpt-5.6-luna", apiKeySecret: "", actionsFolder: "VaultMate/AI actions" },
 	aiState: { confirmed: {}, notInterested: {} },
 	collections: { folder: "", typeProperty: "type", ratingProperty: "rating" },
@@ -146,6 +148,18 @@ export function validateDistinctTags(decisionTag: string, predictionTag: string)
 /** Error message when the idea tag clashes with a journal tag (ignoring case), or undefined. */
 export function validateDistinctIdeaTag(ideaTag: string, journalTag: string): string | undefined {
 	return sameTag(ideaTag, journalTag) ? "Ideas need a tag different from decisions and predictions." : undefined;
+}
+
+/** A project tag as stored: trimmed, without a leading `#`. */
+export function cleanProjectTag(text: string): string {
+	return text.trim().replace(/^#+/, "");
+}
+
+/** Error message for the project tag as typed, or undefined when it is valid. */
+export function validateProjectTag(text: string): string | undefined {
+	const tag = cleanProjectTag(text);
+	if (tag === "") return "Enter a tag.";
+	return /\s/.test(tag) ? "A tag cannot contain spaces." : undefined;
 }
 
 /** Error message for the Tracks section title as typed, or undefined. The plugin must be able to read back the section it creates. */
@@ -286,6 +300,7 @@ export function normalizeSettings(value: unknown): VaultMateSettings {
 		journal: { enabled: typeof journal.enabled === "boolean" ? journal.enabled : defaults.enabled, decisionTag, predictionTag },
 		projects: {
 			enabled: typeof projects.enabled === "boolean" ? projects.enabled : projectDefaults.enabled,
+			tag: typeof projects.tag === "string" && validateProjectTag(projects.tag) === undefined ? cleanProjectTag(projects.tag) : projectDefaults.tag,
 			tracksTitle: typeof projects.tracksTitle === "string" && validateTracksTitle(projects.tracksTitle) === undefined ? projects.tracksTitle.trim() : projectDefaults.tracksTitle,
 		},
 		ideas: {

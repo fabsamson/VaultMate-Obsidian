@@ -101,12 +101,6 @@ export function isTracksHeading(text: string): boolean {
 	return sectionKind(text) === "tracks";
 }
 
-/** Whether a note with these headings (text and level, in order) has a Tracks section: what the project index asks of the metadata cache. */
-export function hasTracksSection(headings: ReadonlyArray<{ text: string; level: number }>): boolean {
-	const list: Heading[] = headings.map((heading, line) => ({ line, level: heading.level, text: heading.text }));
-	return findSections(list, list.length).sections.some((section) => section.kind === "tracks");
-}
-
 export interface Section {
 	kind: SectionKind;
 	/** Index of the heading line. */

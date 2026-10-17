@@ -150,3 +150,14 @@ describe("promoting and dropping a tagged idea", () => {
 		expect(apply(lines, dropIdea(lines, { line: 2, raw: lines[2] ?? "" }))).toEqual([...lines.slice(0, 2), ...lines.slice(3)]);
 	});
 });
+
+describe("promoteIdea in a note with no recognized section", () => {
+	it("creates the Tracks section at level 1 at the end of the note", () => {
+		const lines = ["Some text", "- [ ] try it #idea ➕ 2026-10-10", "", "More text"];
+		const next = apply(lines, promoteIdea(lines, { line: 1, raw: lines[1] ?? "" }, { tags: TAGS, shortName: "Try it", status: "backlog" }));
+		expect(next[0]).toBe("Some text");
+		expect(next).toContain("# 🧭 Tracks");
+		expect(next.some((line) => line.startsWith("## ") && line.includes("Try it"))).toBe(true);
+		expect(next.join("\n")).not.toContain("#idea");
+	});
+});

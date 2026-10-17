@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { DEFAULT_SETTINGS, normalizeSettings, validateTracksTitle } from "../src/core/settings-model";
+import { cleanProjectTag, DEFAULT_SETTINGS, normalizeSettings, validateProjectTag, validateTracksTitle } from "../src/core/settings-model";
 
 describe("validateTracksTitle", () => {
 	it("accepts titles the reader recognizes as a Tracks section", () => {
@@ -14,7 +14,7 @@ describe("validateTracksTitle", () => {
 
 describe("normalizeSettings for projects", () => {
 	it("defaults to projects on with the generic title", () => {
-		expect(DEFAULT_SETTINGS.projects).toEqual({ enabled: true, tracksTitle: "🧭 Tracks" });
+		expect(DEFAULT_SETTINGS.projects).toEqual({ enabled: true, tag: "project", tracksTitle: "🧭 Tracks" });
 		for (const data of [undefined, {}, { projects: null }, { projects: [] }, { projects: "x" }]) {
 			expect(normalizeSettings(data).projects).toEqual(DEFAULT_SETTINGS.projects);
 		}
@@ -30,5 +30,18 @@ describe("normalizeSettings for projects", () => {
 			expect(normalizeSettings({ projects: { tracksTitle } }).projects.tracksTitle, String(tracksTitle)).toBe("🧭 Tracks");
 		}
 		expect(normalizeSettings({ projects: { enabled: "yes" } }).projects.enabled).toBe(true);
+	});
+});
+
+describe("project tag", () => {
+	it("is cleaned and validated", () => {
+		expect(cleanProjectTag(" #projet ")).toBe("projet");
+		for (const tag of ["projet", "#projet", "projet/x"]) expect(validateProjectTag(tag), tag).toBeUndefined();
+		for (const tag of ["", "  ", "#", "a b"]) expect(validateProjectTag(tag), tag).toBeTruthy();
+	});
+
+	it("is normalized from stored data", () => {
+		expect(normalizeSettings({ projects: { tag: " #projet " } }).projects.tag).toBe("projet");
+		for (const tag of ["", "a b", 3, null]) expect(normalizeSettings({ projects: { tag } }).projects.tag, String(tag)).toBe("project");
 	});
 });

@@ -10,7 +10,8 @@ import { baseName } from "../context/note-meta";
 import type { InsertPlan } from "../ai-actions/insertion";
 import { writeProject } from "../projects/project-apply";
 import type { TrackStatus } from "../projects/project-note";
-import { newTrackInNote, promoteIdea } from "../projects/project-write";
+import { newTrackInNote, promoteIdea, refusalMessage } from "../projects/project-write";
+import { hasProjectTag } from "../projects/project-tag";
 import { projectTags } from "../projects/projects-model";
 import type { JournalKind } from "../journal/journal-line";
 import type { NewEntryResult } from "../journal/journal-modals";
@@ -162,11 +163,11 @@ export interface NewTrackChoice {
 }
 
 /**
- * Turns the idea into a track of the project note `project` (a note with a Tracks section).
+ * Turns the idea into a track of the project note `project` (a note with the project tag).
  *
  * In the idea's own note the idea is moved (one edit: the line and its sub-items go, the track is appended).
- * In another project note the track is written first (refused when that note no longer has a Tracks
- * section), then the idea is closed as `track` with a `Track in [[…]]: <name>` sub-item; its sub-items are
+ * In another project note the track is written first (refused when that note no longer has the
+ * project tag), then the idea is closed as `track` with a `Track in [[…]]: <name>` sub-item; its sub-items are
  * copied. Returns whether everything was written; when the track was written but the idea line changed in
  * between, a notice asks to mark the idea by hand and it returns false.
  */
@@ -189,7 +190,12 @@ export async function newTrackFromIdea(host: IdeaWriteHost, item: IdeaItem, proj
 	if (!source) return false;
 	const children = ideaChildren(source, item.line);
 	const track = { name: choice.shortName, status: choice.status, text: statement, children, ...(firstTask ? { firstTask } : {}) };
-	if (!(await writeProject(app, project.path, (lines) => newTrackInNote(lines, track, { tracksTitle, requireTracks: true })))) return false;
+	// The target was a project when it was chosen; refuse, rather than write, if it lost the project tag since.
+	if (!hasProjectTag(app.metadataCache.getFileCache(project)?.frontmatter, settings.projects.tag)) {
+		new Notice(refusalMessage("not-a-project"));
+		return false;
+	}
+	if (!(await writeProject(app, project.path, (lines) => newTrackInNote(lines, track, { tracksTitle })))) return false;
 
 	const linkText = app.metadataCache.fileToLinktext(project, item.path, true);
 	const { line, subItem } = closeParts(item, settings.ideas.tag, "track", today, linkText, choice.shortName);
