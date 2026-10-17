@@ -37,7 +37,7 @@ describe("project tag", () => {
 	it("is cleaned and validated", () => {
 		expect(cleanProjectTag(" #projet ")).toBe("projet");
 		for (const tag of ["projet", "#projet", "projet/x"]) expect(validateProjectTag(tag), tag).toBeUndefined();
-		for (const tag of ["", "  ", "#", "a b"]) expect(validateProjectTag(tag), tag).toBeTruthy();
+		for (const tag of ["", "  ", "#", "a b", "a,b", "2026"]) expect(validateProjectTag(tag), tag).toBeTruthy();
 	});
 
 	it("is normalized from stored data", () => {

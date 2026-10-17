@@ -165,9 +165,7 @@ export function cleanProjectTag(text: string): string {
 
 /** Error message for the project tag as typed, or undefined when it is valid. */
 export function validateProjectTag(text: string): string | undefined {
-	const tag = cleanProjectTag(text);
-	if (tag === "") return "Enter a tag.";
-	return /\s/.test(tag) ? "A tag cannot contain spaces." : undefined;
+	return validateTag(cleanProjectTag(text));
 }
 
 /** Error message for the Tracks section title as typed, or undefined. The plugin must be able to read back the section it creates. */
