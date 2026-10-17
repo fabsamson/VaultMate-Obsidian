@@ -58,6 +58,7 @@ The title after the marker is never changed by VaultMate. A heading with no mark
 - **Commands:** **Move this track…**, **Promote this idea to a track** (also on a tagged idea line) and **Add a task to this track** work on the note you are editing, from the cursor, and can be undone with Ctrl+Z. **Convert this note to tracks** turns an older project note (sections of ideas, improvements, backlog and work in progress that hold sub-headings and bullets) into a Tracks section in one undoable change, then tells you how many tracks it made.
 - **Tasks of a track:** all the task lines of the block, except those tagged with the idea, decision or prediction tag or `#question`: those are ideas, reviews and questions, not work.
 - **Safe writes:** every change checks that the line it targets still reads as it did when it was shown; otherwise nothing is written. Other notes are changed through `Vault.process`, the note you are editing through the editor.
+- **First-run check:** once per vault, if 20 or more lines carry the idea tag without being tasks, or 20 or more notes carry the Project tag, a dialog shows the counts and where to change the tags. It only informs; nothing is written.
 - **Local only:** projects are read from your notes on your device. Nothing is sent anywhere. Turn the feature, change the Project tag or the title of new Tracks sections in the settings under Projects.
 
 ## AI actions

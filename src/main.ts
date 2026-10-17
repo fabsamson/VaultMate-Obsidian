@@ -8,6 +8,7 @@ import { JournalFeature } from "./features/journal/journal";
 import { LocationFeature } from "./features/location/location";
 import { ProjectsFeature } from "./features/projects/projects";
 import { VaultMateSettingTab } from "./settings";
+import { runTagCheck } from "./ui/tag-check-modal";
 import { HUB_VIEW_TYPE, HubView, type HubPage } from "./ui/hub-view";
 import { CAT_ICON_ID, CAT_ICON_SVG } from "./ui/icon";
 
@@ -42,6 +43,7 @@ export default class VaultMatePlugin extends Plugin {
 		this.aiActions.register();
 		this.location.register();
 		this.context.register();
+		this.app.workspace.onLayoutReady(() => void runTagCheck(this));
 		// The pages name the note they work on, so redraw when another note opens.
 		this.registerEvent(this.app.workspace.on("file-open", debounce(() => this.refreshHubs(), 300, true)));
 	}

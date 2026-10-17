@@ -50,6 +50,7 @@ describe("normalizeSettings", () => {
 			location: { enabled: false, latitudeProperty: "lat", longitudeProperty: "lng", labelProperty: "where", androidApp: true },
 			context: { enabled: false, excludedFolders: ["Templates"], peopleProperties: ["who"], maxConnections: 5 },
 			contextState: { notUseful: [["A.md", "B.md"]] },
+			firstRun: { tagCheckDone: true },
 		};
 		expect(normalizeSettings(saved)).toEqual(saved);
 	});

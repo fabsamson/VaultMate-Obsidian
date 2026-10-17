@@ -86,6 +86,12 @@ export interface ContextState {
 	notUseful: NotePair[];
 }
 
+/** What the plugin did once for this vault (shared between devices). */
+export interface FirstRunState {
+	/** The idea and project tags were checked against the vault (see `core/tag-check`). */
+	tagCheckDone: boolean;
+}
+
 /** Nested per feature; a feature's settings live under its own key. */
 export interface VaultMateSettings {
 	journal: JournalSettings;
@@ -97,6 +103,7 @@ export interface VaultMateSettings {
 	location: LocationSettings;
 	context: ContextSettings;
 	contextState: ContextState;
+	firstRun: FirstRunState;
 }
 
 export const DEFAULT_SETTINGS: VaultMateSettings = {
@@ -109,6 +116,7 @@ export const DEFAULT_SETTINGS: VaultMateSettings = {
 	location: { enabled: true, latitudeProperty: "latitude", longitudeProperty: "longitude", labelProperty: "location", androidApp: false },
 	context: { enabled: true, excludedFolders: [], peopleProperties: ["author", "authors", "people"], maxConnections: 3 },
 	contextState: { notUseful: [] },
+	firstRun: { tagCheckDone: false },
 };
 
 const TAG_RE = /^[\p{L}\p{N}\p{M}_/-]+$/u;
@@ -296,6 +304,7 @@ export function normalizeSettings(value: unknown): VaultMateSettings {
 			actionsFolder: typeof ai.actionsFolder === "string" && cleanFolderPath(ai.actionsFolder) !== "" ? cleanFolderPath(ai.actionsFolder) : aiDefaults.actionsFolder,
 		},
 		aiState: { confirmed, notInterested },
+		firstRun: { tagCheckDone: isRecord(value) && isRecord(value.firstRun) && typeof value.firstRun.tagCheckDone === "boolean" ? value.firstRun.tagCheckDone : DEFAULT_SETTINGS.firstRun.tagCheckDone },
 		collections: { folder: typeof col.folder === "string" ? cleanFolderPath(col.folder) : colDefaults.folder, typeProperty, ratingProperty },
 		journal: { enabled: typeof journal.enabled === "boolean" ? journal.enabled : defaults.enabled, decisionTag, predictionTag },
 		projects: {
