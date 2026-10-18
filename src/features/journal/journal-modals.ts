@@ -233,6 +233,13 @@ export class ReviewModal extends JournalModal {
 		super(app);
 	}
 
+	public open(): void {
+		super.open();
+		// Obsidian focuses the first text field when a modal opens, which raises the keyboard over the choices.
+		const active = this.contentEl.doc.activeElement;
+		if (Platform.isPhone && active instanceof HTMLElement && this.modalEl.contains(active)) active.blur();
+	}
+
 	public onOpen(): void {
 		const { contentEl, item, late } = this;
 		const { entry } = item;
