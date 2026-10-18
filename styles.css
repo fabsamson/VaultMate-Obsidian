@@ -295,6 +295,14 @@
 	cursor: pointer;
 }
 
+/* Obsidian mobile gives every button a background and a pill radius: keep a link a plain underlined text. */
+.is-mobile .vaultmate button.vaultmate-link {
+	border: none;
+	border-radius: 0;
+	background: none;
+	box-shadow: none;
+}
+
 /* Hub: reviews grouped by date. */
 .vaultmate-review-group {
 	margin-bottom: var(--size-4-3);
