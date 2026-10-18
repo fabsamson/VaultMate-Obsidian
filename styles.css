@@ -422,6 +422,30 @@ button.vaultmate-badge:focus-visible {
 	inset: -10px -4px;
 }
 
+/* Mobile: 44 px touch targets (Obsidian's `--touch-size-m`). */
+.is-mobile .vaultmate-button,
+.is-mobile .vaultmate-link,
+.is-mobile .vaultmate-choice-option {
+	min-height: var(--touch-size-m);
+}
+
+.is-mobile .vaultmate-back {
+	width: var(--touch-size-m);
+	min-width: var(--touch-size-m);
+	height: var(--touch-size-m);
+}
+
+/* A text link inside a line gets a larger invisible tap area, without making the line taller. */
+.is-mobile .vaultmate button.vaultmate-inline-link {
+	position: relative;
+}
+
+.is-mobile .vaultmate button.vaultmate-inline-link::after {
+	content: "";
+	position: absolute;
+	inset: -14px -4px;
+}
+
 /* Hub: track record. */
 .vaultmate-stamp-row {
 	display: flex;
