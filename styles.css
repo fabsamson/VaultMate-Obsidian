@@ -1227,3 +1227,12 @@ button.vaultmate-badge:focus-visible {
 .vaultmate-disclosure[aria-expanded="true"]::before {
 	content: "\25BE\00a0";
 }
+
+/* A hidden row (the actions behind More…) must not be shown by the flex layout, and it sits close under the first row. */
+.vaultmate-portal-actions[hidden] {
+	display: none;
+}
+
+.vaultmate-portal-actions + .vaultmate-portal-actions {
+	margin-top: 0;
+}

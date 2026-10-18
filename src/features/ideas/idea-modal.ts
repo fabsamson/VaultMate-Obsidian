@@ -14,7 +14,7 @@ import { ideaAge, titleFromIdea, type IdeaItem } from "./idea-line";
 import { defaultIdeaHeading, newNotePath, orderedHeadings } from "./idea-note";
 import { addIdeaToNote, createNoteFromIdea, dropIdea, locateIdea, makeProjectSeed, newTrackFromIdea, trackIdeaAs, type IdeaWriteHost, type NewTrackChoice } from "./idea-write";
 import { itemStatement, plantedText } from "./ideas-model";
-import { ACTION_LABELS, addState, findProject, hasPanel, newNoteState, noteLinkLabel, portalActions, seedSentence, trackState, type PortalAction, type ProjectChoice } from "./portal-actions";
+import { ACTION_LABELS, addState, findProject, hasPanel, moreActions, newNoteState, noteLinkLabel, primaryActions, seedSentence, trackState, type PortalAction, type ProjectChoice } from "./portal-actions";
 
 export interface IdeaPortalHost extends IdeaWriteHost {
 	/** Opens the note at a 0-based line. */
@@ -156,6 +156,8 @@ export class IdeaModal extends JournalModal {
 
 		// ---- The actions, then the panel of the chosen one ----
 		const row = contentEl.createDiv({ cls: "vaultmate-portal-actions", attr: { role: "group", "aria-label": "What to do with this idea" } });
+		const moreRow = contentEl.createDiv({ cls: "vaultmate-portal-actions", attr: { role: "group", "aria-label": "More ways to sort this idea" } });
+		moreRow.hidden = true;
 		const panel = contentEl.createDiv({ cls: "vaultmate-portal-panel" });
 		const buttons = new Map<PortalAction, HTMLButtonElement>();
 		const choose = (action: PortalAction): void => {
@@ -176,11 +178,20 @@ export class IdeaModal extends JournalModal {
 			panel.empty();
 			if (hasPanel(action)) this.renderPanel(panel, action, item, statement);
 		};
-		for (const action of portalActions({ tend: this.tend, projectsEnabled: host.projectsEnabled(), seedSubtag: host.settings.ideas.seedSubtag })) {
-			const button = row.createEl("button", { cls: "vaultmate-button", text: ACTION_LABELS[action], attr: { type: "button", "aria-pressed": "false" } });
+		const context = { tend: this.tend, projectsEnabled: host.projectsEnabled(), seedSubtag: host.settings.ideas.seedSubtag };
+		const addButton = (target: HTMLElement, action: PortalAction): void => {
+			const button = target.createEl("button", { cls: "vaultmate-button", text: ACTION_LABELS[action], attr: { type: "button", "aria-pressed": "false" } });
 			button.addEventListener("click", () => choose(action));
 			buttons.set(action, button);
-		}
+		};
+		for (const action of primaryActions(context)) addButton(row, action);
+		for (const action of moreActions(context)) addButton(moreRow, action);
+		// The row stays open once an action from it is chosen: the choice is shown selected inside it.
+		const more = row.createEl("button", { cls: "vaultmate-button", text: "More…", attr: { type: "button", "aria-expanded": "false" } });
+		more.addEventListener("click", () => {
+			moreRow.hidden = !moreRow.hidden;
+			more.setAttribute("aria-expanded", String(!moreRow.hidden));
+		});
 		// Opening the modal focuses its first control (the note link) after this runs: focus the first action next.
 		row.win.setTimeout(() => row.querySelector("button")?.focus(), 0);
 	}

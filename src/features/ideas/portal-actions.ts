@@ -26,10 +26,16 @@ export interface PortalContext {
 	seedSubtag: string;
 }
 
-/** The actions in order; New track needs the Projects feature, Project seed its setting, Skip Tend mode. */
-export function portalActions(context: PortalContext): PortalAction[] {
-	const all: PortalAction[] = ["add", "new-note", "track", "decision", "prediction", "seed", "drop", "skip"];
-	return all.filter((action) => (action !== "track" || context.projectsEnabled) && (action !== "seed" || context.seedSubtag !== "") && (action !== "skip" || context.tend));
+/** The fixed main actions, always in this order (no learned order): New track needs the Projects feature, Skip Tend mode. */
+export function primaryActions(context: PortalContext): PortalAction[] {
+	const all: PortalAction[] = ["new-note", "track", "drop", "skip"];
+	return all.filter((action) => (action !== "track" || context.projectsEnabled) && (action !== "skip" || context.tend));
+}
+
+/** The actions behind "More…", always in this order; Project seed needs its setting. */
+export function moreActions(context: PortalContext): PortalAction[] {
+	const all: PortalAction[] = ["add", "decision", "prediction", "seed"];
+	return all.filter((action) => action !== "seed" || context.seedSubtag !== "");
 }
 
 /** Decision and Prediction open the journal form and Skip moves on: none shows a panel. */
