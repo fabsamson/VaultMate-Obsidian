@@ -2,7 +2,7 @@
 import { Modal, Platform, type App } from "obsidian";
 
 import { addInterval, formatDate, INTERVAL_LABELS, REVIEW_INTERVALS, startOfDay, type ReviewInterval } from "../../core/dates";
-import { createChipRow, createSectionHeader, createSegmentedControl } from "../../ui/components";
+import { createChipRow, createDisclosure, createSectionHeader, createSegmentedControl } from "../../ui/components";
 import type { JournalItem } from "./journal-index";
 import {
 	OUTCOMES,
@@ -120,15 +120,19 @@ export class NewEntryModal extends JournalModal {
 		createSectionHeader(contentEl, `New ${kindName(kind)}`);
 		const statement = textField(contentEl, capitalize(kindName(kind)), { placeholder: kind === "decision" ? "What did you decide?" : "What do you expect to happen?" });
 		statement.value = this.initialStatement;
-		const answer = answerField(contentEl, kind);
-		const confidence = textField(contentEl, confidenceLabel(kind), { placeholder: "70", numeric: true });
+		// A prediction needs its probability, so it stays in view; a decision keeps it with the other details.
+		const decision = kind === "decision";
+		const confidence = decision ? null : textField(contentEl, confidenceLabel(kind), { placeholder: "70", numeric: true });
 		const interval = intervalField(contentEl, "Review in");
-		const labels = kind === "decision" ? ["Why", "Options", "Expected", "Signals"] : ["Why", "Signals"];
-		const extras = labels.map((label) => ({ label, input: textField(contentEl, label) }));
+		const details = createDisclosure(contentEl, { label: "Add details" }).body;
+		const answer = answerField(details, kind);
+		const confidenceField = confidence ?? textField(details, confidenceLabel(kind), { placeholder: "70", numeric: true });
+		const labels = decision ? ["Why", "Options", "Expected", "Signals"] : ["Why", "Signals"];
+		const extras = labels.map((label) => ({ label, input: textField(details, label) }));
 
 		const actions = contentEl.createDiv({ cls: "vaultmate-actions" });
-		const percent = (): number | null => parsePercentInput(confidence.value);
-		const valid = (): boolean => statement.value.trim() !== "" && (confidence.value.trim() === "" ? kind === "decision" : percent() !== null);
+		const percent = (): number | null => parsePercentInput(confidenceField.value);
+		const valid = (): boolean => statement.value.trim() !== "" && (confidenceField.value.trim() === "" ? decision : percent() !== null);
 		const submit = (): void => {
 			if (!valid()) return;
 			this.onSubmit({ statement: statement.value, answer: answer.value, confidence: percent(), interval: interval(), extras: extras.map(({ label, input }) => [label, input.value]) });
@@ -138,7 +142,7 @@ export class NewEntryModal extends JournalModal {
 		const update = (): void => {
 			add.disabled = !valid();
 		};
-		for (const input of [statement, answer, confidence, ...extras.map((extra) => extra.input)]) {
+		for (const input of [statement, answer, confidenceField, ...extras.map((extra) => extra.input)]) {
 			input.addEventListener("input", update);
 			this.submitOnEnter(input, submit);
 		}
@@ -262,41 +266,6 @@ export class ReviewModal extends JournalModal {
 		const update = (): void => {
 			if (closeButton) closeButton.disabled = decision ? outcome === null || quality === null : result === null;
 		};
-
-		const happened = textField(contentEl, decision ? "What happened?" : "Notes", { multiline: true });
-		let lesson: Field | undefined;
-		if (decision) {
-			createSegmentedControl(choiceRow(contentEl, "Outcome"), {
-				label: "Outcome",
-				choices: OUTCOMES.map((value) => ({ value, label: OUTCOME_LABELS[value] })),
-				value: outcome,
-				onChange: (value) => {
-					outcome = value;
-					update();
-				},
-			});
-			createSegmentedControl(choiceRow(contentEl, "Quality of the decision"), {
-				label: "Quality of the decision",
-				choices: QUALITIES.map((value) => ({ value, label: QUALITY_LABELS[value] })),
-				value: quality,
-				onChange: (value) => {
-					quality = value;
-					update();
-				},
-			});
-			lesson = textField(contentEl, "Lesson");
-		} else {
-			createSegmentedControl(choiceRow(contentEl, "Did it happen?"), {
-				label: "Did it happen?",
-				choices: RESULTS.map((value) => ({ value, label: RESULT_LABELS[value] })),
-				value: result,
-				onChange: (value) => {
-					result = value;
-					update();
-				},
-			});
-		}
-
 		const send = (input: ReviewInput): void => {
 			buttons.forEach((button) => (button.disabled = true));
 			void this.onSubmit(input).then((written) => {
@@ -308,22 +277,90 @@ export class ReviewModal extends JournalModal {
 				}
 			});
 		};
-		const base = (): { happened: string; lesson: string } => ({ happened: happened.value, lesson: lesson?.value ?? "" });
 
-		const actions = contentEl.createDiv({ cls: "vaultmate-actions" });
-		closeButton = this.button(actions, late ? "Save outcome" : decision ? "Close decision" : "Close prediction", true, () => {
-			if (decision && outcome && quality) send({ ...base(), type: "close-decision", outcome, quality });
-			else if (!decision && result) send({ ...base(), type: "close-prediction", result });
+		// Three blocks, one shown at a time: the question, closing the entry (Yes) and postponing it (Not yet).
+		// Late mode has no question: it starts on the Yes block.
+		const askEl = contentEl.createDiv();
+		const yesEl = contentEl.createDiv();
+		const notYetEl = contentEl.createDiv();
+		const firstChoice = (group: HTMLElement): HTMLElement | null => group.querySelector<HTMLElement>('[tabindex="0"]');
+		let focusYes: () => HTMLElement | null = () => null;
+		let focusNotYet: () => HTMLElement | null = () => null;
+		let focusAsk: () => HTMLElement | null = () => null;
+		const go = (step: "ask" | "yes" | "not-yet"): void => {
+			askEl.hidden = step !== "ask";
+			yesEl.hidden = step !== "yes";
+			notYetEl.hidden = step !== "not-yet";
+			// On a phone the keyboard would open at once and cover the choices: the user taps the first control.
+			if (Platform.isPhone) return;
+			(step === "ask" ? focusAsk() : step === "yes" ? focusYes() : focusNotYet())?.focus();
+		};
+		const back = (actions: HTMLElement): void => {
+			if (!late) this.button(actions, "Back", false, () => go("ask"));
+		};
+
+		// ---- Time to judge? ----
+		askEl.createEl("p", { cls: "vaultmate-question", text: "Time to judge?" });
+		const askActions = askEl.createDiv({ cls: "vaultmate-actions" });
+		this.button(askActions, "Not yet", false, () => go("not-yet"));
+		const yesButton = this.button(askActions, "Yes", true, () => go("yes"));
+		focusAsk = () => yesButton;
+
+		// ---- Yes: the outcome, a lesson, an optional note ----
+		if (decision) {
+			const outcomeGroup = createSegmentedControl(choiceRow(yesEl, "Outcome"), {
+				label: "Outcome",
+				choices: OUTCOMES.map((value) => ({ value, label: OUTCOME_LABELS[value] })),
+				value: outcome,
+				onChange: (value) => {
+					outcome = value;
+					update();
+				},
+			});
+			createSegmentedControl(choiceRow(yesEl, "Quality of the decision"), {
+				label: "Quality of the decision",
+				choices: QUALITIES.map((value) => ({ value, label: QUALITY_LABELS[value] })),
+				value: quality,
+				onChange: (value) => {
+					quality = value;
+					update();
+				},
+			});
+			focusYes = () => firstChoice(outcomeGroup.el);
+		} else {
+			const resultGroup = createSegmentedControl(choiceRow(yesEl, "Did it happen?"), {
+				label: "Did it happen?",
+				choices: RESULTS.map((value) => ({ value, label: RESULT_LABELS[value] })),
+				value: result,
+				onChange: (value) => {
+					result = value;
+					update();
+				},
+			});
+			focusYes = () => firstChoice(resultGroup.el);
+		}
+		const lesson = textField(yesEl, "Lesson (optional)");
+		const happened = textField(createDisclosure(yesEl, { label: "Add a note" }).body, decision ? "What happened?" : "Notes", { multiline: true });
+		const yesActions = yesEl.createDiv({ cls: "vaultmate-actions" });
+		back(yesActions);
+		closeButton = this.button(yesActions, late ? "Save outcome" : decision ? "Close decision" : "Close prediction", true, () => {
+			const base = { happened: happened.value, lesson: lesson.value };
+			if (decision && outcome && quality) send({ ...base, type: "close-decision", outcome, quality });
+			else if (!decision && result) send({ ...base, type: "close-prediction", result });
 		});
 		buttons.push(closeButton);
+
+		// ---- Not yet: a new date and an optional note ----
 		if (!late) {
-			const again = contentEl.createDiv({ cls: "vaultmate-again" });
-			const interval = intervalField(again, "Or review again in");
-			const againActions = again.createDiv({ cls: "vaultmate-actions" });
-			buttons.push(this.button(againActions, "Review again", false, () => send({ ...base(), type: "again", interval: interval() })));
+			const interval = intervalField(notYetEl, "Review again in");
+			const note = textField(notYetEl, "Note (optional)");
+			const notYetActions = notYetEl.createDiv({ cls: "vaultmate-actions" });
+			back(notYetActions);
+			buttons.push(this.button(notYetActions, "Review again", true, () => send({ happened: note.value, lesson: "", type: "again", interval: interval() })));
+			focusNotYet = () => firstChoice(notYetEl);
+			this.submitOnEnter(note, () => notYetActions.querySelector<HTMLButtonElement>(".mod-cta")?.click());
 		}
 		update();
-		// On a phone the keyboard would open at once and cover the choices.
-		if (!Platform.isPhone) happened.focus();
+		go(late ? "yes" : "ask");
 	}
 }

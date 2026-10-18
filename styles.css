@@ -246,12 +246,6 @@
 	margin-top: var(--size-4-3);
 }
 
-.vaultmate-again {
-	margin-top: var(--size-4-4);
-	padding-top: var(--size-4-2);
-	border-top: 2px solid var(--vaultmate-rule);
-}
-
 .vaultmate-button {
 	min-height: 40px;
 	min-width: 40px;
@@ -1235,4 +1229,11 @@ button.vaultmate-badge:focus-visible {
 
 .vaultmate-portal-actions + .vaultmate-portal-actions {
 	margin-top: 0;
+}
+
+/* The question of a two-step form ("Time to judge?"). */
+.vaultmate-question {
+	margin: var(--size-4-4) 0 0;
+	font-size: var(--font-ui-medium);
+	font-weight: 700;
 }
