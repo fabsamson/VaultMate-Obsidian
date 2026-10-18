@@ -1,5 +1,5 @@
 // The three forms of the journal: new entry, track an existing line, review an entry.
-import { Modal, type App } from "obsidian";
+import { Modal, Platform, type App } from "obsidian";
 
 import { addInterval, formatDate, INTERVAL_LABELS, REVIEW_INTERVALS, startOfDay, type ReviewInterval } from "../../core/dates";
 import { createChipRow, createSectionHeader, createSegmentedControl } from "../../ui/components";
@@ -316,6 +316,7 @@ export class ReviewModal extends JournalModal {
 			buttons.push(this.button(againActions, "Review again", false, () => send({ ...base(), type: "again", interval: interval() })));
 		}
 		update();
-		happened.focus();
+		// On a phone the keyboard would open at once and cover the choices.
+		if (!Platform.isPhone) happened.focus();
 	}
 }
