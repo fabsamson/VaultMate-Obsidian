@@ -1,0 +1,719 @@
+{
+ "format": "VaultMate review cases. The plugin owns this folder; `npm run sync-contract` copies it to the Android project.",
+ "tags": {
+  "decision": "decision",
+  "prediction": "prediction"
+ },
+ "cases": [
+  {
+   "late": false,
+   "happened": "",
+   "lesson": "",
+   "today": "2026-10-18",
+   "name": "decision: close, no text",
+   "lines": [
+    "- [ ] Move to Lyon #decision [confidence: 70%] ➕ 2026-10-08 📅 2026-10-15"
+   ],
+   "index": 0,
+   "action": {
+    "type": "close-decision",
+    "outcome": "better",
+    "quality": "good"
+   },
+   "expected": [
+    "- [x] Move to Lyon #decision [confidence: 70%] [outcome: better] [quality: good] ➕ 2026-10-08 📅 2026-10-15 ✅ 2026-10-18"
+   ]
+  },
+  {
+   "late": false,
+   "happened": "The rent was higher than expected",
+   "lesson": "Visit twice before signing",
+   "today": "2026-10-18",
+   "name": "decision: close with what happened and a lesson",
+   "lines": [
+    "# Plans",
+    "- [ ] Move to Lyon #decision [confidence: 70%] ➕ 2026-10-08 📅 2026-10-15",
+    "",
+    "Next"
+   ],
+   "index": 1,
+   "action": {
+    "type": "close-decision",
+    "outcome": "worse",
+    "quality": "unsure"
+   },
+   "expected": [
+    "# Plans",
+    "- [x] Move to Lyon #decision [confidence: 70%] [outcome: worse] [quality: unsure] ➕ 2026-10-08 📅 2026-10-15 ✅ 2026-10-18",
+    "    - Review 2026-10-18: The rent was higher than expected. Lesson: Visit twice before signing",
+    "",
+    "Next"
+   ]
+  },
+  {
+   "late": false,
+   "happened": "It went well!",
+   "lesson": "Plan earlier",
+   "today": "2026-10-18",
+   "name": "decision: what happened ends with punctuation",
+   "lines": [
+    "- [ ] Move to Lyon #decision [confidence: 70%] ➕ 2026-10-08 📅 2026-10-15"
+   ],
+   "index": 0,
+   "action": {
+    "type": "close-decision",
+    "outcome": "as-expected",
+    "quality": "good"
+   },
+   "expected": [
+    "- [x] Move to Lyon #decision [confidence: 70%] [outcome: as-expected] [quality: good] ➕ 2026-10-08 📅 2026-10-15 ✅ 2026-10-18",
+    "    - Review 2026-10-18: It went well! Lesson: Plan earlier"
+   ]
+  },
+  {
+   "late": false,
+   "happened": "",
+   "lesson": "Ask for a second opinion",
+   "today": "2026-10-18",
+   "name": "decision: lesson only",
+   "lines": [
+    "- [ ] Move to Lyon #decision [confidence: 70%] ➕ 2026-10-08 📅 2026-10-15"
+   ],
+   "index": 0,
+   "action": {
+    "type": "close-decision",
+    "outcome": "better",
+    "quality": "bad"
+   },
+   "expected": [
+    "- [x] Move to Lyon #decision [confidence: 70%] [outcome: better] [quality: bad] ➕ 2026-10-08 📅 2026-10-15 ✅ 2026-10-18",
+    "    - Review 2026-10-18: Lesson: Ask for a second opinion"
+   ]
+  },
+  {
+   "late": false,
+   "happened": "  line one\n line two  ",
+   "lesson": "",
+   "today": "2026-10-18",
+   "name": "decision: what happened only, spaces collapsed",
+   "lines": [
+    "- [ ] Move to Lyon #decision [confidence: 70%] ➕ 2026-10-08 📅 2026-10-15"
+   ],
+   "index": 0,
+   "action": {
+    "type": "close-decision",
+    "outcome": "as-expected",
+    "quality": "unsure"
+   },
+   "expected": [
+    "- [x] Move to Lyon #decision [confidence: 70%] [outcome: as-expected] [quality: unsure] ➕ 2026-10-08 📅 2026-10-15 ✅ 2026-10-18",
+    "    - Review 2026-10-18: line one line two"
+   ]
+  },
+  {
+   "late": false,
+   "happened": "Moved in May",
+   "lesson": "Start earlier",
+   "today": "2026-10-18",
+   "name": "decision: children kept, review after the last one (spaces)",
+   "lines": [
+    "- [ ] Move to Lyon #decision [confidence: 70%] ➕ 2026-10-08 📅 2026-10-15",
+    "    - Why: more sun",
+    "    - Options: stay, Lyon, Nantes",
+    "- [ ] Another task"
+   ],
+   "index": 0,
+   "action": {
+    "type": "close-decision",
+    "outcome": "better",
+    "quality": "good"
+   },
+   "expected": [
+    "- [x] Move to Lyon #decision [confidence: 70%] [outcome: better] [quality: good] ➕ 2026-10-08 📅 2026-10-15 ✅ 2026-10-18",
+    "    - Why: more sun",
+    "    - Options: stay, Lyon, Nantes",
+    "    - Review 2026-10-18: Moved in May. Lesson: Start earlier",
+    "- [ ] Another task"
+   ]
+  },
+  {
+   "late": false,
+   "happened": "Not cheaper",
+   "lesson": "",
+   "today": "2026-10-18",
+   "name": "decision: children kept, review after the last one (tabs)",
+   "lines": [
+    "- [ ] Move to Lyon #decision [confidence: 70%] ➕ 2026-10-08 📅 2026-10-15",
+    "\t- Why: more sun",
+    "\t- Expected: cheaper",
+    "\t\t- deeper note",
+    "- [ ] Another task"
+   ],
+   "index": 0,
+   "action": {
+    "type": "close-decision",
+    "outcome": "worse",
+    "quality": "bad"
+   },
+   "expected": [
+    "- [x] Move to Lyon #decision [confidence: 70%] [outcome: worse] [quality: bad] ➕ 2026-10-08 📅 2026-10-15 ✅ 2026-10-18",
+    "\t- Why: more sun",
+    "\t- Expected: cheaper",
+    "\t\t- deeper note",
+    "\t- Review 2026-10-18: Not cheaper",
+    "- [ ] Another task"
+   ]
+  },
+  {
+   "late": false,
+   "happened": "No regrets",
+   "lesson": "",
+   "today": "2026-10-18",
+   "name": "decision: no children, note uses tabs",
+   "lines": [
+    "- Parent",
+    "\t- [ ] Quit the gym #decision ➕ 2026-10-01 📅 2026-10-20",
+    "\t- Other"
+   ],
+   "index": 1,
+   "action": {
+    "type": "close-decision",
+    "outcome": "as-expected",
+    "quality": "good"
+   },
+   "expected": [
+    "- Parent",
+    "\t- [x] Quit the gym #decision [outcome: as-expected] [quality: good] ➕ 2026-10-01 📅 2026-10-20 ✅ 2026-10-18",
+    "\t\t- Review 2026-10-18: No regrets",
+    "\t- Other"
+   ]
+  },
+  {
+   "late": false,
+   "happened": "No regrets",
+   "lesson": "",
+   "today": "2026-10-18",
+   "name": "decision: no children, nested with two spaces, note uses spaces",
+   "lines": [
+    "- Parent",
+    "  - [ ] Quit the gym #decision ➕ 2026-10-01 📅 2026-10-20",
+    "  - Other"
+   ],
+   "index": 1,
+   "action": {
+    "type": "close-decision",
+    "outcome": "as-expected",
+    "quality": "good"
+   },
+   "expected": [
+    "- Parent",
+    "  - [x] Quit the gym #decision [outcome: as-expected] [quality: good] ➕ 2026-10-01 📅 2026-10-20 ✅ 2026-10-18",
+    "      - Review 2026-10-18: No regrets",
+    "  - Other"
+   ]
+  },
+  {
+   "late": false,
+   "happened": "Great",
+   "lesson": "",
+   "today": "2026-10-18",
+   "name": "decision: in a callout, with children",
+   "lines": [
+    "> [!note] Choices",
+    "> - [ ] Move to Lyon #decision [confidence: 70%] 📅 2026-10-15",
+    ">     - Why: more sun",
+    "> - [ ] Other"
+   ],
+   "index": 1,
+   "action": {
+    "type": "close-decision",
+    "outcome": "better",
+    "quality": "good"
+   },
+   "expected": [
+    "> [!note] Choices",
+    "> - [x] Move to Lyon #decision [confidence: 70%] [outcome: better] [quality: good] 📅 2026-10-15 ✅ 2026-10-18",
+    ">     - Why: more sun",
+    ">     - Review 2026-10-18: Great",
+    "> - [ ] Other"
+   ]
+  },
+  {
+   "late": false,
+   "happened": "",
+   "lesson": "Go earlier",
+   "today": "2026-10-18",
+   "name": "decision: in a callout, no children",
+   "lines": [
+    "> [!note] Choices",
+    "> - [ ] Move to Lyon #decision 📅 2026-10-15"
+   ],
+   "index": 1,
+   "action": {
+    "type": "close-decision",
+    "outcome": "better",
+    "quality": "good"
+   },
+   "expected": [
+    "> [!note] Choices",
+    "> - [x] Move to Lyon #decision [outcome: better] [quality: good] 📅 2026-10-15 ✅ 2026-10-18",
+    ">     - Review 2026-10-18: Lesson: Go earlier"
+   ]
+  },
+  {
+   "late": false,
+   "happened": "Too cold",
+   "lesson": "",
+   "today": "2026-10-18",
+   "name": "decision: in a numbered list",
+   "lines": [
+    "1. [ ] Move to Lyon #decision ➕ 2026-10-08 📅 2026-10-15",
+    "    - Why: sun",
+    "2. Next item"
+   ],
+   "index": 0,
+   "action": {
+    "type": "close-decision",
+    "outcome": "worse",
+    "quality": "unsure"
+   },
+   "expected": [
+    "1. [x] Move to Lyon #decision [outcome: worse] [quality: unsure] ➕ 2026-10-08 📅 2026-10-15 ✅ 2026-10-18",
+    "    - Why: sun",
+    "    - Review 2026-10-18: Too cold",
+    "2. Next item"
+   ]
+  },
+  {
+   "late": false,
+   "happened": "Settled in",
+   "lesson": "",
+   "today": "2026-10-18",
+   "name": "decision: an existing review sub-line stays, the new one follows",
+   "lines": [
+    "- [ ] Move to Lyon #decision [confidence: 70%] ➕ 2026-10-08 📅 2026-10-15",
+    "    - Why: sun",
+    "    - Review 2026-09-01: first look, nothing yet"
+   ],
+   "index": 0,
+   "action": {
+    "type": "close-decision",
+    "outcome": "better",
+    "quality": "good"
+   },
+   "expected": [
+    "- [x] Move to Lyon #decision [confidence: 70%] [outcome: better] [quality: good] ➕ 2026-10-08 📅 2026-10-15 ✅ 2026-10-18",
+    "    - Why: sun",
+    "    - Review 2026-09-01: first look, nothing yet",
+    "    - Review 2026-10-18: Settled in"
+   ]
+  },
+  {
+   "late": false,
+   "happened": "Yes",
+   "lesson": "",
+   "today": "2026-10-18",
+   "name": "decision: answer and confidence fields, block id kept",
+   "lines": [
+    "- [ ] Should I move? #decision [answer: Move to Lyon] [confidence: 60%] ➕ 2026-10-08 📅 2026-10-15 ^dec1"
+   ],
+   "index": 0,
+   "action": {
+    "type": "close-decision",
+    "outcome": "better",
+    "quality": "good"
+   },
+   "expected": [
+    "- [x] Should I move? #decision [answer: Move to Lyon] [confidence: 60%] [outcome: better] [quality: good] ➕ 2026-10-08 📅 2026-10-15 ✅ 2026-10-18 ^dec1",
+    "    - Review 2026-10-18: Yes"
+   ]
+  },
+  {
+   "late": false,
+   "happened": "",
+   "lesson": "",
+   "today": "2026-10-18",
+   "name": "decision: priority emoji and recurrence kept",
+   "lines": [
+    "- [ ] Renew insurance #decision [confidence: 80%] ⏫ 🔁 every year ➕ 2026-10-08 📅 2026-10-15"
+   ],
+   "index": 0,
+   "action": {
+    "type": "close-decision",
+    "outcome": "as-expected",
+    "quality": "good"
+   },
+   "expected": [
+    "- [x] Renew insurance #decision [confidence: 80%] [outcome: as-expected] [quality: good] ⏫ 🔁 every year ➕ 2026-10-08 📅 2026-10-15 ✅ 2026-10-18"
+   ]
+  },
+  {
+   "late": false,
+   "happened": "",
+   "lesson": "",
+   "today": "2026-10-18",
+   "name": "decision: previous outcome fields are replaced",
+   "lines": [
+    "- [ ] Move #decision [outcome: worse] [quality: bad] 📅 2026-10-15"
+   ],
+   "index": 0,
+   "action": {
+    "type": "close-decision",
+    "outcome": "better",
+    "quality": "good"
+   },
+   "expected": [
+    "- [x] Move #decision [outcome: better] [quality: good] 📅 2026-10-15 ✅ 2026-10-18"
+   ]
+  },
+  {
+   "late": false,
+   "happened": "",
+   "lesson": "",
+   "today": "2026-10-18",
+   "name": "prediction: yes",
+   "lines": [
+    "- [ ] Rent stays under 900 euros #prediction [confidence: 60%] ➕ 2026-09-01 📅 2026-10-10"
+   ],
+   "index": 0,
+   "action": {
+    "type": "close-prediction",
+    "result": "yes"
+   },
+   "expected": [
+    "- [x] Rent stays under 900 euros #prediction [confidence: 60%] [result: yes] ➕ 2026-09-01 📅 2026-10-10 ✅ 2026-10-18"
+   ]
+  },
+  {
+   "late": false,
+   "happened": "Rent went to 950",
+   "lesson": "",
+   "today": "2026-10-18",
+   "name": "prediction: no, with notes",
+   "lines": [
+    "# Bets",
+    "- [ ] Rent stays under 900 euros #prediction [confidence: 60%] ➕ 2026-09-01 📅 2026-10-10",
+    "    - Expected: yes",
+    "    - Signals: new listings"
+   ],
+   "index": 1,
+   "action": {
+    "type": "close-prediction",
+    "result": "no"
+   },
+   "expected": [
+    "# Bets",
+    "- [x] Rent stays under 900 euros #prediction [confidence: 60%] [result: no] ➕ 2026-09-01 📅 2026-10-10 ✅ 2026-10-18",
+    "    - Expected: yes",
+    "    - Signals: new listings",
+    "    - Review 2026-10-18: Rent went to 950"
+   ]
+  },
+  {
+   "late": false,
+   "happened": "Two of three flats",
+   "lesson": "Count the charges",
+   "today": "2026-10-18",
+   "name": "prediction: partly, with notes and a lesson",
+   "lines": [
+    "- [ ] Rent stays under 900 euros #prediction [confidence: 60%] ➕ 2026-09-01 📅 2026-10-10"
+   ],
+   "index": 0,
+   "action": {
+    "type": "close-prediction",
+    "result": "partly"
+   },
+   "expected": [
+    "- [x] Rent stays under 900 euros #prediction [confidence: 60%] [result: partly] ➕ 2026-09-01 📅 2026-10-10 ✅ 2026-10-18",
+    "    - Review 2026-10-18: Two of three flats. Lesson: Count the charges"
+   ]
+  },
+  {
+   "late": false,
+   "happened": "Poured",
+   "lesson": "",
+   "today": "2026-10-18",
+   "name": "prediction: in a callout with an answer",
+   "lines": [
+    "> - [ ] Will it rain? #prediction [answer: Yes] [confidence: 90%] 📅 2026-10-10"
+   ],
+   "index": 0,
+   "action": {
+    "type": "close-prediction",
+    "result": "yes"
+   },
+   "expected": [
+    "> - [x] Will it rain? #prediction [answer: Yes] [confidence: 90%] [result: yes] 📅 2026-10-10 ✅ 2026-10-18",
+    ">     - Review 2026-10-18: Poured"
+   ]
+  },
+  {
+   "late": false,
+   "happened": "Nearly",
+   "lesson": "",
+   "today": "2026-10-18",
+   "name": "prediction: tabs",
+   "lines": [
+    "- Bets",
+    "\t- [ ] Rent stays low #prediction 📅 2026-10-10",
+    "\t\t- Signals: x"
+   ],
+   "index": 1,
+   "action": {
+    "type": "close-prediction",
+    "result": "partly"
+   },
+   "expected": [
+    "- Bets",
+    "\t- [x] Rent stays low #prediction [result: partly] 📅 2026-10-10 ✅ 2026-10-18",
+    "\t\t- Signals: x",
+    "\t\t- Review 2026-10-18: Nearly"
+   ]
+  },
+  {
+   "late": true,
+   "happened": "",
+   "lesson": "",
+   "today": "2026-10-18",
+   "name": "late: decision without outcome, done date kept",
+   "lines": [
+    "- [x] Move to Lyon #decision [confidence: 70%] ➕ 2026-10-08 📅 2026-10-15 ✅ 2026-10-12"
+   ],
+   "index": 0,
+   "action": {
+    "type": "close-decision",
+    "outcome": "better",
+    "quality": "good"
+   },
+   "expected": [
+    "- [x] Move to Lyon #decision [confidence: 70%] [outcome: better] [quality: good] ➕ 2026-10-08 📅 2026-10-15 ✅ 2026-10-12"
+   ]
+  },
+  {
+   "late": true,
+   "happened": "Late thoughts",
+   "lesson": "Review on time",
+   "today": "2026-10-18",
+   "name": "late: decision, partial fields are overwritten with the chosen values, done date added",
+   "lines": [
+    "- [x] Move to Lyon #decision [outcome: better] ➕ 2026-10-08 📅 2026-10-15"
+   ],
+   "index": 0,
+   "action": {
+    "type": "close-decision",
+    "outcome": "better",
+    "quality": "unsure"
+   },
+   "expected": [
+    "- [x] Move to Lyon #decision [outcome: better] [quality: unsure] ➕ 2026-10-08 📅 2026-10-15 ✅ 2026-10-18",
+    "    - Review 2026-10-18: Late thoughts. Lesson: Review on time"
+   ]
+  },
+  {
+   "late": true,
+   "happened": "It rose",
+   "lesson": "",
+   "today": "2026-10-18",
+   "name": "late: prediction without result",
+   "lines": [
+    "- [x] Rent stays low #prediction [confidence: 60%] 📅 2026-10-10 ✅ 2026-10-11",
+    "    - Expected: yes"
+   ],
+   "index": 0,
+   "action": {
+    "type": "close-prediction",
+    "result": "no"
+   },
+   "expected": [
+    "- [x] Rent stays low #prediction [confidence: 60%] [result: no] 📅 2026-10-10 ✅ 2026-10-11",
+    "    - Expected: yes",
+    "    - Review 2026-10-18: It rose"
+   ]
+  },
+  {
+   "late": true,
+   "happened": "Regret",
+   "lesson": "",
+   "today": "2026-10-18",
+   "name": "late: in a callout",
+   "lines": [
+    "> [!note] Choices",
+    "> - [x] Quit #decision ➕ 2026-10-01 📅 2026-10-20 ✅ 2026-10-19",
+    "> - [ ] Other #decision"
+   ],
+   "index": 1,
+   "action": {
+    "type": "close-decision",
+    "outcome": "worse",
+    "quality": "bad"
+   },
+   "expected": [
+    "> [!note] Choices",
+    "> - [x] Quit #decision [outcome: worse] [quality: bad] ➕ 2026-10-01 📅 2026-10-20 ✅ 2026-10-19",
+    ">     - Review 2026-10-18: Regret",
+    "> - [ ] Other #decision"
+   ]
+  },
+  {
+   "late": true,
+   "happened": "",
+   "lesson": "Think first",
+   "today": "2026-10-18",
+   "name": "late: tab-indented, no children",
+   "lines": [
+    "- Parent",
+    "\t- [x] Quit #decision ➕ 2026-10-01 📅 2026-10-20",
+    "- Next"
+   ],
+   "index": 1,
+   "action": {
+    "type": "close-decision",
+    "outcome": "worse",
+    "quality": "bad"
+   },
+   "expected": [
+    "- Parent",
+    "\t- [x] Quit #decision [outcome: worse] [quality: bad] ➕ 2026-10-01 📅 2026-10-20 ✅ 2026-10-18",
+    "\t\t- Review 2026-10-18: Lesson: Think first",
+    "- Next"
+   ]
+  },
+  {
+   "late": false,
+   "happened": "",
+   "lesson": "",
+   "today": "2026-10-18",
+   "name": "again: no note, one week",
+   "lines": [
+    "- [ ] Move to Lyon #decision [confidence: 70%] ➕ 2026-10-08 📅 2026-10-15"
+   ],
+   "index": 0,
+   "action": {
+    "type": "again",
+    "interval": "1w"
+   },
+   "expected": [
+    "- [ ] Move to Lyon #decision [confidence: 70%] ➕ 2026-10-08 📅 2026-10-25"
+   ]
+  },
+  {
+   "late": false,
+   "happened": "Still looking at flats",
+   "lesson": "",
+   "today": "2026-10-18",
+   "name": "again: with a note, three months",
+   "lines": [
+    "- [ ] Move to Lyon #decision [confidence: 70%] ➕ 2026-10-08 📅 2026-10-15",
+    "    - Why: sun"
+   ],
+   "index": 0,
+   "action": {
+    "type": "again",
+    "interval": "3m"
+   },
+   "expected": [
+    "- [ ] Move to Lyon #decision [confidence: 70%] ➕ 2026-10-08 📅 2027-01-18",
+    "    - Why: sun",
+    "    - Review 2026-10-18: Still looking at flats"
+   ]
+  },
+  {
+   "late": false,
+   "happened": "",
+   "lesson": "",
+   "today": "2027-01-31",
+   "name": "again: end of month clamps",
+   "lines": [
+    "- [ ] Move to Lyon #decision [confidence: 70%] ➕ 2026-10-08 📅 2026-10-15"
+   ],
+   "index": 0,
+   "action": {
+    "type": "again",
+    "interval": "1m"
+   },
+   "expected": [
+    "- [ ] Move to Lyon #decision [confidence: 70%] ➕ 2026-10-08 📅 2027-02-28"
+   ]
+  },
+  {
+   "late": false,
+   "happened": "Too early to say",
+   "lesson": "",
+   "today": "2026-10-18",
+   "name": "again: prediction with a note, tabs",
+   "lines": [
+    "- Bets",
+    "\t- [ ] Rent stays low #prediction [confidence: 60%] 📅 2026-10-10",
+    "\t\t- Signals: x"
+   ],
+   "index": 1,
+   "action": {
+    "type": "again",
+    "interval": "1m"
+   },
+   "expected": [
+    "- Bets",
+    "\t- [ ] Rent stays low #prediction [confidence: 60%] 📅 2026-11-18",
+    "\t\t- Signals: x",
+    "\t\t- Review 2026-10-18: Too early to say"
+   ]
+  },
+  {
+   "late": false,
+   "happened": "",
+   "lesson": "",
+   "today": "2026-10-18",
+   "name": "again: a line without a review date gets one",
+   "lines": [
+    "- [ ] Move #decision ➕ 2026-10-08"
+   ],
+   "index": 0,
+   "action": {
+    "type": "again",
+    "interval": "1w"
+   },
+   "expected": [
+    "- [ ] Move #decision ➕ 2026-10-08 📅 2026-10-25"
+   ]
+  },
+  {
+   "late": false,
+   "happened": "Not yet",
+   "lesson": "",
+   "today": "2026-10-18",
+   "name": "again: in a callout, with a note",
+   "lines": [
+    "> - [ ] Move #decision 📅 2026-10-15",
+    ">     - Why: sun"
+   ],
+   "index": 0,
+   "action": {
+    "type": "again",
+    "interval": "3m"
+   },
+   "expected": [
+    "> - [ ] Move #decision 📅 2027-01-18",
+    ">     - Why: sun",
+    ">     - Review 2026-10-18: Not yet"
+   ]
+  },
+  {
+   "late": false,
+   "happened": "x",
+   "lesson": "",
+   "today": "2026-10-18",
+   "name": "refused: the line changed since it was read",
+   "lines": [
+    "- [ ] Move to Lyon #decision [confidence: 75%] ➕ 2026-10-08 📅 2026-10-15"
+   ],
+   "index": 0,
+   "action": {
+    "type": "close-decision",
+    "outcome": "better",
+    "quality": "good"
+   },
+   "expectedLine": "- [ ] Move to Lyon #decision [confidence: 70%] ➕ 2026-10-08 📅 2026-10-15",
+   "expected": null
+  }
+ ]
+}
