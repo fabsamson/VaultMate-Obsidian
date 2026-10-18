@@ -810,6 +810,13 @@ button.vaultmate-badge:focus-visible {
 	overflow-wrap: anywhere;
 }
 
+/* Buttons do not wrap their text: cut long lines with an ellipsis (the full text is the button's title). */
+.vaultmate-place > div {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
 .vaultmate-place.is-selected {
 	background-color: var(--vaultmate-rule);
 }
@@ -817,6 +824,11 @@ button.vaultmate-badge:focus-visible {
 .vaultmate-place:focus-visible {
 	outline: 2px solid var(--vaultmate-seal);
 	outline-offset: -2px;
+}
+
+/* The attribution link: the palette's primary keeps 4.5:1 on the paper in both themes (the theme's link color measured 4.2:1). */
+.vaultmate-search-attribution a {
+	color: var(--vaultmate-primary);
 }
 
 /* New connections page. */

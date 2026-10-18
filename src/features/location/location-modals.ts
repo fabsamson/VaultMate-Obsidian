@@ -1,5 +1,5 @@
 // The windows of the location feature: the place search and the "replace the location?" question.
-import { Modal, requestUrl, type App } from "obsidian";
+import { Modal, Platform, requestUrl, type App } from "obsidian";
 
 import { createPanel, createSectionHeader } from "../../ui/components";
 import type { Place } from "./location-properties";
@@ -75,7 +75,7 @@ export class SearchModal extends Modal {
 		if (this.results.length > 0) this.renderResults();
 		if (this.chosen) this.renderLabel();
 
-		const attribution = contentEl.createEl("p", { cls: "vaultmate-muted" });
+		const attribution = contentEl.createEl("p", { cls: "vaultmate-muted vaultmate-search-attribution" });
 		attribution.appendText("© ");
 		attribution.createEl("a", { text: "OpenStreetMap contributors", href: "https://www.openstreetmap.org/copyright" });
 		if (focusInput) input.focus();
@@ -84,10 +84,11 @@ export class SearchModal extends Modal {
 	private renderResults(): void {
 		const list = createPanel(this.contentEl, "vaultmate-places");
 		for (const result of this.results) {
-			const item = list.createEl("button", { cls: "vaultmate-place", attr: { type: "button" } });
-			item.toggleClass("is-selected", result === this.chosen);
-			item.createDiv({ cls: "vaultmate-action-name", text: result.name || "Unnamed place" });
 			const detail = [result.type, result.address].filter((part) => part !== "").join(" · ");
+			const name = result.name || "Unnamed place";
+			const item = list.createEl("button", { cls: "vaultmate-place", attr: { type: "button", title: detail ? `${name} — ${detail}` : name } });
+			item.toggleClass("is-selected", result === this.chosen);
+			item.createDiv({ cls: "vaultmate-action-name", text: name });
 			if (detail) item.createDiv({ cls: "vaultmate-muted", text: detail });
 			item.addEventListener("click", () => {
 				this.chosen = result;
@@ -139,7 +140,9 @@ export class SearchModal extends Modal {
 			this.message = requestErrorMessage(null);
 		}
 		this.busy = false;
-		this.render(true);
+		// On a phone the keyboard would stay open over the results: drop the focus, do not give it back.
+		if (Platform.isMobile) (this.contentEl.doc.activeElement as HTMLElement | null)?.blur();
+		this.render(!Platform.isMobile);
 	}
 }
 
