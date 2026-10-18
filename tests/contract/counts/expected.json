@@ -1,0 +1,117 @@
+{
+  "format": "VaultMate counting cases. The plugin owns this folder; `npm run sync-contract` copies it to the Android project.",
+  "today": "2026-10-18",
+  "fallbackDate": "2026-10-16",
+  "fallbackDateMeaning": "Creation date of a note, used for an idea with neither a created date nor a date in the note name.",
+  "tags": {
+    "idea": "idea",
+    "seedSubtag": "projet",
+    "decision": "decision",
+    "prediction": "prediction",
+    "project": "project"
+  },
+  "ignoredFolders": ["Gaps"],
+  "ideas": {
+    "fresh": {
+      "count": 8,
+      "statements": [
+        "Capitalized tag still counts",
+        "Fresh thought written during an old brainstorm",
+        "Idea inside a callout",
+        "Idea without any date",
+        "Learn the cello",
+        "Pitch a ten-minute demo",
+        "Plan a surprise for a friend",
+        "Sketch a weekly menu"
+      ]
+    },
+    "waiting": {
+      "count": 5,
+      "statements": [
+        "Cuisiner un grand pot-au-feu le dimanche",
+        "Idea in a numbered list",
+        "Idea inside a nested callout",
+        "Try a Pomodoro variant",
+        "Write the notes of the year"
+      ]
+    },
+    "wilting": {
+      "count": 2,
+      "statements": [
+        "Idea from an old brainstorm",
+        "Rebuild the old bookshelf"
+      ]
+    },
+    "seeds": {
+      "count": 3,
+      "statements": [
+        "Seed from an old brainstorm",
+        "Seed planted yesterday",
+        "Un jardin partagé pour le quartier"
+      ]
+    }
+  },
+  "reviews": {
+    "overdue": {
+      "count": 4,
+      "statements": [
+        "Decision inside a callout",
+        "Move the standup to Tuesday",
+        "Switch the backup to weekly",
+        "The bakery reopens before November"
+      ]
+    },
+    "today": {
+      "count": 2,
+      "statements": [
+        "Choisir un nouveau forfait mobile",
+        "Prediction inside a nested callout"
+      ]
+    },
+    "week": {
+      "count": 5,
+      "statements": [
+        "Buy the standing desk",
+        "Choisir un nouveau forfait mobile",
+        "La pluie tombe dimanche",
+        "Numbered decision",
+        "Prediction inside a nested callout"
+      ]
+    },
+    "upcoming": {
+      "count": 3,
+      "statements": [
+        "Change the router",
+        "Renew the gym card",
+        "Rent goes up in January"
+      ]
+    },
+    "undated": {
+      "count": 1,
+      "statements": [
+        "Decision without a review date"
+      ]
+    }
+  },
+  "gaps": {
+    "reviewWithOnlyScheduledDate": {
+      "line": "Decision with only a scheduled date",
+      "plugin": "undated",
+      "app": "overdue"
+    },
+    "plainTaggedIdeaLine": {
+      "line": "A plain line that carries the tag",
+      "plugin": "fresh",
+      "app": "not counted"
+    }
+  },
+  "groupsMeaning": {
+    "fresh/waiting/wilting": "Open ideas of 0-2, 3-14, more than 14 days, from the created date, else a date in the note name, else fallbackDate. A future date is fresh.",
+    "seeds": "Open ideas tagged idea/<seedSubtag>; never in fresh, waiting or wilting.",
+    "overdue": "Open decision or prediction whose review date is before today.",
+    "today": "Open review due exactly today (also in week).",
+    "week": "Open review due from today to six days ahead. Only the plugin shows it.",
+    "upcoming": "Open review due seven days or more ahead. Only the plugin shows it.",
+    "undated": "Open review without a review date. Only the plugin shows it."
+  }
+}
