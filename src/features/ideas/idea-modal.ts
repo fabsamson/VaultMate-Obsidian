@@ -124,8 +124,10 @@ export class IdeaModal extends JournalModal {
 		} finally {
 			this.busy = false;
 		}
-		if (written) this.advance();
-		else {
+		if (written) {
+			this.written = true;
+			this.advance();
+		} else {
 			buttons.forEach((button) => (button.disabled = false));
 			restore();
 		}
@@ -151,6 +153,7 @@ export class IdeaModal extends JournalModal {
 		const source = planted.createEl("button", { cls: "vaultmate-inline-link", text: baseName(item.path), attr: { type: "button", "aria-label": `Open ${baseName(item.path)} at this idea` } });
 		source.addEventListener("click", () => {
 			host.openAtLine(item.path, item.line);
+			this.onClosed = undefined; // the user chose to stay in Obsidian
 			this.close();
 		});
 

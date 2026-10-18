@@ -7,6 +7,8 @@ import { editorLines } from "../../core/note-edit";
 import { openFileAtLine, openNoteAtLine, showLine } from "../../core/open-note";
 import { getDescription, getInlineField, parseTaskLine } from "../../core/task-line";
 import type VaultMatePlugin from "../../main";
+import { returnToApp } from "../app-link/app-link";
+import { wantsBack } from "../app-link/back-link";
 import { CaptureSuggest } from "./capture-suggest";
 import { noticeWithButton } from "../ideas/idea-modal";
 import { noteCandidates, parseIdeaLink } from "../ideas/idea-link";
@@ -212,13 +214,17 @@ export class JournalFeature {
 
 	// ---- Review -------------------------------------------------------------------------------------
 
-	public openReview(item: JournalItem): void {
-		new ReviewModal(this.plugin.app, item, (input) => this.applyReview(item, input)).open();
+	public openReview(item: JournalItem, onClosed?: (result: "done" | "cancel") => void): void {
+		const modal = new ReviewModal(this.plugin.app, item, (input) => this.applyReview(item, input));
+		modal.onClosed = onClosed;
+		modal.open();
 	}
 
 	/** The review form for an entry ticked without a review: it only adds what is missing. */
-	public openLateReview(item: JournalItem): void {
-		new ReviewModal(this.plugin.app, item, (input) => this.applyReview(item, input, true), true).open();
+	public openLateReview(item: JournalItem, onClosed?: (result: "done" | "cancel") => void): void {
+		const modal = new ReviewModal(this.plugin.app, item, (input) => this.applyReview(item, input, true), true);
+		modal.onClosed = onClosed;
+		modal.open();
 	}
 
 	/** Turns the entry's `[x]` into `[-]`, so it leaves the list and the statistics; the notice offers to undo. */
@@ -287,8 +293,11 @@ export class JournalFeature {
 		} else {
 			const item = this.entryAt(editor, file.path, found.line);
 			if (!item) new Notice("No decision or prediction to review on this line.");
-			else if (found.kind === "open") this.openReview(item);
-			else this.openLateReview(item);
+			else {
+				const onClosed = wantsBack(params) ? (result: "done" | "cancel") => returnToApp("review", result) : undefined;
+				if (found.kind === "open") this.openReview(item, onClosed);
+				else this.openLateReview(item, onClosed);
+			}
 		}
 	}
 

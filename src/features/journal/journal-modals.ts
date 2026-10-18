@@ -59,6 +59,11 @@ function intervalField(parent: HTMLElement, label: string): () => ReviewInterval
 }
 
 export abstract class JournalModal extends Modal {
+	/** Set once something was written; read by `onClosed`. */
+	protected written = false;
+	/** Called once when the window closes: "done" when something was written, else "cancel" (the way back to the app). */
+	public onClosed?: (result: "done" | "cancel") => void;
+
 	public constructor(app: App) {
 		super(app);
 		this.modalEl.addClass("vaultmate");
@@ -66,6 +71,9 @@ export abstract class JournalModal extends Modal {
 
 	public onClose(): void {
 		this.contentEl.empty();
+		const notify = this.onClosed;
+		this.onClosed = undefined;
+		notify?.(this.written ? "done" : "cancel");
 	}
 
 	/** Enter in a single-line field runs `submit`. */
@@ -270,6 +278,7 @@ export class ReviewModal extends JournalModal {
 			buttons.forEach((button) => (button.disabled = true));
 			void this.onSubmit(input).then((written) => {
 				if (written) {
+					this.written = true;
 					this.close();
 				} else {
 					buttons.forEach((button) => (button.disabled = false));

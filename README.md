@@ -168,6 +168,21 @@ For the app's developers. The VaultMate Android app shows a **Review** button, i
 
 When the decision journal is on, the plugin opens the note (in the pane already showing it, else the current one), puts the cursor on that line and opens the review form. If the note changed since the app read it, it uses the nearest decision or prediction within 3 lines that still needs a review; if there is none, the note stays open at the line with a message. An entry ticked without a review opens **Add the outcome** instead; an entry already reviewed or cancelled only gets a message. A missing note, a missing `file` or a `line` that is not a non-negative integer is refused with a message. The link only opens: it never writes, and every change still needs a click in the form.
 
+### Back link and daily note
+
+For the app's developers. The idea link and the review link accept an optional `back=app`. On mobile, once the window the link opened is closed, the plugin opens the app with:
+
+`vaultmate://back?kind=<idea|review|daily>&result=<done|cancel|error>`
+
+- `kind=idea` or `kind=review`: `result=done` when the portal or the form wrote something, `result=cancel` when it was closed without a change (a skipped idea, Escape). No link is sent when the link only ended with a message (note not found, entry already processed), or when you choose to open the note from the portal.
+- Without `back=app`, or on desktop, nothing changes.
+
+A third link asks Obsidian to create today's daily note:
+
+`obsidian://vaultmate-daily?vault=<vault name>&back=app`
+
+The plugin runs the Daily notes core plugin's own command (open or create today's note, with your template), waits up to 10 seconds for the note to exist, then, with `back=app` on mobile, opens `vaultmate://back?kind=daily&result=done`. If the Daily notes core plugin is turned off or the note does not appear, a message says so and the result is `error`. The link never writes anything itself.
+
 ## Privacy
 
 The plugin collects no telemetry. Its network requests are the AI actions you run (sent to the AI provider you configured, with the content you previewed) and the place searches you start (sent to OpenStreetMap Nominatim, with your search text only). See [PRIVACY.md](PRIVACY.md).

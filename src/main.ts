@@ -2,6 +2,7 @@ import { addIcon, debounce, MarkdownView, Plugin, type TFile, type WorkspaceLeaf
 
 import { normalizeSettings, type VaultMateSettings } from "./core/settings-model";
 import { AiActionsFeature } from "./features/ai-actions/ai-actions";
+import { registerDailyLink } from "./features/app-link/app-link";
 import { ContextFeature } from "./features/context/context";
 import { IdeasFeature } from "./features/ideas/ideas";
 import { JournalFeature } from "./features/journal/journal";
@@ -42,6 +43,7 @@ export default class VaultMatePlugin extends Plugin {
 		this.projects.register();
 		this.aiActions.register();
 		this.location.register();
+		registerDailyLink(this);
 		this.context.register();
 		this.app.workspace.onLayoutReady(() => void runTagCheck(this));
 		// The pages name the note they work on, so redraw when another note opens.

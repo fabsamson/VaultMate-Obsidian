@@ -7,6 +7,8 @@ import type VaultMatePlugin from "../../main";
 import { editorLines } from "../../core/note-edit";
 import { openFileAtLine, openNoteAtLine, showLine } from "../../core/open-note";
 import { IdeaCaptureSuggest, plantIdea } from "./capture-suggest";
+import { returnToApp } from "../app-link/app-link";
+import { wantsBack } from "../app-link/back-link";
 import { createIdeaBadgeExtension } from "./idea-badge";
 import { IdeaIndex } from "./idea-index";
 import { noteCandidates, parseIdeaLink, resolveIdeaLine } from "./idea-link";
@@ -182,7 +184,7 @@ export class IdeasFeature {
 		else if (found.kind === "none") new Notice("This idea is no longer on this line.");
 		else {
 			const item = this.itemAt(editor, file, line);
-			if (item && isOpenIdea(item.idea)) this.openPortal(item);
+			if (item && isOpenIdea(item.idea)) this.openPortal(item, wantsBack(params) ? (result) => returnToApp("idea", result) : undefined);
 			else new Notice("This idea is no longer on this line.");
 		}
 	}
@@ -204,8 +206,10 @@ export class IdeasFeature {
 		};
 	}
 
-	public openPortal(item: IdeaItem): void {
-		new IdeaModal(this.plugin.app, this.portalHost(), [item]).open();
+	public openPortal(item: IdeaItem, onClosed?: (result: "done" | "cancel") => void): void {
+		const modal = new IdeaModal(this.plugin.app, this.portalHost(), [item]);
+		modal.onClosed = onClosed;
+		modal.open();
 	}
 
 	/** Tend mode over `items`, else over every fresh idea of the vault, oldest first. */
