@@ -1,5 +1,8 @@
 // Opening a note at a line for the protocol links (idea link, review link).
-import { MarkdownView, Notice, type App, type Editor, type TFile, type WorkspaceLeaf } from "obsidian";
+import { MarkdownView, Notice, Platform, type App, type Editor, type TFile, type WorkspaceLeaf } from "obsidian";
+
+/** Lines shown above the target line in reading view on mobile. */
+const PREVIEW_LEAD_LINES = 3;
 
 /** Opens the note in a leaf already showing it, else in the current leaf; resolves with its view once the editor has the text. */
 export async function openNoteAtLine(app: App, file: TFile, line: number): Promise<MarkdownView | null> {
@@ -17,6 +20,8 @@ export async function openNoteAtLine(app: App, file: TFile, line: number): Promi
 	for (let wait = 0; wait < 20 && view.editor.getValue() === "" && file.stat.size > 0; wait++) {
 		await new Promise((resolve) => window.setTimeout(resolve, 50));
 	}
+	// Reading view puts the line at the very top, under the status bar and the floating header buttons of mobile: start a few lines earlier.
+	if (Platform.isMobile && view.getMode() === "preview") view.previewMode.applyScroll(Math.max(0, line - PREVIEW_LEAD_LINES));
 	return view;
 }
 
