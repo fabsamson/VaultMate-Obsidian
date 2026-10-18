@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { addInterval, daysBetween, dueLabel, formatDate, INTERVAL_LABELS, parseDate, REVIEW_INTERVALS, startOfDay, type ReviewInterval } from "../src/core/dates";
+import { addInterval, daysBetween, dueLabel, keepTogether, formatDate, INTERVAL_LABELS, parseDate, REVIEW_INTERVALS, startOfDay, type ReviewInterval } from "../src/core/dates";
 
 function date(text: string): Date {
 	const parsed = parseDate(text);
@@ -146,5 +146,20 @@ describe("labels", () => {
 		for (const interval of REVIEW_INTERVALS) {
 			expect(dueLabel(addInterval(today, interval), today)).toBe(expected[interval]);
 		}
+	});
+});
+
+describe("keepTogether", () => {
+	it("makes ISO dates unbreakable", () => {
+		expect(keepTogether("closed 2026-08-16")).toBe("closed 2026‑08‑16");
+	});
+
+	it("joins a number and its word", () => {
+		expect(keepTogether("This month: 22 planted · 3 new notes · 1 track")).toBe("This month: 22 planted · 3 new notes · 1 track");
+	});
+
+	it("leaves other text alone", () => {
+		expect(keepTogether("Projet test · 2026 plan")).toBe("Projet test · 2026 plan");
+		expect(keepTogether("no digits here - at all")).toBe("no digits here - at all");
 	});
 });

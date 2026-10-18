@@ -1,4 +1,5 @@
 // The "Track record" block of the journal page: stamps, Brier score, calibration, decision matrix and lessons.
+import { keepTogether } from "../../core/dates";
 import { createHankoStamp, createPanel } from "../../ui/components";
 import { createSprite } from "../../ui/pixel";
 import { SPRITES } from "../../ui/sprites";
@@ -93,7 +94,7 @@ export function createTrackRecordBlock(host: TrackRecordHost): (body: HTMLElemen
 		for (const lesson of shown) {
 			const main = body.createDiv({ cls: "vaultmate-review-row" }).createEl("button", { cls: "vaultmate-review-main", attr: { type: "button" } });
 			main.createSpan({ cls: "vaultmate-review-statement", text: lesson.text });
-			main.createSpan({ cls: "vaultmate-muted", text: `${lesson.item.entry.statement || "(no text)"} · ${lesson.date}` });
+			main.createSpan({ cls: "vaultmate-muted", text: `${lesson.item.entry.statement || "(no text)"} · ${keepTogether(lesson.date)}` });
 			main.addEventListener("click", () => host.openItem(lesson.item));
 		}
 		if (shown.length < record.lessons.length) {

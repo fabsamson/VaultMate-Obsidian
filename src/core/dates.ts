@@ -72,3 +72,10 @@ export function dueLabel(due: Date, today: Date): string {
 	if (days === 1) return "tomorrow";
 	return days > 0 ? `in ${spanLabel(days)}` : `${spanLabel(-days)} overdue`;
 }
+
+/** Display text that does not break inside an ISO date (non-breaking hyphens) nor between a number and its word (non-breaking space). */
+export function keepTogether(text: string): string {
+	return text
+		.replace(/\b(\d{4})-(\d{2})-(\d{2})\b/g, "$1‑$2‑$3")
+		.replace(/(\d) (?=[A-Za-z])/g, "$1 ");
+}

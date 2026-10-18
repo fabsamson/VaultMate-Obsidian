@@ -1,5 +1,5 @@
 // The hub's "Ideas" page: what to tend (open ideas by age) and what became of the others.
-import { startOfDay } from "../../core/dates";
+import { keepTogether, startOfDay } from "../../core/dates";
 import { createChipRow, createPanel, createSectionHeader } from "../../ui/components";
 import type { HubPage } from "../../ui/hub-view";
 import { createSprite } from "../../ui/pixel";
@@ -74,7 +74,7 @@ export function createIdeasPage(host: IdeasPageHost): HubPage {
 		const card = createPanel(list.createEl("li"), "vaultmate-idea-card");
 		const open = card.createEl("button", { cls: "vaultmate-idea-statement", text: statement, attr: { type: "button", "aria-label": `Open the note at this idea: ${statement}` } });
 		open.addEventListener("click", () => host.openItem(item));
-		card.createEl("p", { cls: "vaultmate-muted", text: `in ${baseName(item.path)} · ${ageText(ideaAge(item.date, today))}` });
+		card.createEl("p", { cls: "vaultmate-muted", text: `in ${baseName(item.path)} · ${keepTogether(ageText(ideaAge(item.date, today)))}` });
 		const actions = card.createDiv({ cls: "vaultmate-related-actions" });
 		const process = actions.createEl("button", { cls: "vaultmate-button", text: "Process", attr: { type: "button", "aria-label": `Process idea: ${statement}` } });
 		process.addEventListener("click", () => host.process(item));
@@ -177,7 +177,7 @@ export function createIdeasPage(host: IdeasPageHost): HubPage {
 					renderEmpty(content);
 					return;
 				}
-				content.createEl("p", { cls: "vaultmate-muted", text: monthSummary(items, startOfDay()) });
+				content.createEl("p", { cls: "vaultmate-muted", text: keepTogether(monthSummary(items, startOfDay())) });
 				const seeds = seedLine(seedCount(items, { tag: host.tag(), subtag: host.seedSubtag() }));
 				if (seeds !== null) content.createEl("p", { cls: "vaultmate-muted", text: seeds });
 				renderToTend(content.createDiv({ cls: "vaultmate-hub-section" }), items, startOfDay());

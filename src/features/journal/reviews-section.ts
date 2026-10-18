@@ -1,5 +1,5 @@
 // The "Reviews" block of the journal page: open entries grouped by review date.
-import { dueLabel, parseDate, startOfDay } from "../../core/dates";
+import { dueLabel, keepTogether, parseDate, startOfDay } from "../../core/dates";
 import { createPanel } from "../../ui/components";
 import { createSprite } from "../../ui/pixel";
 import { SPRITES } from "../../ui/sprites";
@@ -35,7 +35,7 @@ export function createReviewsBlock(host: ReviewsHost): (body: HTMLElement, items
 		main.createSpan({ cls: "vaultmate-review-statement", text: entry.statement || "(no text)" });
 		if (entry.answer !== null) main.createSpan({ cls: "vaultmate-muted", text: `${entry.kind === "decision" ? "Your decision" : "Your answer"}: ${entry.answer}` });
 		const due = entry.due === null ? null : parseDate(entry.due);
-		main.createSpan({ cls: "vaultmate-muted", text: `${noteName(item.path)} · ${due ? dueLabel(due, today) : "no review date"}` });
+		main.createSpan({ cls: "vaultmate-muted", text: `${noteName(item.path)} · ${due ? keepTogether(dueLabel(due, today)) : "no review date"}` });
 		main.addEventListener("click", () => host.openItem(item));
 		if (untracked) {
 			const track = row.createEl("button", { cls: "vaultmate-button", text: `Track as ${kindName(entry.kind)}`, attr: { type: "button", "aria-label": `Track as ${kindName(entry.kind)}: ${entry.statement}` } });
