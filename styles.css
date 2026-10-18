@@ -304,6 +304,7 @@
 
 .vaultmate-review-row {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	gap: var(--size-4-2);
 	padding: var(--size-4-1) 0;
@@ -314,7 +315,7 @@
 .vaultmate-review-row > button.vaultmate-review-main,
 .is-mobile .vaultmate-review-row > button.vaultmate-review-main {
 	display: flex;
-	flex: 1;
+	flex: 1 1 12em;
 	flex-direction: column;
 	align-items: flex-start;
 	gap: var(--size-4-1);
