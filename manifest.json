@@ -1,7 +1,7 @@
 {
   "id": "vaultmate",
   "name": "VaultMate",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "minAppVersion": "1.13.0",
   "description": "Track decisions and predictions with reviews, capture ideas, move project tracks from idea to done, run AI actions that challenge a note or recommend titles, add places, and find new connections. Pairs with the optional VaultMate Android app.",
   "author": "Fabian Samson",
