@@ -1213,7 +1213,13 @@ button.vaultmate-badge:focus-visible {
 	font-weight: 700;
 }
 
-/* Disclosure toggle: a link-looking button with a triangle that points down once open. */
+/* Disclosure toggle: a link-looking button with a triangle that points down once open. It keeps its own width at the
+   start of a column (in a modal Obsidian mobile stretches buttons and centres their text). */
+.vaultmate .vaultmate-disclosure {
+	align-self: flex-start;
+	justify-content: flex-start;
+}
+
 .vaultmate-disclosure::before {
 	content: "\25B8\00a0";
 }
