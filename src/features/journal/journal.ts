@@ -4,7 +4,7 @@ import type { EditorView } from "@codemirror/view";
 
 import { formatDate, startOfDay } from "../../core/dates";
 import { editorLines } from "../../core/note-edit";
-import { openNoteAtLine, showLine } from "../../core/open-note";
+import { openFileAtLine, openNoteAtLine, showLine } from "../../core/open-note";
 import { getDescription, getInlineField, parseTaskLine } from "../../core/task-line";
 import type VaultMatePlugin from "../../main";
 import { CaptureSuggest } from "./capture-suggest";
@@ -310,7 +310,7 @@ export class JournalFeature {
 
 	private async openAtLine(item: JournalItem): Promise<void> {
 		const file = this.plugin.app.vault.getFileByPath(item.path);
-		if (file instanceof TFile) await this.plugin.app.workspace.getLeaf(false).openFile(file, { eState: { line: item.line } });
+		if (file instanceof TFile) await openFileAtLine(this.plugin.app.workspace.getLeaf(false), file, item.line);
 	}
 
 	/** Once a day at most: "VaultMate: 2 reviews due". The day is kept on this device, not in data.json, which every device shares; it is stored only when the notice shows. */

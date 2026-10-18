@@ -5,7 +5,7 @@ import type { EditorView } from "@codemirror/view";
 import { formatDate, startOfDay } from "../../core/dates";
 import type VaultMatePlugin from "../../main";
 import { editorLines } from "../../core/note-edit";
-import { openNoteAtLine, showLine } from "../../core/open-note";
+import { openFileAtLine, openNoteAtLine, showLine } from "../../core/open-note";
 import { IdeaCaptureSuggest, plantIdea } from "./capture-suggest";
 import { createIdeaBadgeExtension } from "./idea-badge";
 import { IdeaIndex } from "./idea-index";
@@ -196,7 +196,7 @@ export class IdeasFeature {
 			settings: plugin.settings,
 			openAtLine: (path, line) => {
 				const file = plugin.app.vault.getFileByPath(path);
-				if (file) void plugin.app.workspace.getLeaf(false).openFile(file, { eState: { line } });
+				if (file) void openFileAtLine(plugin.app.workspace.getLeaf(false), file, line);
 			},
 			projectsEnabled: () => plugin.projects.enabled(),
 			projectNotes: () => (plugin.projects.enabled() ? plugin.projects.index.notes().map((note) => ({ path: note.path, name: note.name })) : []),

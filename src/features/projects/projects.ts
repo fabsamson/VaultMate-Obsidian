@@ -5,6 +5,7 @@ import { debounce, Notice, type Editor, type MarkdownFileInfo, type MarkdownView
 import { formatDate, startOfDay } from "../../core/dates";
 import { applyEditsToEditor } from "../../core/note-edit";
 import { readNoteLines } from "../../core/note-write";
+import { openFileAtLine } from "../../core/open-note";
 import type VaultMatePlugin from "../../main";
 import { buildIdeaItem } from "../ideas/idea-line";
 import { noticeWithButton } from "../ideas/idea-modal";
@@ -79,7 +80,7 @@ export class ProjectsFeature {
 
 	private open(path: string, line: number): void {
 		const file = this.plugin.app.vault.getFileByPath(path);
-		if (file) void this.plugin.app.workspace.getLeaf(false).openFile(file, { eState: { line } });
+		if (file) void openFileAtLine(this.plugin.app.workspace.getLeaf(false), file, line);
 	}
 
 	// ---- Writes -------------------------------------------------------------------------------------
