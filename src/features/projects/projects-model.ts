@@ -86,3 +86,9 @@ export function headerCounts(counts: Record<TrackStatus, number>, showClosed: bo
 export function lineIn(line: number, start: number, end: number): boolean {
 	return line >= start && line < end;
 }
+
+/** Projects with a track in progress stay in view; the others go under "Other projects". Order is kept. */
+export function splitByProgress<T extends { model: { tracks: ReadonlyArray<{ status: TrackStatus }> } }>(projects: readonly T[]): { active: T[]; other: T[] } {
+	const active = projects.filter((project) => project.model.tracks.some((track) => track.status === "progress"));
+	return { active, other: projects.filter((project) => !active.includes(project)) };
+}

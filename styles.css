@@ -1218,3 +1218,12 @@ button.vaultmate-badge:focus-visible {
 	font-size: var(--font-ui-smaller);
 	font-weight: 700;
 }
+
+/* Disclosure toggle: a link-looking button with a triangle that points down once open. */
+.vaultmate-disclosure::before {
+	content: "\25B8\00a0";
+}
+
+.vaultmate-disclosure[aria-expanded="true"]::before {
+	content: "\25BE\00a0";
+}

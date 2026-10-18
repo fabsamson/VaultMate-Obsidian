@@ -2,14 +2,14 @@
 // one column per status.
 import { Menu } from "obsidian";
 
-import { createPanel } from "../../ui/components";
+import { createDisclosure, createPanel } from "../../ui/components";
 import type { HubPage } from "../../ui/hub-view";
 import { createSprite } from "../../ui/pixel";
 import { SPRITES } from "../../ui/sprites";
 import { addScopeControls } from "../journal/scope-control";
 import type { ProjectContent, ProjectNote } from "./project-index";
 import { STATUS_INFO, trackCounts, type ProjectIdea, type ProjectTrack, type TrackStatus } from "./project-note";
-import { boardStatuses, headerCounts, moveTargets, needsNextTask, primaryAction, taskSummary, tileSummary } from "./projects-model";
+import { boardStatuses, headerCounts, moveTargets, needsNextTask, primaryAction, splitByProgress, taskSummary, tileSummary } from "./projects-model";
 
 export const PROJECTS_PAGE_ID = "projects";
 
@@ -43,6 +43,7 @@ const SEALS: Record<TrackStatus, (typeof SPRITES)[keyof typeof SPRITES]> = {
 
 export function createProjectsPage(host: ProjectsPageHost): HubPage {
 	let showClosed = false;
+	let showOther = false;
 
 	const statusMenu = (event: MouseEvent, statuses: readonly TrackStatus[], onPick: (status: TrackStatus) => void): void => {
 		const menu = new Menu();
@@ -140,7 +141,12 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 					content.createEl("p", { cls: "vaultmate-muted", text: "No project in this scope." });
 					return;
 				}
-				for (const project of projects) renderProject(content, project);
+				const { active, other } = splitByProgress(projects);
+				for (const project of active) renderProject(content, project);
+				if (other.length === 0) return;
+				const group = content.createDiv({ cls: "vaultmate-hub-section" });
+				const disclosure = createDisclosure(group, { label: `Other projects · ${other.length}`, open: showOther, onToggle: (open) => (showOther = open) });
+				for (const project of other) renderProject(disclosure.body, project);
 			};
 			checkbox.addEventListener("change", () => {
 				showClosed = checkbox.checked;

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { readProject, trackCounts } from "../src/features/projects/project-note";
-import { boardStatuses, headerCounts, lineIn, moveTargets, needsNextTask, primaryAction, taskSummary, tileSummary } from "../src/features/projects/projects-model";
+import { boardStatuses, headerCounts, lineIn, moveTargets, needsNextTask, primaryAction, splitByProgress, taskSummary, tileSummary } from "../src/features/projects/projects-model";
 
 const NOTE = ["# Ideas", "- a", "- b", "# Tracks", "## 🔨 Busy", "- [ ] first ➕ 2026-10-01", "- [x] done one", "- [ ] second", "## 🔨 Idle", "- [x] only done", "## 📥 Later", "## ★ Maybe", "## ✅ Over"];
 const tracks = readProject(NOTE).tracks;
@@ -59,5 +59,20 @@ describe("board and buttons", () => {
 	it("tells whether a line is inside a block", () => {
 		expect(lineIn(4, 4, 8)).toBe(true);
 		expect(lineIn(8, 4, 8)).toBe(false);
+	});
+});
+
+describe("splitByProgress", () => {
+	const project = (name: string, ...statuses: Array<"progress" | "backlog">) => ({ name, model: { tracks: statuses.map((status) => ({ status })) } });
+
+	it("keeps projects with a track in progress in view, in order", () => {
+		const { active, other } = splitByProgress([project("a", "backlog"), project("b", "backlog", "progress"), project("c"), project("d", "progress")]);
+		expect(active.map((entry) => entry.name)).toEqual(["b", "d"]);
+		expect(other.map((entry) => entry.name)).toEqual(["a", "c"]);
+	});
+
+	it("puts every project under Other when none is in progress", () => {
+		expect(splitByProgress([project("a", "backlog")]).active).toEqual([]);
+		expect(splitByProgress([]).other).toEqual([]);
 	});
 });

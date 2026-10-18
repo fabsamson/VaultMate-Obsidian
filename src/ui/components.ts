@@ -126,3 +126,27 @@ export function createSegmentedControl<T extends string>(parent: HTMLElement, op
 export function createChipRow<T extends string>(parent: HTMLElement, options: ChoiceGroupOptions<T>): ChoiceGroup<T> {
 	return createChoiceGroup(parent, "vaultmate-chips", options);
 }
+
+export interface Disclosure {
+	/** The content; hidden while the disclosure is closed. */
+	body: HTMLElement;
+	button: HTMLButtonElement;
+	setOpen(open: boolean): void;
+}
+
+/** A toggle button (`aria-expanded`, a triangle that turns) that shows or hides a block. The label stays the same. */
+export function createDisclosure(parent: HTMLElement, options: { label: string; open?: boolean; onToggle?: (open: boolean) => void }): Disclosure {
+	const button = parent.createEl("button", { cls: "vaultmate-link vaultmate-disclosure", text: options.label, attr: { type: "button", "aria-expanded": "false" } });
+	const body = parent.createDiv();
+	const setOpen = (open: boolean): void => {
+		button.setAttribute("aria-expanded", String(open));
+		body.hidden = !open;
+	};
+	setOpen(options.open ?? false);
+	button.addEventListener("click", () => {
+		const open = button.getAttribute("aria-expanded") !== "true";
+		setOpen(open);
+		options.onToggle?.(open);
+	});
+	return { body, button, setOpen };
+}
