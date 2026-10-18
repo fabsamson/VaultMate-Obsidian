@@ -122,6 +122,13 @@
 	color: var(--vaultmate-text);
 }
 
+/* Phone: the modal sits under the status bar and above the soft keyboard (Obsidian does not resize it), and its content scrolls. */
+.is-phone .modal.vaultmate {
+	margin-top: auto;
+	margin-bottom: var(--keyboard-height, 0px);
+	max-height: calc(100% - var(--safe-area-inset-top) - var(--keyboard-height, 0px));
+}
+
 /* Hanko stamp: sprite, bold label and an optional state line (HankoStamp.kt). */
 .vaultmate-hanko {
 	display: inline-flex;
