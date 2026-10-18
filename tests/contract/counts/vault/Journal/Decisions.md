@@ -9,6 +9,8 @@
 - [ ] Renew the gym card #decision 📅 2026-10-25
 - [ ] Change the router #decision/home 📅 2026-12-01
 - [ ] Decision without a review date #decision
+- [ ] Decision with only a scheduled date #decision ⏳ 2026-10-10
+- [ ] Decision scheduled today and due later #decision ⏳ 2026-10-18 📅 2026-10-30
 - [x] Decision already reviewed #decision [outcome: better] 📅 2026-10-01 ✅ 2026-10-05
 - [-] Decision no longer relevant #decision 📅 2026-10-01
 
@@ -17,6 +19,7 @@
 - [ ] The bakery reopens before November #prediction 📅 2026-10-12
 - [ ] La pluie tombe dimanche #prediction ➕ 2026-10-10 📅 2026-10-20
 - [ ] Rent goes up in January #prediction 📅 2027-01-05
+- [ ] Prediction scheduled today without a review date #prediction ⏳ 2026-10-18
 - [x] Prediction already resolved #prediction [result: yes] 📅 2026-10-01 ✅ 2026-10-05
 - [-] Prediction cancelled #prediction 📅 2026-10-01
 

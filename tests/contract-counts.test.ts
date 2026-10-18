@@ -86,13 +86,6 @@ describe("shared counting cases: reviews", () => {
 describe("shared counting cases: known gaps", () => {
 	const gaps = counted((path) => path.startsWith("Gaps/"));
 
-	it("a review with only a scheduled date is undated in the plugin (the app counts it as overdue)", () => {
-		const groups = groupByDue(reviewEntries(gaps), today);
-		expect(expected.gaps.reviewWithOnlyScheduledDate).toMatchObject({ plugin: "undated" });
-		expect(shown(groups.undated)).toEqual([expected.gaps.reviewWithOnlyScheduledDate?.line]);
-		expect(groups.overdue).toHaveLength(0);
-	});
-
 	it("a plain line with the idea tag is an open idea in the plugin (the app does not see it)", () => {
 		const groups = groupOpen(ideaItems(gaps), today, seed);
 		expect(expected.gaps.plainTaggedIdeaLine).toMatchObject({ plugin: "fresh" });

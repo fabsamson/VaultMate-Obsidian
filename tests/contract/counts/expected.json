@@ -10,7 +10,9 @@
     "prediction": "prediction",
     "project": "project"
   },
-  "ignoredFolders": ["Gaps"],
+  "ignoredFolders": [
+    "Gaps"
+  ],
   "ideas": {
     "fresh": {
       "count": 8,
@@ -79,26 +81,24 @@
       ]
     },
     "upcoming": {
-      "count": 3,
+      "count": 4,
       "statements": [
         "Change the router",
+        "Decision scheduled today and due later",
         "Renew the gym card",
         "Rent goes up in January"
       ]
     },
     "undated": {
-      "count": 1,
+      "count": 3,
       "statements": [
-        "Decision without a review date"
+        "Decision with only a scheduled date",
+        "Decision without a review date",
+        "Prediction scheduled today without a review date"
       ]
     }
   },
   "gaps": {
-    "reviewWithOnlyScheduledDate": {
-      "line": "Decision with only a scheduled date",
-      "plugin": "undated",
-      "app": "overdue"
-    },
     "plainTaggedIdeaLine": {
       "line": "A plain line that carries the tag",
       "plugin": "fresh",
@@ -108,8 +108,8 @@
   "groupsMeaning": {
     "fresh/waiting/wilting": "Open ideas of 0-2, 3-14, more than 14 days, from the created date, else a date in the note name, else fallbackDate. A future date is fresh.",
     "seeds": "Open ideas tagged idea/<seedSubtag>; never in fresh, waiting or wilting.",
-    "overdue": "Open decision or prediction whose review date is before today.",
-    "today": "Open review due exactly today (also in week).",
+    "overdue": "Open decision or prediction whose review date (📅) is before today. A review goes by 📅 only: with just a ⏳ it is undated.",
+    "today": "Open review whose 📅 is exactly today (also in week). A ⏳ today does not make a review due today.",
     "week": "Open review due from today to six days ahead. Only the plugin shows it.",
     "upcoming": "Open review due seven days or more ahead. Only the plugin shows it.",
     "undated": "Open review without a review date. Only the plugin shows it."
