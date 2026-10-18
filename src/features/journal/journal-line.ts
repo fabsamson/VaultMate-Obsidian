@@ -303,6 +303,13 @@ export function groupByDue<T extends { entry: JournalEntry }>(items: readonly T[
 	return groups;
 }
 
+/** What the page's "Tidy up" section holds: plain or undated open entries, and entries ticked without a review. */
+export function tidyUp<T extends { entry: JournalEntry }>(items: readonly T[], today: Date): { untracked: T[]; closed: T[]; total: number } {
+	const untracked = groupByDue(items, today).undated;
+	const closed = items.filter((item) => closedWithoutReview(item.entry));
+	return { untracked, closed, total: untracked.length + closed.length };
+}
+
 /** Number of open entries due today or earlier. */
 export function countDue<T extends { entry: JournalEntry }>(items: readonly T[], today: Date): number {
 	return items.filter((item) => {

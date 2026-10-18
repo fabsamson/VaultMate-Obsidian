@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { canTrackAs, groupByDue, indexedEntry, isUntracked, type JournalTags } from "../src/features/journal/journal-line";
+import { canTrackAs, groupByDue, indexedEntry, isUntracked, tidyUp, type JournalTags } from "../src/features/journal/journal-line";
 
 const TAGS: JournalTags = { decisionTag: "decision", predictionTag: "prediction" };
 
@@ -54,5 +54,26 @@ describe("canTrackAs", () => {
 		expect(canTrackAs("   ", "decision", TAGS)).toBe(false);
 		expect(canTrackAs("- [ ] Move to Lyon #decision ➕ 2026-10-08 📅 2027-01-08", "decision", TAGS)).toBe(false);
 		expect(canTrackAs("- [x] Move to Lyon #decision", "decision", TAGS)).toBe(false);
+	});
+});
+
+describe("tidyUp", () => {
+	const item = (line: string) => ({ entry: indexedEntry(line, TAGS)!.entry });
+
+	it("counts untracked entries and entries closed without a review", () => {
+		const items = [
+			item("- A plain one #decision"),
+			item("- [ ] Tracked #decision 📅 2026-10-20"),
+			item("- [x] Ticked #decision ✅ 2026-10-10"),
+			item("- [x] Reviewed #decision [outcome: better] [quality: good] ✅ 2026-10-10"),
+		];
+		const tidy = tidyUp(items, new Date(2026, 9, 18));
+		expect(tidy.untracked.map((entry) => entry.entry.statement)).toEqual(["A plain one"]);
+		expect(tidy.closed.map((entry) => entry.entry.statement)).toEqual(["Ticked"]);
+		expect(tidy.total).toBe(2);
+	});
+
+	it("is empty when there is nothing to tidy", () => {
+		expect(tidyUp([item("- [ ] Tracked #decision 📅 2026-10-20")], new Date(2026, 9, 18)).total).toBe(0);
 	});
 });

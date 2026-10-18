@@ -17,6 +17,8 @@ export interface HubState {
 	kind: JournalKind;
 	/** Journal page: which notes it covers. */
 	scope: JournalScope;
+	/** Journal page: whether the "Tidy up" section is open. */
+	tidy: boolean;
 }
 
 export interface HubPageContext {
@@ -45,7 +47,7 @@ export interface HubPage {
 
 /** Side panel: a landing page of tiles, one per enabled feature, and a page for each. */
 export class HubView extends ItemView {
-	private state: HubState = { page: null, kind: "decision", scope: "vault" };
+	private state: HubState = { page: null, kind: "decision", scope: "vault", tidy: false };
 
 	public constructor(leaf: WorkspaceLeaf, private readonly getPages: () => HubPage[]) {
 		super(leaf);
@@ -73,6 +75,7 @@ export class HubView extends ItemView {
 			page: typeof saved.page === "string" ? saved.page : null,
 			kind: saved.kind === "prediction" ? "prediction" : "decision",
 			scope: SCOPES.find((scope) => scope === saved.scope) ?? "vault",
+			tidy: saved.tidy === true,
 		};
 		this.render();
 		await super.setState(state, result);
