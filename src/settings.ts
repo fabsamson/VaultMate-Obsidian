@@ -29,6 +29,11 @@ export class VaultMateSettingTab extends PluginSettingTab {
 				heading: "Appearance",
 				items: [
 					{
+						name: "Scene banner",
+						desc: "Show the scene of the hour at the top of the VaultMate panel. Turn it off for a plainer panel that starts with its title.",
+						control: { type: "toggle", key: "ui.banner" },
+					},
+					{
 						name: "Animations",
 						desc: "Animate the scene at the top of the VaultMate panel and the stamp that lands when you close a review, sort an idea or finish a track. They are always still when your system asks for reduced motion.",
 						control: { type: "toggle", key: "ui.animations" },

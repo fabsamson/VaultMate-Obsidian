@@ -53,8 +53,8 @@ export class HubView extends ItemView {
 	private state: HubState = { page: null, kind: "decision", scope: "vault", tidy: false, project: null };
 	private banner: SceneBanner | null = null;
 
-	/** `animationsOn` is read at each redraw: the setting and the system's reduced-motion preference. */
-	public constructor(leaf: WorkspaceLeaf, private readonly getPages: () => HubPage[], private readonly animationsOn: () => boolean) {
+	/** `animationsOn` and `bannerOn` are read at each redraw: the Animations setting with the system's reduced-motion preference, and the Scene banner setting. */
+	public constructor(leaf: WorkspaceLeaf, private readonly getPages: () => HubPage[], private readonly animationsOn: () => boolean, private readonly bannerOn: () => boolean) {
 		super(leaf);
 	}
 
@@ -134,7 +134,7 @@ export class HubView extends ItemView {
 	}
 
 	private renderLanding(root: HTMLElement, pages: HubPage[], focusId: string | null): void {
-		this.banner = new SceneBanner(root, { animate: this.animationsOn(), onSceneChange: () => this.render() });
+		if (this.bannerOn()) this.banner = new SceneBanner(root, { animate: this.animationsOn(), onSceneChange: () => this.render() });
 		root.createEl("h1", { cls: "vaultmate-hub-title", text: "VaultMate" });
 		if (pages.length === 0) {
 			this.renderEmpty(root);

@@ -34,7 +34,7 @@ export default class VaultMatePlugin extends Plugin {
 		this.settings = normalizeSettings(await this.loadData());
 		this.addSettingTab(new VaultMateSettingTab(this));
 		addIcon(CAT_ICON_ID, CAT_ICON_SVG);
-		this.registerView(HUB_VIEW_TYPE, (leaf) => new HubView(leaf, () => this.sortedHubPages(), () => animationsOn(this.settings.ui.animations)));
+		this.registerView(HUB_VIEW_TYPE, (leaf) => new HubView(leaf, () => this.sortedHubPages(), () => animationsOn(this.settings.ui.animations), () => this.settings.ui.banner));
 		this.addRibbonIcon(CAT_ICON_ID, "Open VaultMate", () => void this.openHub());
 		this.addCommand({
 			id: "open-panel",

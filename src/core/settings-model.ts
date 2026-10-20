@@ -90,6 +90,8 @@ export interface ContextState {
 export interface UiSettings {
 	/** Animate the hub banner and the stamp moment; always off when the system asks for reduced motion. */
 	animations: boolean;
+	/** Show the scene of the hour at the top of the hub landing. */
+	banner: boolean;
 }
 
 /** What the plugin did once for this vault (shared between devices). */
@@ -124,7 +126,7 @@ export const DEFAULT_SETTINGS: VaultMateSettings = {
 	context: { enabled: true, excludedFolders: [], peopleProperties: ["author", "authors", "people"], maxConnections: 3 },
 	contextState: { notUseful: [] },
 	firstRun: { tagCheckDone: false },
-	ui: { animations: true },
+	ui: { animations: true, banner: true },
 };
 
 const TAG_RE = /^[\p{L}\p{N}\p{M}_/-]+$/u;
@@ -289,7 +291,10 @@ export function normalizeSettings(value: unknown): VaultMateSettings {
 	const ctxState = isRecord(value) && isRecord(value.contextState) ? value.contextState : {};
 	const ui = isRecord(value) && isRecord(value.ui) ? value.ui : {};
 	return {
-		ui: { animations: typeof ui.animations === "boolean" ? ui.animations : DEFAULT_SETTINGS.ui.animations },
+		ui: {
+			animations: typeof ui.animations === "boolean" ? ui.animations : DEFAULT_SETTINGS.ui.animations,
+			banner: typeof ui.banner === "boolean" ? ui.banner : DEFAULT_SETTINGS.ui.banner,
+		},
 		contextState: { notUseful: cleanPairs(ctxState.notUseful) },
 		context: {
 			maxConnections: typeof ctx.maxConnections === "number" && Number.isInteger(ctx.maxConnections) && ctx.maxConnections >= 1 && ctx.maxConnections <= MAX_CONNECTIONS ? ctx.maxConnections : ctxDefaults.maxConnections,
