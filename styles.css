@@ -1129,24 +1129,86 @@ button.vaultmate-badge:focus-visible {
 
 /* Projects page ------------------------------------------------------------------------------------ */
 
-.vaultmate-toggle {
+/* A seal scaled down from 48 px: smoothed, since a whole-number pixel scale cannot shrink it. */
+.vaultmate-sprite.vaultmate-sprite-small {
+	flex: none;
+	image-rendering: auto;
+}
+
+/* Dashboard: one tile per project. */
+.vaultmate-project-tiles {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+	gap: var(--size-4-3);
+	margin-bottom: var(--size-4-3);
+}
+
+.is-mobile .vaultmate-project-tiles {
+	grid-template-columns: 1fr;
+}
+
+.vaultmate button.vaultmate-project-tile,
+.is-mobile .vaultmate button.vaultmate-project-tile {
 	display: flex;
-	align-items: center;
-	gap: var(--size-4-2);
-	min-height: 40px;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--size-4-1);
+	width: auto;
+	height: auto;
+	min-height: 64px;
+	margin: 0 2px 2px 0;
+	padding: var(--size-4-2) var(--size-4-3);
+	border: 2px solid var(--vaultmate-border);
+	border-radius: 0;
+	background-color: var(--vaultmate-surface-raised);
+	box-shadow: 2px 2px 0 var(--vaultmate-shadow);
 	color: var(--vaultmate-text);
+	text-align: left;
+	white-space: normal;
+	overflow-wrap: anywhere;
+	cursor: pointer;
 }
 
-.vaultmate-project {
-	margin-bottom: var(--size-4-6);
+.vaultmate-project-tile:focus-visible {
+	outline: 2px solid var(--vaultmate-seal);
+	outline-offset: 2px;
 }
 
+.vaultmate-project-tile-name {
+	font-size: var(--font-ui-medium);
+	font-weight: 700;
+}
+
+.vaultmate-project-tile-line {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--size-4-1) var(--size-4-3);
+}
+
+.vaultmate-project-tile-next {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	overflow: hidden;
+	font-size: var(--font-ui-small);
+}
+
+.vaultmate-seal-count {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--size-4-1);
+	font-weight: 700;
+}
+
+/* Project page. */
 .vaultmate-project-head {
 	display: flex;
 	flex-wrap: wrap;
-	align-items: baseline;
+	align-items: center;
 	gap: var(--size-4-1) var(--size-4-3);
-	margin-bottom: var(--size-4-3);
+	margin-bottom: var(--size-4-2);
 	padding-bottom: var(--size-4-1);
 	border-bottom: 2px solid var(--vaultmate-border);
 }
@@ -1169,48 +1231,253 @@ button.vaultmate-badge:focus-visible {
 	cursor: pointer;
 }
 
-.vaultmate-project-ideas {
+/* The way back to the dashboard: a left angle quote before the word. */
+.vaultmate-back-projects::before {
+	content: "\2039\00a0";
+}
+
+/* The chips scroll to a section; they are not tabs. Wrapped on a wide pane, one scrolling line on a phone. */
+.vaultmate-chip-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--size-4-2);
 	margin-bottom: var(--size-4-3);
 }
 
-.vaultmate-project-idea + .vaultmate-project-idea {
-	margin-top: var(--size-4-3);
-	padding-top: var(--size-4-2);
-	border-top: 1px solid var(--vaultmate-rule);
+.is-mobile .vaultmate-chip-row {
+	flex-wrap: nowrap;
+	overflow-x: auto;
+	padding: 0 2px 4px 0;
 }
 
-.vaultmate-board {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
-	gap: var(--size-4-4);
-	align-items: start;
+.vaultmate .vaultmate-button.vaultmate-section-chip {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	gap: var(--size-4-1);
+	width: auto;
+	height: auto;
+	min-height: 32px;
+	padding: 0 var(--size-4-3);
+	white-space: nowrap;
 }
 
-.vaultmate-column-title {
+.is-mobile .vaultmate .vaultmate-button.vaultmate-section-chip {
+	min-height: var(--touch-size-m);
+}
+
+.vaultmate-project-section {
+	margin-bottom: var(--size-4-3);
+}
+
+/* A section title is one line, with a 16 px seal. */
+.vaultmate-project-section-title {
 	display: flex;
 	align-items: center;
 	gap: var(--size-4-2);
-	margin-bottom: var(--size-4-2);
+	margin-bottom: var(--size-4-1);
+	color: var(--vaultmate-text-muted);
+	font-size: var(--font-ui-smaller);
 	font-weight: 700;
-	color: var(--vaultmate-text);
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	white-space: nowrap;
 }
 
-.vaultmate-column > .vaultmate-track-card + .vaultmate-track-card {
-	margin-top: var(--size-4-3);
+/* An idea: its text on at most two lines, then three icon buttons. */
+.vaultmate-idea-lines {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.vaultmate-idea-line {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-2);
+	min-height: 40px;
+	padding: 2px 0;
+	border-bottom: 1px solid var(--vaultmate-rule);
+}
+
+.is-mobile .vaultmate-idea-line {
+	min-height: var(--touch-size-m);
+}
+
+.vaultmate-idea-line-text {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	overflow-wrap: anywhere;
+}
+
+.vaultmate-icon-actions {
+	display: flex;
+	flex: none;
+}
+
+.vaultmate button.vaultmate-icon-button,
+.is-mobile .vaultmate button.vaultmate-icon-button {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	min-width: 40px;
+	height: 40px;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	background: none;
+	box-shadow: none;
+	color: var(--vaultmate-text);
+	font-size: var(--font-ui-large);
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.is-mobile .vaultmate button.vaultmate-icon-button {
+	width: var(--touch-size-m);
+	min-width: var(--touch-size-m);
+	height: var(--touch-size-m);
+}
+
+.vaultmate button.vaultmate-icon-button:hover {
+	background-color: var(--vaultmate-surface-raised);
+}
+
+.vaultmate-icon-button:focus-visible {
+	outline: 2px solid var(--vaultmate-seal);
+	outline-offset: -2px;
+}
+
+/* A track: title and task summary, the main action, the more menu; its open decisions and predictions below. */
+.vaultmate-track-row {
+	padding: var(--size-4-1) 0;
+	border-bottom: 1px solid var(--vaultmate-rule);
+}
+
+.vaultmate-track-line {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-2);
+}
+
+.vaultmate-track-main {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.vaultmate .vaultmate-track-main button.vaultmate-idea-statement,
+.is-mobile .vaultmate .vaultmate-track-main button.vaultmate-idea-statement {
+	min-height: 0;
+	padding: var(--size-4-1) 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .vaultmate-track-meta {
-	margin: 0;
+	overflow: hidden;
+	font-size: var(--font-ui-small);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.vaultmate-track-actions {
+	display: flex;
+	flex: none;
+	align-items: center;
+	gap: var(--size-4-1);
+}
+
+.vaultmate-track-actions > .vaultmate-button {
+	width: auto;
+	height: auto;
+}
+
+.vaultmate-track-nonext {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--size-4-2);
+	margin-top: var(--size-4-1);
 }
 
 .vaultmate-track-flag {
 	display: inline-block;
-	margin-top: var(--size-4-1);
 	padding: 0 var(--size-4-2);
 	border: 2px solid var(--vaultmate-seal);
 	color: var(--vaultmate-seal);
 	font-size: var(--font-ui-smaller);
 	font-weight: 700;
+}
+
+/* An open decision or prediction: sprite, statement over its review date, then Review. */
+.vaultmate-entry-line {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-2);
+	min-height: 40px;
+	padding: 2px 0 2px var(--size-4-3);
+}
+
+.is-mobile .vaultmate-entry-line {
+	min-height: var(--touch-size-m);
+}
+
+.vaultmate-project-section > .vaultmate-entry-line {
+	padding-left: 0;
+	border-bottom: 1px solid var(--vaultmate-rule);
+}
+
+.vaultmate .vaultmate-entry-line > .vaultmate-button {
+	flex: none;
+	width: auto;
+	height: auto;
+}
+
+.vaultmate button.vaultmate-entry-main,
+.is-mobile .vaultmate button.vaultmate-entry-main {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	align-items: flex-start;
+	width: auto;
+	height: auto;
+	min-width: 0;
+	min-height: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	background: none;
+	box-shadow: none;
+	color: var(--vaultmate-text);
+	text-align: left;
+	cursor: pointer;
+}
+
+.vaultmate-entry-main:focus-visible {
+	outline: 2px solid var(--vaultmate-seal);
+	outline-offset: 2px;
+}
+
+.vaultmate-entry-statement,
+.vaultmate-entry-due {
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.vaultmate-entry-due {
+	font-size: var(--font-ui-smaller);
 }
 
 /* Disclosure toggle: a link-looking button with a triangle that points down once open. It keeps its own width at the

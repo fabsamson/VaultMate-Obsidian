@@ -15,7 +15,8 @@ import { CAT_ICON_ID, CAT_ICON_SVG } from "./ui/icon";
 
 export default class VaultMatePlugin extends Plugin {
 	public settings: VaultMateSettings = normalizeSettings(undefined);
-	private readonly journal = new JournalFeature(this);
+	/** Public so the Projects page can show the open decisions and predictions written in a project. */
+	public readonly journal = new JournalFeature(this);
 	/** The idea index is public for live tests and for the coming pages: `app.plugins.plugins.vaultmate.ideas.index`. */
 	public readonly ideas = new IdeasFeature(this);
 	/** The project-note index is public like the idea index: `app.plugins.plugins.vaultmate.projects.index`. */
