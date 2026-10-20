@@ -271,6 +271,11 @@
 	color: var(--vaultmate-on-primary);
 }
 
+/* The button that shows the rest of a list, under its last row. */
+.vaultmate-show-more {
+	margin-top: var(--size-4-2);
+}
+
 .vaultmate-button:disabled {
 	opacity: 0.5;
 	box-shadow: none;

@@ -131,7 +131,7 @@ export function createIdeasPage(host: IdeasPageHost): HubPage {
 			const list = results.createDiv({ cls: "vaultmate-idea-rows" });
 			for (const item of rows.slice(0, shown)) renderRow(list, item);
 			if (rows.length > shown) {
-				const more = results.createEl("button", { cls: "vaultmate-link", text: "Show more", attr: { type: "button" } });
+				const more = results.createEl("button", { cls: "vaultmate-button vaultmate-show-more", text: `Show ${Math.min(PROCESSED_PAGE, rows.length - shown)} more`, attr: { type: "button" } });
 				more.addEventListener("click", () => {
 					shown += PROCESSED_PAGE;
 					renderResults();

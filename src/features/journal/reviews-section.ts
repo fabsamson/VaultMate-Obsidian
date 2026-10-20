@@ -62,7 +62,7 @@ export function createReviewsBlock(host: ReviewsHost): (body: HTMLElement, items
 		const shown = limit !== undefined && !showAllUpcoming ? items.slice(0, limit) : items;
 		for (const item of shown) renderRow(host, group, item, today);
 		if (shown.length < items.length) {
-			const more = group.createEl("button", { cls: "vaultmate-link", text: `${items.length - shown.length} more`, attr: { type: "button" } });
+			const more = group.createEl("button", { cls: "vaultmate-button vaultmate-show-more", text: `Show ${items.length - shown.length} more`, attr: { type: "button" } });
 			more.addEventListener("click", () => {
 				showAllUpcoming = true;
 				body.empty();

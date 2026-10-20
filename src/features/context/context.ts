@@ -7,6 +7,7 @@ import { debounce, Keymap, Notice, type TFile } from "obsidian";
 
 import { editorFor } from "../../core/note-write";
 import type VaultMatePlugin from "../../main";
+import { noticeWithButton } from "../ideas/idea-modal";
 import { ContextIndex, type BuildProgress, type ContextStats } from "./context-index";
 import { CONTEXT_PAGE_ID, createContextPage } from "./context-page";
 import { addPair, hasPair, removePair, renamePath } from "./dismissed";
@@ -138,18 +139,11 @@ export class ContextFeature {
 		const { contextState } = plugin.settings;
 		contextState.notUseful = addPair(contextState.notUseful, file.path, targetPath);
 		await plugin.saveSettings();
-		const notice = new Notice(
-			createFragment((fragment) => {
-				fragment.createSpan({ text: "Marked as not useful. " });
-				fragment.createEl("button", { text: "Undo" }).addEventListener("click", () => {
-					plugin.settings.contextState.notUseful = removePair(plugin.settings.contextState.notUseful, file.path, targetPath);
-					void plugin.saveSettings();
-					plugin.refreshHubs(CONTEXT_PAGE_ID);
-					notice.hide();
-				});
-			}),
-			8000,
-		);
+		noticeWithButton("Marked as not useful.", "Undo", () => {
+			plugin.settings.contextState.notUseful = removePair(plugin.settings.contextState.notUseful, file.path, targetPath);
+			void plugin.saveSettings();
+			plugin.refreshHubs(CONTEXT_PAGE_ID);
+		});
 		plugin.refreshHubs(CONTEXT_PAGE_ID);
 	}
 

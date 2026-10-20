@@ -98,7 +98,7 @@ export function createTrackRecordBlock(host: TrackRecordHost): (body: HTMLElemen
 			main.addEventListener("click", () => host.openItem(lesson.item));
 		}
 		if (shown.length < record.lessons.length) {
-			const more = body.createEl("button", { cls: "vaultmate-link", text: `${record.lessons.length - shown.length} more`, attr: { type: "button" } });
+			const more = body.createEl("button", { cls: "vaultmate-button vaultmate-show-more", text: `Show ${record.lessons.length - shown.length} more`, attr: { type: "button" } });
 			more.addEventListener("click", () => {
 				showAllLessons = true;
 				body.empty();
