@@ -21,6 +21,7 @@ import {
 	nextTaskLine,
 	orderTiles,
 	primaryAction,
+	progressText,
 	reviewsDueText,
 	sectionChips,
 	splitEntries,
@@ -28,6 +29,7 @@ import {
 	taskSummary,
 	tileCounters,
 	tileSummary,
+	trackProgress,
 	type ProjectSummary,
 	type SectionId,
 } from "./projects-model";
@@ -113,6 +115,13 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		if (statuses.length === 0 && !ideas) line.createSpan({ cls: "vaultmate-muted", text: "No tracks yet" });
 		const alert = reviewsDueText(summary.reviewsDue);
 		if (alert) line.createSpan({ cls: "vaultmate-track-flag", text: alert });
+		const progress = trackProgress(summary.counts);
+		if (progress) {
+			const text = progressText(progress);
+			const meter = tile.createDiv({ cls: "vaultmate-progress", attr: { role: "progressbar", "aria-label": "Tracks done", "aria-valuemin": "0", "aria-valuemax": String(progress.total), "aria-valuenow": String(progress.done), "aria-valuetext": text } });
+			meter.createDiv({ cls: "vaultmate-progress-bar" }).createDiv({ cls: "vaultmate-progress-fill" }).setCssProps({ "--vaultmate-width": `${(100 * progress.done) / progress.total}%` });
+			meter.createSpan({ text });
+		}
 		if (summary.next) tile.createSpan({ cls: "vaultmate-muted vaultmate-project-tile-next", text: `Next: ${keepTogether(nextTaskLine(summary.next))}` });
 		tile.addEventListener("click", () => open(summary.path));
 	};
