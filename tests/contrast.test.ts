@@ -1,17 +1,15 @@
-import { readFileSync } from "node:fs";
-
 import { describe, expect, it } from "vitest";
 
-import { contrastRatio, parseHex } from "../src/ui/contrast";
+import CSS from "virtual:vaultmate-styles";
 
-const CSS = readFileSync("styles.css", "utf8");
+import { contrastRatio, parseHex } from "../src/ui/contrast";
 
 /** The `--vaultmate-*` tokens declared by the rule whose selector starts with `selector`. */
 function tokens(selector: string): Record<string, string> {
 	const start = CSS.indexOf(`${selector},`);
 	const end = CSS.indexOf("}", start);
 	const found: Record<string, string> = {};
-	for (const match of CSS.slice(start, end).matchAll(/--vaultmate-([a-z-]+):\s*(#[0-9a-fA-F]{3,6});/gu)) found[match[1] as string] = match[2] as string;
+	for (const match of CSS.slice(start, end).matchAll(/--vaultmate-([a-z-]+):\s*(#[0-9a-fA-F]{3,6});/gu)) found[match[1]] = match[2];
 	return found;
 }
 
