@@ -1233,7 +1233,7 @@ button.vaultmate-badge:focus-visible {
 
 /* The way back to the dashboard: a left angle quote before the word. */
 .vaultmate-back-projects::before {
-	content: "9 a0";
+	content: "\2039\00a0";
 }
 
 /* The chips scroll to a section; they are not tabs. Wrapped on a wide pane, one scrolling line on a phone. */
