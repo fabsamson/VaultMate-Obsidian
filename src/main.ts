@@ -11,6 +11,9 @@ import { ProjectsFeature } from "./features/projects/projects";
 import { VaultMateSettingTab } from "./settings";
 import { runTagCheck } from "./ui/tag-check-modal";
 import { HUB_VIEW_TYPE, HubView, type HubPage } from "./ui/hub-view";
+import type { Sprite } from "./ui/pixel";
+import { animationsOn } from "./ui/system-motion";
+import { playStampMoment } from "./ui/stamp-moment";
 import { CAT_ICON_ID, CAT_ICON_SVG } from "./ui/icon";
 
 export default class VaultMatePlugin extends Plugin {
@@ -31,7 +34,7 @@ export default class VaultMatePlugin extends Plugin {
 		this.settings = normalizeSettings(await this.loadData());
 		this.addSettingTab(new VaultMateSettingTab(this));
 		addIcon(CAT_ICON_ID, CAT_ICON_SVG);
-		this.registerView(HUB_VIEW_TYPE, (leaf) => new HubView(leaf, () => this.sortedHubPages()));
+		this.registerView(HUB_VIEW_TYPE, (leaf) => new HubView(leaf, () => this.sortedHubPages(), () => animationsOn(this.settings.ui.animations)));
 		this.addRibbonIcon(CAT_ICON_ID, "Open VaultMate", () => void this.openHub());
 		this.addCommand({
 			id: "open-panel",
@@ -71,6 +74,11 @@ export default class VaultMatePlugin extends Plugin {
 		this.projects.onSettingsChanged();
 		this.aiActions.onSettingsChanged();
 		this.refreshHubs();
+	}
+
+	/** The stamp moment, centred over the window; nothing when animations are off or the system reduces motion. */
+	public stampMoment(sprite: Sprite): void {
+		if (animationsOn(this.settings.ui.animations)) playStampMoment(sprite);
 	}
 
 	/** Adds or replaces (same `id`) a page of the hub, then redraws the open hubs. */

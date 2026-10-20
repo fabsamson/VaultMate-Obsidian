@@ -7,6 +7,7 @@ import { applyEditsToEditor } from "../../core/note-edit";
 import { readNoteLines } from "../../core/note-write";
 import { openFileAtLine } from "../../core/open-note";
 import type VaultMatePlugin from "../../main";
+import { SPRITES } from "../../ui/sprites";
 import { buildIdeaItem } from "../ideas/idea-line";
 import { noticeWithButton } from "../ideas/idea-modal";
 import { dropIdea as dropTaggedIdea, locateIdea, undoDrop } from "../ideas/idea-write";
@@ -158,7 +159,9 @@ export class ProjectsFeature {
 	/** Changes the status; moving to In progress first asks for an optional first task, written in the same edit. */
 	private move(path: string, track: ProjectTrack, status: TrackStatus): void {
 		if (status !== "progress" || track.status === "progress") {
-			void this.written(path, (lines) => setTrackStatus(lines, track, status));
+			void this.written(path, (lines) => setTrackStatus(lines, track, status)).then((ok) => {
+				if (ok && status === "done") this.plugin.stampMoment(SPRITES.stampDone);
+			});
 			return;
 		}
 		new TaskModal(this.plugin.app, {

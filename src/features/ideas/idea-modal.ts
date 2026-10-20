@@ -21,6 +21,8 @@ export interface IdeaPortalHost extends IdeaWriteHost {
 	openAtLine(path: string, line: number): void;
 	/** Whether the Projects feature is on (New track needs it). */
 	projectsEnabled(): boolean;
+	/** Shows the stamp moment: an idea was sorted. */
+	stampDone(): void;
 	/** The project notes (notes with the project tag); empty when the feature is off. */
 	projectNotes(): ProjectChoice[];
 	/** The titles of the tracks of a project note, to warn about a repeated name. */
@@ -126,6 +128,7 @@ export class IdeaModal extends JournalModal {
 		}
 		if (written) {
 			this.written = true;
+			this.host.stampDone();
 			this.advance();
 		} else {
 			buttons.forEach((button) => (button.disabled = false));

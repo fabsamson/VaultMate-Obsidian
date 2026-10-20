@@ -5,6 +5,7 @@ import { SCOPES, type JournalScope } from "../features/journal/scope";
 import { createInfoPanel, createSectionHeader } from "./components";
 import { CAT_ICON_ID } from "./icon";
 import { createSprite, type Sprite } from "./pixel";
+import { SceneBanner } from "./scene-banner";
 import { SPRITES } from "./sprites";
 
 export const HUB_VIEW_TYPE = "vaultmate-hub";
@@ -50,8 +51,10 @@ export interface HubPage {
 /** Side panel: a landing page of tiles, one per enabled feature, and a page for each. */
 export class HubView extends ItemView {
 	private state: HubState = { page: null, kind: "decision", scope: "vault", tidy: false, project: null };
+	private banner: SceneBanner | null = null;
 
-	public constructor(leaf: WorkspaceLeaf, private readonly getPages: () => HubPage[]) {
+	/** `animationsOn` is read at each redraw: the setting and the system's reduced-motion preference. */
+	public constructor(leaf: WorkspaceLeaf, private readonly getPages: () => HubPage[], private readonly animationsOn: () => boolean) {
 		super(leaf);
 	}
 
@@ -89,6 +92,12 @@ export class HubView extends ItemView {
 		return Promise.resolve();
 	}
 
+	protected onClose(): Promise<void> {
+		this.banner?.destroy();
+		this.banner = null;
+		return Promise.resolve();
+	}
+
 	/** Whether the hub shows this page now. */
 	public showsPage(id: string): boolean {
 		return this.state.page === id;
@@ -112,6 +121,8 @@ export class HubView extends ItemView {
 	 */
 	public render(focus: string | null = null): void {
 		const root = this.contentEl;
+		this.banner?.destroy();
+		this.banner = null;
 		root.empty();
 		root.addClass("vaultmate", "vaultmate-hub");
 		root.createDiv({ cls: "vaultmate-pattern-band" }).setCssProps({ "--vaultmate-pattern": `url("${SPRITES.patternSeigaiha.src}")` });
@@ -123,6 +134,7 @@ export class HubView extends ItemView {
 	}
 
 	private renderLanding(root: HTMLElement, pages: HubPage[], focusId: string | null): void {
+		this.banner = new SceneBanner(root, { animate: this.animationsOn(), onSceneChange: () => this.render() });
 		root.createEl("h1", { cls: "vaultmate-hub-title", text: "VaultMate" });
 		if (pages.length === 0) {
 			this.renderEmpty(root);
