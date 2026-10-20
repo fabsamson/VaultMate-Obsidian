@@ -26,6 +26,17 @@ export class VaultMateSettingTab extends PluginSettingTab {
 		return [
 			{
 				type: "group",
+				heading: "Appearance",
+				items: [
+					{
+						name: "Animations",
+						desc: "Animate the scene at the top of the VaultMate panel and the stamp that lands when you close a review, sort an idea or finish a track. They are always still when your system asks for reduced motion.",
+						control: { type: "toggle", key: "ui.animations" },
+					},
+				],
+			},
+			{
+				type: "group",
 				heading: "Decision journal",
 				items: [
 					{
