@@ -12,6 +12,8 @@
 	--vaultmate-primary: #315fb8;
 	--vaultmate-on-primary: #fffaed;
 	--vaultmate-seal: #e6573f;
+	/* The seal as text: the plain seal reaches only 3.5:1 on the paper, this darker red reaches 4.5:1. */
+	--vaultmate-seal-text: #a8341f;
 	--vaultmate-sakura: #f6d8d8;
 	--vaultmate-border: #1d315d;
 	--vaultmate-rule: #d6cebb;
@@ -29,6 +31,7 @@
 	--vaultmate-primary: #f2b84b;
 	--vaultmate-on-primary: #101a3e;
 	--vaultmate-seal: #ff8a73;
+	--vaultmate-seal-text: #ff8a73;
 	--vaultmate-sakura: #1f2e62;
 	--vaultmate-border: #fffaed;
 	--vaultmate-rule: #34457a;
@@ -626,7 +629,7 @@ button.vaultmate-badge:focus-visible {
 
 .vaultmate-error {
 	margin: var(--size-4-3) 0 0;
-	color: var(--vaultmate-seal);
+	color: var(--vaultmate-seal-text);
 	font-weight: 700;
 }
 
@@ -1425,7 +1428,7 @@ button.vaultmate-badge:focus-visible {
 	display: inline-block;
 	padding: 0 var(--size-4-2);
 	border: 2px solid var(--vaultmate-seal);
-	color: var(--vaultmate-seal);
+	color: var(--vaultmate-seal-text);
 	font-size: var(--font-ui-smaller);
 	font-weight: 700;
 }
