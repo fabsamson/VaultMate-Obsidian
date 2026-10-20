@@ -21,7 +21,7 @@ import {
 	nextTaskLine,
 	orderTiles,
 	primaryAction,
-	progressText,
+	projectProgressText,
 	reviewsDueText,
 	sectionChips,
 	splitEntries,
@@ -29,7 +29,6 @@ import {
 	taskSummary,
 	tileCounters,
 	tileSummary,
-	trackProgress,
 	type ProjectSummary,
 	type SectionId,
 } from "./projects-model";
@@ -46,6 +45,8 @@ export interface ProjectsPageHost {
 	/** Path of the active Markdown note, else the most recent one, or null. */
 	activeNote(): string | null;
 	markdownPaths(): string[];
+	/** The `progress` property of the project note (metadata cache), whatever its type; undefined when absent. */
+	progressProperty(path: string): unknown;
 	/** The journal's entries; empty while the Decisions and predictions module is off. */
 	entries(): JournalItem[];
 	/** Opens the "Time to judge?" review of an entry. */
@@ -115,11 +116,12 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		if (statuses.length === 0 && !ideas) line.createSpan({ cls: "vaultmate-muted", text: "No tracks yet" });
 		const alert = reviewsDueText(summary.reviewsDue);
 		if (alert) line.createSpan({ cls: "vaultmate-track-flag", text: alert });
-		const progress = trackProgress(summary.counts);
+		const { progress } = summary;
 		if (progress) {
-			const text = progressText(progress);
-			const meter = tile.createDiv({ cls: "vaultmate-progress", attr: { role: "progressbar", "aria-label": "Tracks done", "aria-valuemin": "0", "aria-valuemax": String(progress.total), "aria-valuenow": String(progress.done), "aria-valuetext": text } });
-			meter.createDiv({ cls: "vaultmate-progress-bar" }).createDiv({ cls: "vaultmate-progress-fill" }).setCssProps({ "--vaultmate-width": `${(100 * progress.done) / progress.total}%` });
+			const text = projectProgressText(progress);
+			const [now, max] = progress.kind === "percent" ? [progress.percent, 100] : [progress.done, progress.total];
+			const meter = tile.createDiv({ cls: "vaultmate-progress", attr: { role: "progressbar", "aria-label": progress.kind === "percent" ? "Progress" : "Tracks done", "aria-valuemin": "0", "aria-valuemax": String(max), "aria-valuenow": String(now), "aria-valuetext": text } });
+			meter.createDiv({ cls: "vaultmate-progress-bar" }).createDiv({ cls: "vaultmate-progress-fill" }).setCssProps({ "--vaultmate-width": `${(100 * now) / max}%` });
 			meter.createSpan({ text });
 		}
 		if (summary.next) tile.createSpan({ cls: "vaultmate-muted vaultmate-project-tile-next", text: `Next: ${keepTogether(nextTaskLine(summary.next))}` });
@@ -329,7 +331,7 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 				return;
 			}
 			const today = startOfDay();
-			renderDashboard(content, projects.map((entry) => summarizeProject(entry.project, entry, today)), (path) => openProject(path));
+			renderDashboard(content, projects.map((entry) => summarizeProject(entry.project, entry, today, host.progressProperty(entry.project.path))), (path) => openProject(path));
 			if (focusTile) content.querySelector<HTMLElement>(`[data-path="${CSS.escape(focusTile)}"]`)?.focus();
 		};
 		await draw(false);

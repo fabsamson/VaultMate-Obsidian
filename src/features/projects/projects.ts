@@ -63,6 +63,11 @@ export class ProjectsFeature {
 				read: (path) => this.read(path),
 				activeNote: () => plugin.contextFile()?.path ?? null,
 				markdownPaths: () => plugin.app.vault.getMarkdownFiles().map((file) => file.path),
+				progressProperty: (path) => {
+					const file = plugin.app.vault.getFileByPath(path);
+					const frontmatter: Record<string, unknown> | undefined = file ? plugin.app.metadataCache.getFileCache(file)?.frontmatter : undefined;
+					return frontmatter?.progress;
+				},
 				entries: () => (plugin.journal.enabled() ? plugin.journal.index.entries() : []),
 				openReview: (item) => plugin.journal.openReview(item),
 				open: (path, line) => this.open(path, line),
