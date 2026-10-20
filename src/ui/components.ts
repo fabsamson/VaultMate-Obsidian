@@ -1,6 +1,6 @@
 // Reusable DOM pieces in VaultMate's look (styles.css). Parents must sit inside a `.vaultmate` element
 // (the hub, or a modal whose `modalEl` has the class) so the palette tokens apply.
-import { createSprite, type Sprite } from "./pixel";
+import { createSmallSprite, createSprite, type Sprite } from "./pixel";
 
 /** Small capitals label and a rule (SectionHeader.kt). */
 export function createSectionHeader(parent: HTMLElement, label: string): HTMLElement {
@@ -38,6 +38,8 @@ export function createHankoStamp(parent: HTMLElement, options: HankoStampOptions
 export interface Choice<T extends string> {
 	value: T;
 	label: string;
+	/** A 16 px mark before the label (a status seal); the label still carries the meaning. */
+	sprite?: Sprite;
 }
 
 export interface ChoiceGroupOptions<T extends string> {
@@ -76,7 +78,12 @@ export function nextChoiceIndex(key: string, current: number, count: number): nu
 function createChoiceGroup<T extends string>(parent: HTMLElement, groupCls: string, options: ChoiceGroupOptions<T>): ChoiceGroup<T> {
 	const el = parent.createDiv({ cls: `vaultmate-choice ${groupCls}`, attr: { role: "radiogroup", "aria-label": options.label } });
 	let value = options.value;
-	const buttons = options.choices.map((choice) => el.createEl("button", { cls: "vaultmate-choice-option", text: choice.label, attr: { type: "button", role: "radio" } }));
+	const buttons = options.choices.map((choice) => {
+		const button = el.createEl("button", { cls: "vaultmate-choice-option", attr: { type: "button", role: "radio" } });
+		if (choice.sprite) createSmallSprite(button, choice.sprite, 16);
+		button.createSpan({ text: choice.label });
+		return button;
+	});
 
 	// Roving tabindex: one tab stop per group, on the selected option (or the first when none is selected).
 	const sync = (): void => {

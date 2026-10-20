@@ -13,6 +13,7 @@ import { kindName } from "../journal/journal-line";
 import { addScopeControls } from "../journal/scope-control";
 import { scopePaths } from "../journal/scope";
 import type { ProjectContent, ProjectNote } from "./project-index";
+import { TRACK_SEALS } from "./track-seals";
 import { STATUS_INFO, type ProjectIdea, type ProjectTrack, type TrackStatus } from "./project-note";
 import {
 	moveTargets,
@@ -57,13 +58,7 @@ export interface ProjectsPageHost {
 	addTask(path: string, track: ProjectTrack): void;
 }
 
-const SEALS: Record<TrackStatus, Sprite> = {
-	explore: SPRITES.sealTrackExplore,
-	backlog: SPRITES.sealTrackBacklog,
-	progress: SPRITES.sealTrackProgress,
-	done: SPRITES.sealTrackDone,
-	dropped: SPRITES.sealTrackDropped,
-};
+const SEALS = TRACK_SEALS;
 
 /** Seals and sprites of headings, chips and counters are 16 px. */
 const SMALL = 16;
@@ -191,7 +186,7 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		more.addEventListener("click", (event) =>
 			menuAt(event, (menu) => {
 				menu.addItem((item) => item.setTitle("Move to…").onClick(() => menuAt(event, (moves) => {
-					for (const status of moveTargets(track.status)) moves.addItem((entry) => entry.setTitle(`${STATUS_INFO[status].marker} ${STATUS_INFO[status].label}`).onClick(() => host.move(project.path, track, status)));
+					for (const status of moveTargets(track.status)) moves.addItem((entry) => entry.setTitle(STATUS_INFO[status].label).onClick(() => host.move(project.path, track, status)));
 				})));
 				if (track.status !== "done" && track.status !== "dropped") menu.addItem((item) => item.setTitle("Add task").onClick(() => host.addTask(project.path, track)));
 			}),

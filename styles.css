@@ -159,6 +159,10 @@
 }
 
 .vaultmate-choice-option {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--size-4-1);
 	min-height: 40px;
 	min-width: 40px;
 	height: auto;
@@ -1053,6 +1057,13 @@ button.vaultmate-badge:focus-visible {
 
 .vaultmate-track-status {
 	margin: var(--size-4-2) 0;
+}
+
+/* A status in the Move and Promote pickers: seal, then label. */
+.vaultmate-status-choice {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-2);
 }
 
 /* A text-sized button inside a muted line (the idea's note, the note it went to). */
