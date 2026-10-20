@@ -86,6 +86,12 @@ export interface ContextState {
 	notUseful: NotePair[];
 }
 
+/** How VaultMate looks and moves. */
+export interface UiSettings {
+	/** Animate the hub banner and the stamp moment; always off when the system asks for reduced motion. */
+	animations: boolean;
+}
+
 /** What the plugin did once for this vault (shared between devices). */
 export interface FirstRunState {
 	/** The idea and project tags were checked against the vault (see `core/tag-check`). */
@@ -104,6 +110,7 @@ export interface VaultMateSettings {
 	context: ContextSettings;
 	contextState: ContextState;
 	firstRun: FirstRunState;
+	ui: UiSettings;
 }
 
 export const DEFAULT_SETTINGS: VaultMateSettings = {
@@ -117,6 +124,7 @@ export const DEFAULT_SETTINGS: VaultMateSettings = {
 	context: { enabled: true, excludedFolders: [], peopleProperties: ["author", "authors", "people"], maxConnections: 3 },
 	contextState: { notUseful: [] },
 	firstRun: { tagCheckDone: false },
+	ui: { animations: true },
 };
 
 const TAG_RE = /^[\p{L}\p{N}\p{M}_/-]+$/u;
@@ -279,7 +287,9 @@ export function normalizeSettings(value: unknown): VaultMateSettings {
 	const stringList = (raw: unknown, clean: (item: string) => string): string[] | undefined =>
 		Array.isArray(raw) ? [...new Set(raw.filter((item): item is string => typeof item === "string").map(clean).filter((item) => item !== ""))] : undefined;
 	const ctxState = isRecord(value) && isRecord(value.contextState) ? value.contextState : {};
+	const ui = isRecord(value) && isRecord(value.ui) ? value.ui : {};
 	return {
+		ui: { animations: typeof ui.animations === "boolean" ? ui.animations : DEFAULT_SETTINGS.ui.animations },
 		contextState: { notUseful: cleanPairs(ctxState.notUseful) },
 		context: {
 			maxConnections: typeof ctx.maxConnections === "number" && Number.isInteger(ctx.maxConnections) && ctx.maxConnections >= 1 && ctx.maxConnections <= MAX_CONNECTIONS ? ctx.maxConnections : ctxDefaults.maxConnections,

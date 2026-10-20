@@ -1529,3 +1529,226 @@ button.vaultmate-badge:focus-visible {
 	font-size: var(--font-ui-medium);
 	font-weight: 700;
 }
+
+/* Time-of-day banner at the top of the hub: 160 x 56 source pixels at a whole-number scale (sized by code). */
+.vaultmate-banner {
+	position: relative;
+	overflow: hidden;
+	box-sizing: content-box;
+	width: var(--vaultmate-banner-width, 160px);
+	height: var(--vaultmate-banner-height, 56px);
+	max-width: 100%;
+	margin: 0 auto var(--size-4-3);
+	border: 2px solid var(--vaultmate-border);
+	box-shadow: 2px 2px 0 var(--vaultmate-shadow);
+	background-color: var(--vaultmate-surface-raised);
+}
+
+.vaultmate-banner-layer {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	image-rendering: pixelated;
+}
+
+.vaultmate-banner-frame {
+	opacity: 0;
+}
+
+.vaultmate-banner-frame.is-on {
+	opacity: 1;
+}
+
+/* Twice the banner wide: the cloud tile repeats every 160 source pixels, so moving the strip by one banner width loops. */
+.vaultmate-banner-clouds {
+	position: absolute;
+	top: 0;
+	left: -100%;
+	width: 200%;
+	height: 100%;
+	background-image: var(--vaultmate-clouds);
+	background-repeat: repeat-x;
+	background-size: 50% 100%;
+	image-rendering: pixelated;
+	animation: vaultmate-clouds 40s steps(160) infinite;
+}
+
+.vaultmate-banner.is-paused .vaultmate-banner-clouds {
+	animation-play-state: paused;
+}
+
+@keyframes vaultmate-clouds {
+	from {
+		transform: translateX(0);
+	}
+	to {
+		transform: translateX(50%);
+	}
+}
+
+/* Stamp moment: the 28 px ink canvas holds the 20 px stamp at (4, 4). Timeline of a 600 ms animation: drop 0-120 ms, ink 1 from 120, ink 2 from 200, ink 3 from 300, ink fades 400-600. */
+.vaultmate-stamp-moment {
+	position: fixed;
+	inset: 0;
+	z-index: 1000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	pointer-events: none;
+	animation: vaultmate-stamp-leave 1500ms linear both;
+}
+
+.vaultmate-stamp-canvas {
+	position: relative;
+	width: calc(28 * var(--vaultmate-px));
+	height: calc(28 * var(--vaultmate-px));
+}
+
+.vaultmate-stamp-canvas img {
+	position: absolute;
+	image-rendering: pixelated;
+}
+
+.vaultmate-stamp-ink {
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	opacity: 0;
+	animation-duration: 600ms;
+	animation-fill-mode: both;
+	animation-timing-function: step-end;
+}
+
+.vaultmate-stamp-ink-1 {
+	animation-name: vaultmate-ink-1;
+}
+
+.vaultmate-stamp-ink-2 {
+	animation-name: vaultmate-ink-2;
+}
+
+.vaultmate-stamp-ink-3 {
+	animation-name: vaultmate-ink-3;
+}
+
+.vaultmate-stamp-seal {
+	top: calc(4 * var(--vaultmate-px));
+	left: calc(4 * var(--vaultmate-px));
+	width: calc(20 * var(--vaultmate-px));
+	height: calc(20 * var(--vaultmate-px));
+	animation: vaultmate-stamp-drop 600ms step-end both, vaultmate-stamp-in 40ms linear both;
+}
+
+@keyframes vaultmate-stamp-drop {
+	0% {
+		transform: translateY(calc(-12 * var(--vaultmate-px)));
+	}
+	6.67% {
+		transform: translateY(calc(-8 * var(--vaultmate-px)));
+	}
+	13.33% {
+		transform: translateY(calc(-4 * var(--vaultmate-px)));
+	}
+	20% {
+		transform: translateY(calc(2 * var(--vaultmate-px)));
+	}
+	33.33% {
+		transform: translateY(calc(-1 * var(--vaultmate-px)));
+	}
+	43.33% {
+		transform: translateY(0);
+	}
+}
+
+@keyframes vaultmate-stamp-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes vaultmate-ink-1 {
+	0% {
+		opacity: 0;
+	}
+	20% {
+		opacity: 1;
+	}
+	33.33% {
+		opacity: 0;
+	}
+}
+
+@keyframes vaultmate-ink-2 {
+	0% {
+		opacity: 0;
+	}
+	33.33% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0;
+	}
+}
+
+@keyframes vaultmate-ink-3 {
+	0% {
+		opacity: 0;
+	}
+	50% {
+		opacity: 1;
+		animation-timing-function: linear;
+	}
+	66.67% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+	}
+}
+
+/* The whole moment rests, then fades and goes (code removes it afterwards). */
+@keyframes vaultmate-stamp-leave {
+	0%,
+	80% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+	}
+}
+
+/* Progress of a project's tracks: a pixel bar with its text, in the palette. */
+.vaultmate-progress {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	align-self: stretch;
+	font-size: var(--font-ui-small);
+	color: var(--vaultmate-text-muted);
+}
+
+.vaultmate-progress-bar {
+	height: 8px;
+	border: 2px solid var(--vaultmate-border);
+	background-color: var(--vaultmate-surface);
+}
+
+.vaultmate-progress-fill {
+	height: 100%;
+	width: var(--vaultmate-width, 0);
+	background-color: var(--vaultmate-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.vaultmate-banner-clouds {
+		animation: none;
+	}
+
+	.vaultmate-stamp-moment {
+		display: none;
+	}
+}

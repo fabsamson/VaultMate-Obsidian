@@ -7,6 +7,7 @@ import { editorLines } from "../../core/note-edit";
 import { openFileAtLine, openNoteAtLine, showLine } from "../../core/open-note";
 import { getDescription, getInlineField, parseTaskLine } from "../../core/task-line";
 import type VaultMatePlugin from "../../main";
+import { SPRITES } from "../../ui/sprites";
 import { returnToApp } from "../app-link/app-link";
 import { wantsBack } from "../app-link/back-link";
 import { CaptureSuggest } from "./capture-suggest";
@@ -252,7 +253,10 @@ export class JournalFeature {
 			done = `Review date moved to ${due}.`;
 		}
 		const written = await writeEntryLine(this.plugin.app, item, line, reviewItemText(todayText, input.happened, input.lesson));
-		if (written) new Notice(done);
+		if (written) {
+			new Notice(done);
+			if (input.type !== "again") this.plugin.stampMoment(SPRITES.stampReview);
+		}
 		return written;
 	}
 

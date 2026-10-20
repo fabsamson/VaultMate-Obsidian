@@ -180,6 +180,23 @@ export function tileCounters(summary: ProjectSummary): { statuses: Array<{ statu
 	return { statuses, ideas: summary.ideas > 0 ? `${summary.ideas} ${summary.ideas === 1 ? "idea" : "ideas"}` : "" };
 }
 
+/** Tracks done out of the tracks that count: every track but the dropped ones (the rule of the Android app). */
+export interface TrackProgress {
+	done: number;
+	total: number;
+}
+
+/** The progress of a project from its track counts, or null when it has no track that counts. */
+export function trackProgress(counts: Record<TrackStatus, number>): TrackProgress | null {
+	const total = counts.explore + counts.backlog + counts.progress + counts.done;
+	return total === 0 ? null : { done: counts.done, total };
+}
+
+/** "3/8 tracks done", as in the app. */
+export function progressText(progress: TrackProgress): string {
+	return `${progress.done}/${progress.total} tracks done`;
+}
+
 /** "1 review due" or "3 reviews due"; empty when none. */
 export function reviewsDueText(count: number): string {
 	return count === 0 ? "" : `${count} ${count === 1 ? "review" : "reviews"} due`;

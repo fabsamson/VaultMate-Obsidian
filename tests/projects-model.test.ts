@@ -10,6 +10,7 @@ import {
 	nextTaskLine,
 	orderTiles,
 	primaryAction,
+	progressText,
 	reviewsDueText,
 	sectionChips,
 	splitEntries,
@@ -17,6 +18,7 @@ import {
 	taskSummary,
 	tileCounters,
 	tileSummary,
+	trackProgress,
 } from "../src/features/projects/projects-model";
 
 const TAGS = { decisionTag: "decision", predictionTag: "prediction" };
@@ -183,5 +185,29 @@ describe("splitEntries", () => {
 	it("ends a track block before the next heading", () => {
 		const gate = project.model.tracks[0];
 		expect(inShed.line).toBeGreaterThanOrEqual(gate.end);
+	});
+});
+
+describe("trackProgress", () => {
+	const counts = (partial: Partial<Record<"explore" | "backlog" | "progress" | "done" | "dropped", number>>) => ({ explore: 0, backlog: 0, progress: 0, done: 0, dropped: 0, ...partial });
+
+	it("counts the done tracks over every track but the dropped ones", () => {
+	  const progress = trackProgress(counts({ explore: 1, backlog: 1, progress: 1, done: 2, dropped: 3 }));
+	  expect(progress).toEqual({ done: 2, total: 5 });
+	  expect(progressText(progress!)).toBe("2/5 tracks done");
+	});
+
+	it("is zero over the tracks when none is done, and full when all are", () => {
+	  expect(trackProgress(counts({ backlog: 2 }))).toEqual({ done: 0, total: 2 });
+	  expect(trackProgress(counts({ done: 1, dropped: 1 }))).toEqual({ done: 1, total: 1 });
+	});
+
+	it("has no progress without a track that counts", () => {
+	  expect(trackProgress(counts({}))).toBeNull();
+	  expect(trackProgress(counts({ dropped: 2 }))).toBeNull();
+	});
+
+	it("reads the counts of a project note", () => {
+	  expect(trackProgress(trackCounts(tracks))).toEqual({ done: 1, total: 5 });
 	});
 });
