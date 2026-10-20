@@ -1,3 +1,6 @@
+import actionDrop from "../../assets/sprites/action_drop.png";
+import actionOpenNote from "../../assets/sprites/action_open_note.png";
+import actionPromote from "../../assets/sprites/action_promote.png";
 import mascotSleep from "../../assets/sprites/mascot_sleep.png";
 import mascotTea from "../../assets/sprites/mascot_tea.png";
 import moduleContext from "../../assets/sprites/module_context.png";
@@ -21,6 +24,9 @@ import type { Sprite } from "./pixel";
 
 // Sprites are drawn and built in obsidian_widget/tools/sprites; `npm run sync-sprites` copies them here.
 export const SPRITES = {
+	actionDrop: { src: actionDrop, pixels: 16 },
+	actionOpenNote: { src: actionOpenNote, pixels: 16 },
+	actionPromote: { src: actionPromote, pixels: 16 },
 	mascotSleep: { src: mascotSleep, pixels: 48 },
 	mascotTea: { src: mascotTea, pixels: 48 },
 	moduleContext: { src: moduleContext, pixels: 24 },

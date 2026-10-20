@@ -155,9 +155,9 @@ describe("splitEntries", () => {
 	const lines = ["# Tracks", "## 🔨 Gate", "- [ ] a #decision 📅 2026-10-25", "- [ ] t", "", "## 📥 Shed", "- [ ] b #prediction 📅 2026-10-20", "# Notes", "- [ ] c #decision 📅 2026-10-22"];
 	const project = { path: "Lyon/Lyon.md", model: readProject(lines) };
 	const item = (path: string, line: number, text: string, extra: object = {}) => ({ path, line, entry: parseJournalLine(text, TAGS)!, ...extra });
-	const inGate = item("Lyon/Lyon.md", 2, lines[2]!);
-	const inShed = item("Lyon/Lyon.md", 6, lines[6]!);
-	const outside = item("Lyon/Lyon.md", 8, lines[8]!);
+	const inGate = item("Lyon/Lyon.md", 2, lines[2]);
+	const inShed = item("Lyon/Lyon.md", 6, lines[6]);
+	const outside = item("Lyon/Lyon.md", 8, lines[8]);
 	const sub = item("Lyon/Flat.md", 0, "- [ ] s #decision 📅 2026-10-21");
 
 	it("puts an entry in its track's block and the others outside, due first", () => {
@@ -170,18 +170,18 @@ describe("splitEntries", () => {
 		const tree = new Set(["Lyon/Lyon.md", "Lyon/Flat.md"]);
 		expect(splitEntries(project, [outside, sub, inGate], tree).outside).toEqual([sub, outside]);
 		expect(splitEntries(project, [sub], null).outside).toEqual([]);
-		expect(splitEntries(project, [item("Other.md", 8, lines[8]!)], tree).outside).toEqual([]);
+		expect(splitEntries(project, [item("Other.md", 8, lines[8])], tree).outside).toEqual([]);
 	});
 
 	it("leaves out closed, plain and undated entries", () => {
 		const closed = item("Lyon/Lyon.md", 8, "- [x] c #decision 📅 2026-10-22 ✅ 2026-10-23");
 		const undated = item("Lyon/Lyon.md", 8, "- [ ] c #decision");
-		const plain = item("Lyon/Lyon.md", 8, lines[8]!, { plain: true });
+		const plain = item("Lyon/Lyon.md", 8, lines[8], { plain: true });
 		expect(splitEntries(project, [closed, undated, plain], null)).toEqual({ byTrack: [[], []], outside: [] });
 	});
 
 	it("ends a track block before the next heading", () => {
-		const gate = project.model.tracks[0]!;
+		const gate = project.model.tracks[0];
 		expect(inShed.line).toBeGreaterThanOrEqual(gate.end);
 	});
 });

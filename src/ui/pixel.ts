@@ -21,3 +21,13 @@ export function createSprite(parent: HTMLElement, sprite: Sprite, maxCssPixels: 
 	image.setCssProps({ "--vaultmate-sprite-size": `${size}px` });
 	return image;
 }
+
+/**
+ * Appends a decorative sprite scaled to exactly `cssPixels`, smoothed: for small marks drawn from a larger
+ * sprite (a 48 px seal at 16 px), which a whole-number pixel scale cannot shrink. Nearby text carries the meaning.
+ */
+export function createSmallSprite(parent: HTMLElement, sprite: Sprite, cssPixels: number): HTMLImageElement {
+	const image = parent.createEl("img", { cls: "vaultmate-sprite vaultmate-sprite-small", attr: { src: sprite.src, alt: "" } });
+	image.setCssProps({ "--vaultmate-sprite-size": `${cssPixels}px` });
+	return image;
+}
