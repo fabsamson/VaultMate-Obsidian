@@ -1,6 +1,6 @@
 // The "Reviews" block of the journal page: open entries grouped by review date.
 import { dueLabel, keepTogether, parseDate, startOfDay } from "../../core/dates";
-import { createPanel } from "../../ui/components";
+import { createInfoPanel } from "../../ui/components";
 import { createSprite } from "../../ui/pixel";
 import { SPRITES } from "../../ui/sprites";
 import type { JournalItem } from "./journal-index";
@@ -62,7 +62,7 @@ export function createReviewsBlock(host: ReviewsHost): (body: HTMLElement, items
 		const shown = limit !== undefined && !showAllUpcoming ? items.slice(0, limit) : items;
 		for (const item of shown) renderRow(host, group, item, today);
 		if (shown.length < items.length) {
-			const more = group.createEl("button", { cls: "vaultmate-link", text: `${items.length - shown.length} more`, attr: { type: "button" } });
+			const more = group.createEl("button", { cls: "vaultmate-button vaultmate-show-more", text: `Show ${items.length - shown.length} more`, attr: { type: "button" } });
 			more.addEventListener("click", () => {
 				showAllUpcoming = true;
 				body.empty();
@@ -75,10 +75,7 @@ export function createReviewsBlock(host: ReviewsHost): (body: HTMLElement, items
 		const today = startOfDay();
 		const groups = groupByDue(shownItems, today);
 		if (groups.overdue.length + groups.week.length + groups.upcoming.length === 0) {
-			const panel = createPanel(body, "vaultmate-empty");
-			createSprite(panel, SPRITES.mascotSleep, 96);
-			panel.createEl("p", { cls: "vaultmate-empty-title", text: "Nothing to review" });
-			panel.createEl("p", { cls: "vaultmate-muted", text: `End a line with #${host.decisionTag()}, or run New decision.` });
+			createInfoPanel(body, { sprite: SPRITES.mascotSleep, title: "Nothing to review", text: `End a line with #${host.decisionTag()}, or run New decision.` });
 			return;
 		}
 		renderGroup(body, "Overdue", groups.overdue, today);

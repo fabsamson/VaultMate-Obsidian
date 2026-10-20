@@ -1,6 +1,6 @@
 // The hub's "Places" page: the location of the context note, and the ways to set it.
 import type { HubPage } from "../../ui/hub-view";
-import { createPanel } from "../../ui/components";
+import { createInfoPanel, createPanel } from "../../ui/components";
 import { SPRITES } from "../../ui/sprites";
 import { openStreetMapUrl, type LatLng } from "./nominatim";
 
@@ -38,7 +38,7 @@ export function createLocationPage(host: LocationPageHost): HubPage {
 		render: (body) => {
 			const name = host.contextName();
 			if (!name) {
-				body.createEl("p", { cls: "vaultmate-muted", text: "Open a note first." });
+				createInfoPanel(body, { sprite: SPRITES.mascotSleep, title: "Open a note first", compact: true });
 				return;
 			}
 			const panel = createPanel(body);

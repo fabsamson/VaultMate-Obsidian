@@ -4,7 +4,7 @@
 import { Menu } from "obsidian";
 
 import { dueLabel, keepTogether, parseDate, startOfDay } from "../../core/dates";
-import { createDisclosure, createPanel } from "../../ui/components";
+import { createDisclosure, createInfoPanel } from "../../ui/components";
 import type { HubPage, HubPageContext } from "../../ui/hub-view";
 import { createSmallSprite, createSprite, type Sprite } from "../../ui/pixel";
 import { SPRITES } from "../../ui/sprites";
@@ -13,6 +13,7 @@ import { kindName } from "../journal/journal-line";
 import { addScopeControls } from "../journal/scope-control";
 import { scopePaths } from "../journal/scope";
 import type { ProjectContent, ProjectNote } from "./project-index";
+import { TRACK_SEALS } from "./track-seals";
 import { STATUS_INFO, type ProjectIdea, type ProjectTrack, type TrackStatus } from "./project-note";
 import {
 	moveTargets,
@@ -57,13 +58,7 @@ export interface ProjectsPageHost {
 	addTask(path: string, track: ProjectTrack): void;
 }
 
-const SEALS: Record<TrackStatus, Sprite> = {
-	explore: SPRITES.sealTrackExplore,
-	backlog: SPRITES.sealTrackBacklog,
-	progress: SPRITES.sealTrackProgress,
-	done: SPRITES.sealTrackDone,
-	dropped: SPRITES.sealTrackDropped,
-};
+const SEALS = TRACK_SEALS;
 
 /** Seals and sprites of headings, chips and counters are 16 px. */
 const SMALL = 16;
@@ -191,7 +186,7 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		more.addEventListener("click", (event) =>
 			menuAt(event, (menu) => {
 				menu.addItem((item) => item.setTitle("Move to…").onClick(() => menuAt(event, (moves) => {
-					for (const status of moveTargets(track.status)) moves.addItem((entry) => entry.setTitle(`${STATUS_INFO[status].marker} ${STATUS_INFO[status].label}`).onClick(() => host.move(project.path, track, status)));
+					for (const status of moveTargets(track.status)) moves.addItem((entry) => entry.setTitle(STATUS_INFO[status].label).onClick(() => host.move(project.path, track, status)));
 				})));
 				if (track.status !== "done" && track.status !== "dropped") menu.addItem((item) => item.setTitle("Add task").onClick(() => host.addTask(project.path, track)));
 			}),
@@ -218,7 +213,7 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		for (const track of project.model.tracks) counts[track.status]++;
 		const chips = sectionChips(counts, project.model.ideas.length, view.outside.length);
 		if (chips.length === 0) {
-			page.createEl("p", { cls: "vaultmate-muted", text: "No tracks yet" });
+			createInfoPanel(page, { sprite: SPRITES.mascotSleep, title: "No tracks yet", compact: true });
 			return;
 		}
 		const chipRow = page.createDiv({ cls: "vaultmate-chip-row", attr: { role: "group", "aria-label": "Sections" } });
@@ -240,7 +235,7 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		}
 		if (counts.done + counts.dropped > 0) {
 			const section = page.createDiv({ cls: "vaultmate-project-section", attr: { "data-section": "closed" } });
-			const disclosure = createDisclosure(section, { label: `Closed · ${counts.done + counts.dropped}`, open: showClosed, onToggle: (open) => (showClosed = open) });
+			const disclosure = createDisclosure(section, { label: `Closed tracks · ${counts.done + counts.dropped}`, open: showClosed, onToggle: (open) => (showClosed = open) });
 			for (const status of ["done", "dropped"] as const) {
 				project.model.tracks.forEach((track, index) => {
 					if (track.status === status) renderTrack(disclosure.body, view, index, today);
@@ -251,7 +246,7 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		}
 
 		for (const chip of chips) {
-			const label = chip.id === "ideas" ? `Ideas · ${chip.count}` : chip.id === "reviews" ? `Reviews · ${chip.count}` : chip.id === "closed" ? `Closed · ${chip.count}` : `${STATUS_INFO[chip.id].label} · ${chip.count}`;
+			const label = chip.id === "ideas" ? `Ideas · ${chip.count}` : chip.id === "reviews" ? `Reviews · ${chip.count}` : chip.id === "closed" ? `Closed tracks · ${chip.count}` : `${STATUS_INFO[chip.id].label} · ${chip.count}`;
 			const element = chipRow.createEl("button", { cls: "vaultmate-button vaultmate-section-chip", attr: { type: "button", "aria-label": `Go to ${label}`, title: label } });
 			if (chip.id === "progress" || chip.id === "backlog" || chip.id === "explore") {
 				createSmallSprite(element, SEALS[chip.id], SMALL);
@@ -280,10 +275,7 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 	const render = async (body: HTMLElement, ctx: HubPageContext): Promise<void> => {
 		const notes = host.notes();
 		if (notes.length === 0) {
-			const panel = createPanel(body, "vaultmate-empty");
-			createSprite(panel, SPRITES.mascotSleep, 96);
-			panel.createEl("p", { cls: "vaultmate-empty-title", text: "No projects yet" });
-			panel.createEl("p", { cls: "vaultmate-muted", text: `A project is a note with ${host.projectTag()} in its tags property. Run Make this note a project on a note, or Convert this note to tracks on an older project note.` });
+			createInfoPanel(body, { sprite: SPRITES.mascotSleep, title: "No projects yet", text: `A project is a note with ${host.projectTag()} in its tags property. Run Make this note a project on a note, or Convert this note to tracks on an older project note.` });
 			return;
 		}
 		const controls = body.createDiv({ cls: "vaultmate-switcher" });
@@ -324,7 +316,7 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 			const projects = (await Promise.all(inScope.map((note) => view(note.path, items, markdownPaths)))).filter((entry): entry is ProjectView => entry !== null);
 			if (mine !== token) return;
 			if (projects.length === 0) {
-				content.createEl("p", { cls: "vaultmate-muted", text: "No project in this scope." });
+				createInfoPanel(content, { sprite: SPRITES.mascotSleep, title: "No project in this scope", compact: true });
 				return;
 			}
 			const today = startOfDay();

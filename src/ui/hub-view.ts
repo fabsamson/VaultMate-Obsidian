@@ -2,7 +2,7 @@ import { ItemView, setIcon, type ViewStateResult, type WorkspaceLeaf } from "obs
 
 import type { JournalKind } from "../features/journal/journal-line";
 import { SCOPES, type JournalScope } from "../features/journal/scope";
-import { createPanel, createSectionHeader } from "./components";
+import { createInfoPanel, createSectionHeader } from "./components";
 import { CAT_ICON_ID } from "./icon";
 import { createSprite, type Sprite } from "./pixel";
 import { SPRITES } from "./sprites";
@@ -156,15 +156,12 @@ export class HubView extends ItemView {
 		} catch (error) {
 			console.error(`VaultMate: the "${page.id}" page failed`, error);
 			body.empty();
-			body.createEl("p", { cls: "vaultmate-muted", text: "This page could not be shown." });
+			createInfoPanel(body, { sprite: SPRITES.mascotSleep, title: "This page could not be shown", compact: true });
 		}
 	}
 
 	private renderEmpty(root: HTMLElement): void {
 		createSectionHeader(root, "Today");
-		const panel = createPanel(root, "vaultmate-empty");
-		createSprite(panel, SPRITES.mascotTea, 96);
-		panel.createEl("p", { cls: "vaultmate-empty-title", text: "Nothing to review yet" });
-		panel.createEl("p", { cls: "vaultmate-muted", text: "Turn on a feature in the VaultMate settings." });
+		createInfoPanel(root, { sprite: SPRITES.mascotTea, title: "Nothing to review yet", text: "Turn on a feature in the VaultMate settings." });
 	}
 }

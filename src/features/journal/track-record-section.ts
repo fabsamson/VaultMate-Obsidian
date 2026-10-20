@@ -1,7 +1,6 @@
 // The "Track record" block of the journal page: stamps, Brier score, calibration, decision matrix and lessons.
 import { keepTogether } from "../../core/dates";
-import { createHankoStamp, createPanel } from "../../ui/components";
-import { createSprite } from "../../ui/pixel";
+import { createHankoStamp, createInfoPanel, createPanel } from "../../ui/components";
 import { SPRITES } from "../../ui/sprites";
 import type { JournalItem } from "./journal-index";
 import { OUTCOMES, QUALITIES, type JournalKind } from "./journal-line";
@@ -98,7 +97,7 @@ export function createTrackRecordBlock(host: TrackRecordHost): (body: HTMLElemen
 			main.addEventListener("click", () => host.openItem(lesson.item));
 		}
 		if (shown.length < record.lessons.length) {
-			const more = body.createEl("button", { cls: "vaultmate-link", text: `${record.lessons.length - shown.length} more`, attr: { type: "button" } });
+			const more = body.createEl("button", { cls: "vaultmate-button vaultmate-show-more", text: `Show ${record.lessons.length - shown.length} more`, attr: { type: "button" } });
 			more.addEventListener("click", () => {
 				showAllLessons = true;
 				body.empty();
@@ -119,10 +118,7 @@ export function createTrackRecordBlock(host: TrackRecordHost): (body: HTMLElemen
 		const record = computeTrackRecord(shownItems);
 		const { predictions, decisions } = record;
 		if (record.reviewsDone + predictions.scored + decisions.closed + record.lessons.length === 0) {
-			const panel = createPanel(body, "vaultmate-empty");
-			createSprite(panel, SPRITES.mascotTea, 96);
-			panel.createEl("p", { cls: "vaultmate-empty-title", text: "No reviews yet" });
-			panel.createEl("p", { cls: "vaultmate-muted", text: shownKind === "prediction" ? `Your track record builds up as you resolve predictions; ${MIN_SCORED} resolved predictions unlock calibration.` : "Your track record builds up as you close decisions." });
+			createInfoPanel(body, { sprite: SPRITES.mascotTea, title: "No reviews yet", text: shownKind === "prediction" ? `Your track record builds up as you resolve predictions; ${MIN_SCORED} resolved predictions unlock calibration.` : "Your track record builds up as you close decisions." });
 			renderUnreviewed(body, record);
 			return;
 		}

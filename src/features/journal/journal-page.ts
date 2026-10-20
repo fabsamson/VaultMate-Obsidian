@@ -39,8 +39,8 @@ export function createJournalPage(host: JournalPageHost): HubPage {
 			const entries = host.entries();
 			const groups = groupByDue(entries, startOfDay());
 			const parts = [
-				groups.overdue.length > 0 ? `${groups.overdue.length} overdue` : "",
-				groups.week.length > 0 ? `${groups.week.length} this week` : "",
+				groups.overdue.length > 0 ? `${groups.overdue.length} ${groups.overdue.length === 1 ? "review" : "reviews"} overdue` : "",
+				groups.week.length > 0 ? `${groups.week.length} due this week` : "",
 			].filter(Boolean);
 			return parts.length > 0 ? parts.join(" · ") : "Nothing to review";
 		},
@@ -74,7 +74,7 @@ export function createJournalPage(host: JournalPageHost): HubPage {
 				if (tidy.total > 0) {
 					const section = content.createDiv({ cls: "vaultmate-hub-section" });
 					const disclosure = createDisclosure(section, {
-						label: `Tidy up · ${tidy.total}`,
+						label: `Tidy up · ${tidy.total} ${tidy.total === 1 ? "item" : "items"}`,
 						open: ctx.state.tidy,
 						onToggle: (open) => {
 							ctx.state.tidy = open;

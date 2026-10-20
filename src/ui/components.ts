@@ -1,6 +1,6 @@
 // Reusable DOM pieces in VaultMate's look (styles.css). Parents must sit inside a `.vaultmate` element
 // (the hub, or a modal whose `modalEl` has the class) so the palette tokens apply.
-import { createSprite, type Sprite } from "./pixel";
+import { createSmallSprite, createSprite, type Sprite } from "./pixel";
 
 /** Small capitals label and a rule (SectionHeader.kt). */
 export function createSectionHeader(parent: HTMLElement, label: string): HTMLElement {
@@ -13,6 +13,25 @@ export function createSectionHeader(parent: HTMLElement, label: string): HTMLEle
 /** Paper panel with a border and a hard offset shadow (PixelPanel.kt). */
 export function createPanel(parent: HTMLElement, cls?: string): HTMLElement {
 	return parent.createDiv({ cls: cls ? `vaultmate-panel ${cls}` : "vaultmate-panel" });
+}
+
+export interface InfoPanelOptions {
+	sprite: Sprite;
+	/** What the panel says, in a few words and without a final period. */
+	title: string;
+	/** A sentence that tells what to do next. */
+	text?: string;
+	/** A small sprite for a notice inside a page; the default is the large one of an empty page. */
+	compact?: boolean;
+}
+
+/** A paper panel with a sprite, a title and an optional sentence: empty states and notices. */
+export function createInfoPanel(parent: HTMLElement, options: InfoPanelOptions): HTMLElement {
+	const panel = createPanel(parent, "vaultmate-empty");
+	createSprite(panel, options.sprite, options.compact ? 48 : 96);
+	panel.createEl("p", { cls: "vaultmate-empty-title", text: options.title });
+	if (options.text) panel.createEl("p", { cls: "vaultmate-muted", text: options.text });
+	return panel;
 }
 
 export interface HankoStampOptions {
@@ -38,6 +57,8 @@ export function createHankoStamp(parent: HTMLElement, options: HankoStampOptions
 export interface Choice<T extends string> {
 	value: T;
 	label: string;
+	/** A 16 px mark before the label (a status seal); the label still carries the meaning. */
+	sprite?: Sprite;
 }
 
 export interface ChoiceGroupOptions<T extends string> {
@@ -76,7 +97,12 @@ export function nextChoiceIndex(key: string, current: number, count: number): nu
 function createChoiceGroup<T extends string>(parent: HTMLElement, groupCls: string, options: ChoiceGroupOptions<T>): ChoiceGroup<T> {
 	const el = parent.createDiv({ cls: `vaultmate-choice ${groupCls}`, attr: { role: "radiogroup", "aria-label": options.label } });
 	let value = options.value;
-	const buttons = options.choices.map((choice) => el.createEl("button", { cls: "vaultmate-choice-option", text: choice.label, attr: { type: "button", role: "radio" } }));
+	const buttons = options.choices.map((choice) => {
+		const button = el.createEl("button", { cls: "vaultmate-choice-option", attr: { type: "button", role: "radio" } });
+		if (choice.sprite) createSmallSprite(button, choice.sprite, 16);
+		button.createSpan({ text: choice.label });
+		return button;
+	});
 
 	// Roving tabindex: one tab stop per group, on the selected option (or the first when none is selected).
 	const sync = (): void => {

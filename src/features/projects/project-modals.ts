@@ -3,8 +3,10 @@ import { SuggestModal, type App } from "obsidian";
 
 import { parseDate } from "../../core/dates";
 import { createChipRow, createSectionHeader } from "../../ui/components";
+import { createSmallSprite } from "../../ui/pixel";
 import { JournalModal, textField } from "../journal/journal-modals";
 import { STATUS_INFO, TRACK_STATUSES, type TrackStatus } from "./project-note";
+import { TRACK_SEALS } from "./track-seals";
 import { prefillName, trackFormState } from "./track-form";
 
 export interface TaskFormResult {
@@ -89,7 +91,7 @@ export function addTrackFields(parent: HTMLElement, options: TrackFieldsOptions)
 	let status: TrackStatus = "explore";
 	const chips = createChipRow(parent, {
 		label: "Status",
-		choices: TRACK_STATUSES.map((value) => ({ value, label: `${STATUS_INFO[value].marker} ${STATUS_INFO[value].label}` })),
+		choices: TRACK_STATUSES.map((value) => ({ value, label: STATUS_INFO[value].label, sprite: TRACK_SEALS[value] })),
 		value: status,
 		onChange: (value) => {
 			status = value;
@@ -190,7 +192,9 @@ export class StatusModal extends SuggestModal<TrackStatus> {
 	}
 
 	public renderSuggestion(status: TrackStatus, el: HTMLElement): void {
-		el.setText(`${STATUS_INFO[status].marker} ${STATUS_INFO[status].label}`);
+		el.addClass("vaultmate-status-choice");
+		createSmallSprite(el, TRACK_SEALS[status], 16);
+		el.createSpan({ text: STATUS_INFO[status].label });
 	}
 
 	public onChooseSuggestion(status: TrackStatus): void {

@@ -234,7 +234,7 @@ export class IdeaModal extends JournalModal {
 	private optionalNote(panel: HTMLElement, action: PortalAction, confirm: () => void): () => string {
 		const label = noteLinkLabel(action);
 		if (label === null) return () => "";
-		const link = panel.createEl("button", { cls: "vaultmate-link vaultmate-note-link", text: label, attr: { type: "button", "aria-expanded": "false" } });
+		const link = panel.createEl("button", { cls: "vaultmate-button vaultmate-note-link", text: label, attr: { type: "button", "aria-expanded": "false" } });
 		let input: HTMLInputElement | null = null;
 		link.addEventListener("click", () => {
 			if (input) return;
