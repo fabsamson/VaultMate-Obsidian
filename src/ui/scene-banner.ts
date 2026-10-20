@@ -63,7 +63,10 @@ export class SceneBanner {
 	/** Keeps the banner at a whole-number pixel scale of the width its parent offers, and again when that changes. */
 	private fit(parent: HTMLElement): void {
 		const apply = (): void => {
-			const size = sceneSize(parent.clientWidth, parent.win.devicePixelRatio || 1);
+			const style = parent.win.getComputedStyle(parent);
+			// The banner has a 2 px border on each side, and sits inside the padding of its parent.
+			const room = parent.clientWidth - (parseFloat(style.paddingLeft) || 0) - (parseFloat(style.paddingRight) || 0) - 4;
+			const size = sceneSize(room, parent.win.devicePixelRatio || 1);
 			this.banner.setCssProps({ "--vaultmate-banner-width": `${size.width}px`, "--vaultmate-banner-height": `${size.height}px` });
 		};
 		apply();
