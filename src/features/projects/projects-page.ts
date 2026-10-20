@@ -4,7 +4,7 @@
 import { Menu } from "obsidian";
 
 import { dueLabel, keepTogether, parseDate, startOfDay } from "../../core/dates";
-import { createDisclosure, createPanel } from "../../ui/components";
+import { createDisclosure, createInfoPanel } from "../../ui/components";
 import type { HubPage, HubPageContext } from "../../ui/hub-view";
 import { createSmallSprite, createSprite, type Sprite } from "../../ui/pixel";
 import { SPRITES } from "../../ui/sprites";
@@ -213,7 +213,7 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		for (const track of project.model.tracks) counts[track.status]++;
 		const chips = sectionChips(counts, project.model.ideas.length, view.outside.length);
 		if (chips.length === 0) {
-			page.createEl("p", { cls: "vaultmate-muted", text: "No tracks yet" });
+			createInfoPanel(page, { sprite: SPRITES.mascotSleep, title: "No tracks yet", compact: true });
 			return;
 		}
 		const chipRow = page.createDiv({ cls: "vaultmate-chip-row", attr: { role: "group", "aria-label": "Sections" } });
@@ -275,10 +275,7 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 	const render = async (body: HTMLElement, ctx: HubPageContext): Promise<void> => {
 		const notes = host.notes();
 		if (notes.length === 0) {
-			const panel = createPanel(body, "vaultmate-empty");
-			createSprite(panel, SPRITES.mascotSleep, 96);
-			panel.createEl("p", { cls: "vaultmate-empty-title", text: "No projects yet" });
-			panel.createEl("p", { cls: "vaultmate-muted", text: `A project is a note with ${host.projectTag()} in its tags property. Run Make this note a project on a note, or Convert this note to tracks on an older project note.` });
+			createInfoPanel(body, { sprite: SPRITES.mascotSleep, title: "No projects yet", text: `A project is a note with ${host.projectTag()} in its tags property. Run Make this note a project on a note, or Convert this note to tracks on an older project note.` });
 			return;
 		}
 		const controls = body.createDiv({ cls: "vaultmate-switcher" });
@@ -319,7 +316,7 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 			const projects = (await Promise.all(inScope.map((note) => view(note.path, items, markdownPaths)))).filter((entry): entry is ProjectView => entry !== null);
 			if (mine !== token) return;
 			if (projects.length === 0) {
-				content.createEl("p", { cls: "vaultmate-muted", text: "No project in this scope." });
+				createInfoPanel(content, { sprite: SPRITES.mascotSleep, title: "No project in this scope", compact: true });
 				return;
 			}
 			const today = startOfDay();

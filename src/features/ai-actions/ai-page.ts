@@ -1,6 +1,6 @@
 // The hub's "AI actions" page: the valid actions as compact cards.
 import type { HubPage } from "../../ui/hub-view";
-import { createPanel } from "../../ui/components";
+import { createInfoPanel, createPanel } from "../../ui/components";
 import { SPRITES } from "../../ui/sprites";
 import type { ActionDefinition, ActionEntry } from "./definition";
 import { createActionIcon } from "./run-modal";
@@ -35,13 +35,12 @@ export function createAiPage(host: AiPageHost): HubPage {
 			const valid = entries.flatMap((entry) => (entry.ok ? [entry.action] : []));
 			const invalid = entries.length - valid.length;
 			if (entries.length === 0) {
-				const panel = createPanel(body);
-				panel.createEl("p", { cls: "vaultmate-empty-title", text: "No AI actions yet" });
-				panel.createEl("p", { cls: "vaultmate-muted", text: `Create the default actions in the VaultMate settings, or add action files to ${host.folder()}.` });
+				createInfoPanel(body, { sprite: SPRITES.mascotSleep, title: "No AI actions yet", text: `Create the default actions in the VaultMate settings, or add action files to ${host.folder()}.` });
 				return;
 			}
 			const name = host.contextName();
-			body.createEl("p", { cls: "vaultmate-muted", text: name ? `Runs on ${name}. Nothing is sent before you confirm.` : "Open a note first." });
+			if (name) body.createEl("p", { cls: "vaultmate-muted", text: `Runs on ${name}. Nothing is sent before you confirm.` });
+			else createInfoPanel(body, { sprite: SPRITES.mascotSleep, title: "Open a note first", compact: true });
 			for (const action of valid) {
 				const card = createPanel(body, "vaultmate-action-card");
 				createActionIcon(card, action.icon);

@@ -15,6 +15,25 @@ export function createPanel(parent: HTMLElement, cls?: string): HTMLElement {
 	return parent.createDiv({ cls: cls ? `vaultmate-panel ${cls}` : "vaultmate-panel" });
 }
 
+export interface InfoPanelOptions {
+	sprite: Sprite;
+	/** What the panel says, in a few words and without a final period. */
+	title: string;
+	/** A sentence that tells what to do next. */
+	text?: string;
+	/** A small sprite for a notice inside a page; the default is the large one of an empty page. */
+	compact?: boolean;
+}
+
+/** A paper panel with a sprite, a title and an optional sentence: empty states and notices. */
+export function createInfoPanel(parent: HTMLElement, options: InfoPanelOptions): HTMLElement {
+	const panel = createPanel(parent, "vaultmate-empty");
+	createSprite(panel, options.sprite, options.compact ? 48 : 96);
+	panel.createEl("p", { cls: "vaultmate-empty-title", text: options.title });
+	if (options.text) panel.createEl("p", { cls: "vaultmate-muted", text: options.text });
+	return panel;
+}
+
 export interface HankoStampOptions {
 	sprite: Sprite;
 	/** Visible text; the stamp's meaning is never carried by the sprite alone. */

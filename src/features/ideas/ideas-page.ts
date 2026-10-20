@@ -1,8 +1,7 @@
 // The hub's "Ideas" page: what to tend (open ideas by age) and what became of the others.
 import { keepTogether, startOfDay } from "../../core/dates";
-import { createChipRow, createPanel, createSectionHeader } from "../../ui/components";
+import { createChipRow, createInfoPanel, createPanel, createSectionHeader } from "../../ui/components";
 import type { HubPage } from "../../ui/hub-view";
-import { createSprite } from "../../ui/pixel";
 import { SPRITES } from "../../ui/sprites";
 import { baseName } from "../context/note-meta";
 import { addScopeControls } from "../journal/scope-control";
@@ -63,10 +62,7 @@ export function createIdeasPage(host: IdeasPageHost): HubPage {
 	let shown = PROCESSED_PAGE;
 
 	const renderEmpty = (parent: HTMLElement): void => {
-		const panel = createPanel(parent, "vaultmate-empty");
-		createSprite(panel, SPRITES.mascotSleep, 96);
-		panel.createEl("p", { cls: "vaultmate-empty-title", text: "No ideas yet" });
-		panel.createEl("p", { cls: "vaultmate-muted", text: `Type Idea: or end a line with #${host.tag()} in any note.` });
+		createInfoPanel(parent, { sprite: SPRITES.mascotSleep, title: "No ideas yet", text: `Type Idea: or end a line with #${host.tag()} in any note.` });
 	};
 
 	const renderCard = (list: HTMLElement, item: IdeaItem, today: Date): void => {
@@ -86,7 +82,7 @@ export function createIdeasPage(host: IdeasPageHost): HubPage {
 		createSectionHeader(parent, "To tend");
 		const groups = groupOpen(items, today, { tag: host.tag(), subtag: host.seedSubtag() });
 		if (groups.fresh.length + groups.waiting.length + groups.wilting.length === 0) {
-			parent.createEl("p", { cls: "vaultmate-muted", text: "Nothing to tend." });
+			createInfoPanel(parent, { sprite: SPRITES.mascotTea, title: "Nothing to tend", compact: true });
 			return;
 		}
 		if (groups.fresh.length > 0) {
@@ -125,7 +121,7 @@ export function createIdeasPage(host: IdeasPageHost): HubPage {
 			results.empty();
 			const rows = processedRows(items, filter);
 			if (rows.length === 0) {
-				results.createEl("p", { cls: "vaultmate-muted", text: "Nothing here yet." });
+				createInfoPanel(results, { sprite: SPRITES.mascotSleep, title: "Nothing here yet", compact: true });
 				return;
 			}
 			const list = results.createDiv({ cls: "vaultmate-idea-rows" });

@@ -4,7 +4,8 @@ import { Modal, Notice, setIcon, type App } from "obsidian";
 import { complete, configurationProblem } from "../../core/ai/client";
 import { baseUrlHost } from "../../core/ai/endpoint";
 import type VaultMatePlugin from "../../main";
-import { createPanel, createSectionHeader } from "../../ui/components";
+import { createInfoPanel, createPanel, createSectionHeader } from "../../ui/components";
+import { SPRITES } from "../../ui/sprites";
 import { collectionTypes, entryChoices, normalizeTitle, type CollectionNote } from "./collection";
 import { collectionProfile, type RatedTitle } from "./collection-profile";
 import { isConfirmed, withConfirmation } from "./confirmation";
@@ -112,7 +113,7 @@ export class RunModal extends Modal {
 				this.renderPreview();
 				break;
 			case "loading":
-				createPanel(contentEl).createEl("p", { text: `Waiting for ${this.host}…` });
+				createInfoPanel(contentEl, { sprite: SPRITES.mascotTea, title: `Waiting for ${this.host}…`, compact: true });
 				break;
 			case "results":
 				this.renderResults(this.state.questions);
@@ -289,7 +290,7 @@ export class RunModal extends Modal {
 	private renderSuggestions(suggestions: Suggestion[], rated: RatedTitle[]): void {
 		const { contentEl } = this;
 		if (suggestions.length === 0) {
-			createPanel(contentEl).createEl("p", { text: "The AI answer had no usable suggestions." });
+			createInfoPanel(contentEl, { sprite: SPRITES.mascotSleep, title: "The AI answer had no usable suggestions", compact: true });
 		} else {
 			renderSuggestionCards(contentEl, suggestions, rated, {
 				search: (suggestion) => void activeWindow.open(searchUrl(suggestion), "_blank", "noopener"),
@@ -322,7 +323,7 @@ export class RunModal extends Modal {
 	private renderResults(questions: Question[]): void {
 		const { contentEl, action } = this;
 		if (questions.length === 0) {
-			createPanel(contentEl).createEl("p", { text: "The AI answer had no usable questions." });
+			createInfoPanel(contentEl, { sprite: SPRITES.mascotSleep, title: "The AI answer had no usable questions", compact: true });
 			const none = contentEl.createDiv({ cls: "vaultmate-actions" });
 			this.button(none, "Close", false, () => this.close());
 			this.button(none, "Ask again", true, () => this.askAgain());

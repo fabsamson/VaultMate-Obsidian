@@ -2,9 +2,8 @@
 // work with it, each with the words both use, where it is, a passage from both notes and the reasons.
 import { setIcon, setTooltip, type TFile } from "obsidian";
 
-import { createPanel } from "../../ui/components";
+import { createInfoPanel, createPanel } from "../../ui/components";
 import type { HubPage } from "../../ui/hub-view";
-import { createSprite } from "../../ui/pixel";
 import { SPRITES } from "../../ui/sprites";
 import type { BuildProgress, ContextStats } from "./context-index";
 import { aboutParts, connectionsSummary, indexingLine, locationLine, noteTitle, REASON_ICONS, statsLine } from "./context-labels";
@@ -51,7 +50,7 @@ export function createContextPage(host: ContextPageHost): HubPage {
 		render: async (body) => {
 			const file = host.file();
 			if (!file) {
-				body.createEl("p", { cls: "vaultmate-muted", text: "Open a note first." });
+				createInfoPanel(body, { sprite: SPRITES.mascotSleep, title: "Open a note first", compact: true });
 				return;
 			}
 			body.createEl("p", { cls: "vaultmate-muted", text: `New connections for ${file.basename}` });
@@ -82,9 +81,7 @@ export function createContextPage(host: ContextPageHost): HubPage {
 }
 
 function renderEmpty(parent: HTMLElement): void {
-	const panel = createPanel(parent, "vaultmate-empty");
-	createSprite(panel, SPRITES.mascotSleep, 96);
-	panel.createEl("p", { cls: "vaultmate-empty-title", text: "No new connection for this note yet." });
+	createInfoPanel(parent, { sprite: SPRITES.mascotSleep, title: "No new connection for this note yet" });
 }
 
 /** The passage with its hits in emphasis, under a small label. */
