@@ -60,10 +60,11 @@ describe("normalizeSettings for ideas", () => {
 
 describe("normalizeSettings for the interface", () => {
 	it("animates by default and keeps only a boolean choice", () => {
-		expect(DEFAULT_SETTINGS.ui).toEqual({ animations: true });
-		for (const data of [undefined, {}, { ui: null }, { ui: [] }, { ui: { animations: "no" } }]) {
-			expect(normalizeSettings(data).ui).toEqual({ animations: true });
+		expect(DEFAULT_SETTINGS.ui).toEqual({ animations: true, banner: true });
+		for (const data of [undefined, {}, { ui: null }, { ui: [] }, { ui: { animations: "no", banner: 1 } }]) {
+			expect(normalizeSettings(data).ui).toEqual({ animations: true, banner: true });
 		}
-		expect(normalizeSettings({ ui: { animations: false } }).ui).toEqual({ animations: false });
+		expect(normalizeSettings({ ui: { animations: false } }).ui).toEqual({ animations: false, banner: true });
+		expect(normalizeSettings({ ui: { banner: false } }).ui).toEqual({ animations: true, banner: false });
 	});
 });

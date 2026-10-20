@@ -161,13 +161,17 @@ export interface ProjectSummary {
 	/** Open entries of the project (in tracks or not) due today or earlier. */
 	reviewsDue: number;
 	next: NextTask | null;
+	/** The bar of the tile; null without a usable `progress` property or a track that counts. */
+	progress: ProjectProgress | null;
 }
 
-export function summarizeProject(project: ProjectLike, entries: { byTrack: readonly EntryLike[][]; outside: readonly EntryLike[] }, today: Date): ProjectSummary {
+export function summarizeProject(project: ProjectLike, entries: { byTrack: readonly EntryLike[][]; outside: readonly EntryLike[] }, today: Date, progressProperty?: unknown): ProjectSummary {
+	const counts = trackCounts(project.model.tracks);
 	return {
 		path: project.path,
 		name: project.name,
-		counts: trackCounts(project.model.tracks),
+		counts,
+		progress: projectProgress(progressProperty, counts),
 		ideas: project.model.ideas.length,
 		reviewsDue: countDue([...entries.byTrack.flat(), ...entries.outside], today),
 		next: nextDueTask(project.model.tracks, today),
@@ -195,6 +199,34 @@ export function trackProgress(counts: Record<TrackStatus, number>): TrackProgres
 /** "3/8 tracks done", as in the app. */
 export function progressText(progress: TrackProgress): string {
 	return `${progress.done}/${progress.total} tracks done`;
+}
+
+/** What a tile's bar shows: the `progress` property of the note, else the tracks (the rule of the Android app). */
+export type ProjectProgress = { kind: "percent"; percent: number } | { kind: "tracks"; done: number; total: number };
+
+/** The `progress` property as a whole percent from 0 to 100: 40, 40%, "40 %"; decimals rounded, out-of-range values clamped; null when unusable. */
+export function progressPercent(value: unknown): number | null {
+	let number: number;
+	if (typeof value === "number") number = value;
+	else if (typeof value === "string") {
+		const match = /^([+-]?(?:\d+\.?\d*|\.\d+))\s*%?$/.exec(value.trim());
+		if (!match) return null;
+		number = Number(match[1]);
+	} else return null;
+	return Number.isFinite(number) ? Math.min(100, Math.max(0, Math.round(number))) : null;
+}
+
+/** The progress of a project: its `progress` property when usable, else its tracks; null when it has neither. */
+export function projectProgress(property: unknown, counts: Record<TrackStatus, number>): ProjectProgress | null {
+	const percent = progressPercent(property);
+	if (percent !== null) return { kind: "percent", percent };
+	const tracks = trackProgress(counts);
+	return tracks ? { kind: "tracks", ...tracks } : null;
+}
+
+/** "3/8 tracks done" from the tracks, "62%" from the property. */
+export function projectProgressText(progress: ProjectProgress): string {
+	return progress.kind === "percent" ? `${progress.percent}%` : progressText(progress);
 }
 
 /** "1 review due" or "3 reviews due"; empty when none. */

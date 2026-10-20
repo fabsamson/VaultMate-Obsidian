@@ -51,7 +51,7 @@ describe("normalizeSettings", () => {
 			context: { enabled: false, excludedFolders: ["Templates"], peopleProperties: ["who"], maxConnections: 5 },
 			contextState: { notUseful: [["A.md", "B.md"]] },
 			firstRun: { tagCheckDone: true },
-			ui: { animations: false },
+			ui: { animations: false, banner: false },
 		};
 		expect(normalizeSettings(saved)).toEqual(saved);
 	});

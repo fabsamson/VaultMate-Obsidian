@@ -10,7 +10,10 @@ import {
 	nextTaskLine,
 	orderTiles,
 	primaryAction,
+	progressPercent,
 	progressText,
+	projectProgress,
+	projectProgressText,
 	reviewsDueText,
 	sectionChips,
 	splitEntries,
@@ -118,7 +121,7 @@ describe("dashboard summary", () => {
 });
 
 describe("orderTiles", () => {
-	const tile = (name: string, progress: number, reviewsDue: number) => ({ path: name, name, counts: { explore: 0, backlog: 0, progress, done: 0, dropped: 0 }, ideas: 0, reviewsDue, next: null });
+	const tile = (name: string, progress: number, reviewsDue: number) => ({ path: name, name, counts: { explore: 0, backlog: 0, progress, done: 0, dropped: 0 }, ideas: 0, reviewsDue, next: null, progress: null });
 
 	it("puts review due first, then in progress, and the rest under Other", () => {
 		const { shown, other } = orderTiles([tile("a", 0, 0), tile("b", 2, 0), tile("c", 0, 1), tile("d", 1, 3), tile("e", 0, 0)]);
@@ -209,5 +212,50 @@ describe("trackProgress", () => {
 
 	it("reads the counts of a project note", () => {
 	  expect(trackProgress(trackCounts(tracks))).toEqual({ done: 1, total: 5 });
+	});
+});
+
+describe("projectProgress (the rule of the app)", () => {
+	const none = { explore: 0, backlog: 0, progress: 0, done: 0, dropped: 0 };
+	const some = { ...none, backlog: 1, done: 1, dropped: 4 };
+
+	it("reads a number, 40%, 40 % and a decimal as a percent", () => {
+		expect(projectProgress(40, some)).toEqual({ kind: "percent", percent: 40 });
+		expect(projectProgress("40", some)).toEqual({ kind: "percent", percent: 40 });
+		expect(projectProgress("40%", some)).toEqual({ kind: "percent", percent: 40 });
+		expect(projectProgress("40 %", some)).toEqual({ kind: "percent", percent: 40 });
+		expect(projectProgress(62.4, none)).toEqual({ kind: "percent", percent: 62 });
+		expect(projectProgress("62.5%", none)).toEqual({ kind: "percent", percent: 63 });
+		expect(projectProgress(0, some)).toEqual({ kind: "percent", percent: 0 });
+	});
+
+	it("clamps values out of range", () => {
+		expect(progressPercent(-5)).toBe(0);
+		expect(progressPercent("-3 %")).toBe(0);
+		expect(progressPercent(140)).toBe(100);
+		expect(progressPercent("250%")).toBe(100);
+	});
+
+	it("falls back to the tracks when the property is not usable", () => {
+		for (const value of [undefined, null, "soon", "", "%", "4x0", true, [40], Number.NaN, Number.POSITIVE_INFINITY]) {
+			expect(projectProgress(value, some)).toEqual({ kind: "tracks", done: 1, total: 2 });
+		}
+	});
+
+	it("has no bar without a property and without a track that counts", () => {
+		expect(projectProgress(undefined, none)).toBeNull();
+		expect(projectProgress("soon", { ...none, dropped: 3 })).toBeNull();
+	});
+
+	it("words the progress as the app does", () => {
+		expect(projectProgressText({ kind: "tracks", done: 3, total: 8 })).toBe("3/8 tracks done");
+		expect(projectProgressText({ kind: "percent", percent: 62 })).toBe("62%");
+	});
+
+	it("summarizes a project with its property", () => {
+		const project = { path: "P.md", name: "P", model: { tracks, ideas: [] } };
+		const today = new Date(2026, 9, 21);
+		expect(summarizeProject(project, { byTrack: [], outside: [] }, today, "75 %").progress).toEqual({ kind: "percent", percent: 75 });
+		expect(summarizeProject(project, { byTrack: [], outside: [] }, today).progress).toEqual({ kind: "tracks", done: 1, total: 5 });
 	});
 });
