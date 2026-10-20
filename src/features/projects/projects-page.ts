@@ -235,7 +235,7 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		}
 		if (counts.done + counts.dropped > 0) {
 			const section = page.createDiv({ cls: "vaultmate-project-section", attr: { "data-section": "closed" } });
-			const disclosure = createDisclosure(section, { label: `Closed · ${counts.done + counts.dropped}`, open: showClosed, onToggle: (open) => (showClosed = open) });
+			const disclosure = createDisclosure(section, { label: `Closed tracks · ${counts.done + counts.dropped}`, open: showClosed, onToggle: (open) => (showClosed = open) });
 			for (const status of ["done", "dropped"] as const) {
 				project.model.tracks.forEach((track, index) => {
 					if (track.status === status) renderTrack(disclosure.body, view, index, today);
@@ -246,7 +246,7 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		}
 
 		for (const chip of chips) {
-			const label = chip.id === "ideas" ? `Ideas · ${chip.count}` : chip.id === "reviews" ? `Reviews · ${chip.count}` : chip.id === "closed" ? `Closed · ${chip.count}` : `${STATUS_INFO[chip.id].label} · ${chip.count}`;
+			const label = chip.id === "ideas" ? `Ideas · ${chip.count}` : chip.id === "reviews" ? `Reviews · ${chip.count}` : chip.id === "closed" ? `Closed tracks · ${chip.count}` : `${STATUS_INFO[chip.id].label} · ${chip.count}`;
 			const element = chipRow.createEl("button", { cls: "vaultmate-button vaultmate-section-chip", attr: { type: "button", "aria-label": `Go to ${label}`, title: label } });
 			if (chip.id === "progress" || chip.id === "backlog" || chip.id === "explore") {
 				createSmallSprite(element, SEALS[chip.id], SMALL);
