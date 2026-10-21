@@ -2692,9 +2692,7 @@ body:not(.is-mobile) .modal-container.vaultmate-modal-top > .modal {
 	padding: calc(var(--g) * 0.3) calc(var(--g) * 0.6);
 	border-bottom: 1px solid var(--vaultmate-rule);
 	color: var(--vaultmate-text);
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
+	overflow-wrap: anywhere;
 }
 
 .vaultmate-guide-mock .vaultmate-guide-file.is-open {
@@ -2720,4 +2718,10 @@ body:not(.is-mobile) .modal-container.vaultmate-modal-top > .modal {
 
 .vaultmate-guide-mock .vaultmate-related-folder {
 	margin: 0;
+}
+
+.vaultmate-guide-mock .vaultmate-guide-note-line:not(.is-h1):not(.is-h2) {
+	min-width: 0;
+	overflow-wrap: anywhere;
+	white-space: normal;
 }

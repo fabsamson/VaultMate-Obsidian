@@ -65,13 +65,13 @@ export const CONNECTIONS_GUIDE: Guide = {
 			mock: (el) => card(el, { about: true }),
 		},
 		{
-			when: "Why this one",
+			when: "Why it fits",
 			cat: SPRITES.mascotThink,
 			text: "Under the card come the reasons: a mention of the title without a link, or a place within a kilometre. Pairs already linked are never shown.",
 			mock: (el) => card(el, { reasons: true }),
 		},
 		{
-			when: "Tie the thread",
+			when: "The link",
 			cat: SPRITES.mascotCheer,
 			text: "**Insert link** puts the link at your cursor. If the pair is no use, **Not useful** hides it for good, in both directions.",
 			mock: (el) => {

@@ -56,10 +56,12 @@ export const IDEAS_GUIDE: Guide = {
 			cat: SPRITES.mascotIdea,
 			text: "The storm comes to you outdoors. Type **Idea:** or end the line with #idea and a space: it is planted as a task dated today, with the badge **Idea · today**.",
 			mock: (el) => {
-				const line = el.createDiv({ cls: "vaultmate-guide-note-line is-task" });
-				createMark(line, SPRITES.stateTask);
-				line.createSpan({ text: STORM });
-				line.createSpan({ cls: "vaultmate-badge", text: "Idea · today" });
+				for (const [text, badge] of [["Cover with the lamp lit", `Idea · ${ageText(3)}`], [STORM, `Idea · ${ageText(0)}`]]) {
+					const line = el.createDiv({ cls: "vaultmate-guide-note-line is-task" });
+					createMark(line, SPRITES.stateTask);
+					line.createSpan({ text });
+					line.createSpan({ cls: "vaultmate-badge", text: badge });
+				}
 			},
 		},
 		{
