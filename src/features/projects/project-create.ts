@@ -19,9 +19,26 @@ async function readTemplate(app: App, setting: string): Promise<string | null> {
 	return null;
 }
 
+/** Resolves once the metadata cache sees the project tag on `file`, or after `timeout` ms at most. */
+function cacheKnowsProject(app: App, file: TFile, tag: string, timeout = 2000): Promise<void> {
+	const known = (): boolean => hasProjectTag(app.metadataCache.getFileCache(file)?.frontmatter, tag);
+	if (known()) return Promise.resolve();
+	return new Promise((resolve) => {
+		const finish = (): void => {
+			window.clearTimeout(timer);
+			app.metadataCache.offref(ref);
+			resolve();
+		};
+		const ref = app.metadataCache.on("changed", (changed) => {
+			if (changed.path === file.path && known()) finish();
+		});
+		const timer = window.setTimeout(finish, timeout);
+	});
+}
+
 /**
- * Creates the project note at `path` (a free path: the caller checked) and returns it, or null after a
- * notice when it could not be created. A template note gets the project tag added to its `tags`.
+ * Creates the project note at `path` (a free path: the caller checked) and returns it once the metadata
+ * cache knows it as a project (2 s at most), or null after a notice when it could not be created. A template note gets the project tag added to its `tags`.
  */
 export async function createProjectNote(app: App, settings: Pick<VaultMateSettings, "projects">, path: string): Promise<TFile | null> {
 	const { tag, newProjectTemplate } = settings.projects;
@@ -46,5 +63,7 @@ export async function createProjectNote(app: App, settings: Pick<VaultMateSettin
 			new Notice(`VaultMate could not add #${tag} to the tags of ${file.basename}.`);
 		}
 	}
+	// Callers may write into the project right away: wait until the cache sees it as a project.
+	await cacheKnowsProject(app, file, tag);
 	return file;
 }
