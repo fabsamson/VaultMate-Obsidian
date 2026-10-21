@@ -9,7 +9,7 @@ import { GUIDES } from "../src/ui/guide/registry";
 
 describe("page guides", () => {
 	it("registers the pilot guides under stable ids", () => {
-		expect([...GUIDES.keys()].sort()).toEqual(["project", "projects"]);
+		expect([...GUIDES.keys()].sort()).toEqual(["ai-actions", "places", "project", "projects"]);
 		for (const [id, guide] of GUIDES) expect(guide.id).toBe(id);
 	});
 

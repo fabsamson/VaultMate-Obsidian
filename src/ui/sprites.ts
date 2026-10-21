@@ -56,6 +56,7 @@ import mascotCheer from "../../assets/sprites/mascot_cheer.png";
 import mascotCrystal from "../../assets/sprites/mascot_crystal.png";
 import mascotIdea from "../../assets/sprites/mascot_idea.png";
 import mascotLaptop from "../../assets/sprites/mascot_laptop.png";
+import mascotMap from "../../assets/sprites/mascot_map.png";
 import mascotPaint from "../../assets/sprites/mascot_paint.png";
 import mascotPoint from "../../assets/sprites/mascot_point.png";
 import mascotRead from "../../assets/sprites/mascot_read.png";
@@ -137,6 +138,7 @@ export const SPRITES = {
 	mascotCrystal: { src: mascotCrystal, pixels: 48 },
 	mascotIdea: { src: mascotIdea, pixels: 48 },
 	mascotLaptop: { src: mascotLaptop, pixels: 48 },
+	mascotMap: { src: mascotMap, pixels: 48 },
 	mascotPaint: { src: mascotPaint, pixels: 48 },
 	mascotPoint: { src: mascotPoint, pixels: 48 },
 	mascotRead: { src: mascotRead, pixels: 48 },

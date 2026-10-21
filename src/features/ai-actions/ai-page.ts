@@ -30,7 +30,8 @@ export function createAiPage(host: AiPageHost): HubPage {
 			const name = host.contextName();
 			return `${count} action${count === 1 ? "" : "s"} · ${name ? `runs on ${name}` : "open a note to run"}`;
 		},
-		render: (body) => {
+		render: (body, ctx) => {
+			ctx.setGuide("ai-actions");
 			const entries = host.entries();
 			const valid = entries.flatMap((entry) => (entry.ok ? [entry.action] : []));
 			const invalid = entries.length - valid.length;

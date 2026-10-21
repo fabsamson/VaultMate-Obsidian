@@ -1,0 +1,94 @@
+// Chapter 4 of the book: the Places page (`places`). The story is a first novel; here the notes get pinned to the
+// lighthouse that inspires it and to the café where it is written. Each picture is drawn with the real classes.
+import { createPanel, createSpriteButton } from "../../ui/components";
+import type { Guide } from "../../ui/guide/guide";
+import { SPRITES } from "../../ui/sprites";
+
+const README = "https://github.com/fabsamson/VaultMate-Obsidian#location";
+
+const LIGHTHOUSE = "Créac'h lighthouse";
+const PLACES = [
+	{ name: LIGHTHOUSE, detail: "lighthouse · Ouessant, Finistère" },
+	{ name: "Créac'h", detail: "hamlet · Ouessant, Finistère" },
+];
+
+/** A property row, as Obsidian draws it. */
+function property(parent: HTMLElement, key: string, value: string): void {
+	const row = parent.createDiv({ cls: "vaultmate-guide-prop" });
+	row.createSpan({ cls: "vaultmate-guide-prop-key", text: key });
+	row.createSpan({ text: value });
+}
+
+/** One pin of the pixel map: a diamond and the name of the note. */
+function pin(parent: HTMLElement, text: string, x: number, y: number): void {
+	const el = parent.createDiv({ cls: "vaultmate-guide-pin" });
+	el.style.left = `${x}%`;
+	el.style.top = `${y}%`;
+	el.createSpan({ cls: "vaultmate-guide-pin-label", text });
+}
+
+export const PLACES_GUIDE: Guide = {
+	id: "places",
+	sprite: SPRITES.moduleLocation,
+	purpose: "Pin a note to a real place, and see all your places on a map.",
+	steps: [
+		{
+			when: "Week 3",
+			cat: SPRITES.mascotMap,
+			text: "**Search a place** finds the lighthouse that inspires the novel on OpenStreetMap. Pick a result, tidy the label, then **Add to note**.",
+			mock: (el) => {
+				const row = el.createDiv({ cls: "vaultmate-search-row" });
+				const input = row.createEl("input", { cls: "vaultmate-input", attr: { type: "text", readonly: "", tabindex: "-1" } });
+				input.value = "Créac'h lighthouse";
+				row.createEl("button", { cls: "vaultmate-button mod-cta", text: "Search", attr: { type: "button", tabindex: "-1" } });
+				const list = createPanel(el, "vaultmate-places");
+				PLACES.forEach((place, index) => {
+					const item = list.createEl("button", { cls: "vaultmate-place", attr: { type: "button", tabindex: "-1" } });
+					item.toggleClass("is-selected", index === 0);
+					item.createDiv({ cls: "vaultmate-action-name", text: place.name });
+					item.createDiv({ cls: "vaultmate-muted", text: place.detail });
+				});
+			},
+		},
+		{
+			when: "Same day",
+			cat: SPRITES.mascotPoint,
+			text: "Chapter 3 now holds **latitude**, **longitude** and **location** in its properties. VaultMate writes only these three.",
+			mock: (el) => {
+				property(el, "latitude", "48.4549");
+				property(el, "longitude", "-5.1288");
+				property(el, "location", LIGHTHOUSE);
+			},
+		},
+		{
+			when: "Month 2",
+			cat: SPRITES.mascotTea,
+			text: "At the café, **Add current location** asks the optional VaultMate Android app for your position, so the note says where you wrote.",
+			mock: (el) => {
+				const panel = createPanel(el);
+				panel.createEl("p", { cls: "vaultmate-muted", text: "Location of chapter 4" });
+				panel.createEl("p", { cls: "vaultmate-action-name", text: "Café des quais" });
+				createSpriteButton(el, { sprite: SPRITES.actionLocate, text: "Add current location" });
+			},
+		},
+		{
+			when: "Month 4",
+			cat: SPRITES.mascotCheer,
+			text: "Make a Base with a **Map** view and set **Marker coordinates** to [latitude, longitude]. Your chapters show up as pins.",
+			mock: (el) => {
+				const map = el.createDiv({ cls: "vaultmate-guide-map" });
+				map.createDiv({ cls: "vaultmate-guide-land" });
+				pin(map, "Chapter 3", 30, 22);
+				pin(map, "Chapter 4", 62, 58);
+				pin(map, "Research notes", 14, 66);
+			},
+		},
+	],
+	write: { caption: "Chapter 3, in the note's properties", lines: ["---", "latitude: 48.4549", "longitude: -5.1288", "location: Créac'h lighthouse", "---"] },
+	tips: [
+		"A search sends only your text, at most once a second, and never while you type.",
+		"VaultMate asks before it replaces a location already in the note.",
+		"The three property names can be changed in the settings, under Location.",
+	],
+	readme: README,
+};

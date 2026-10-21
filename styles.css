@@ -2623,3 +2623,108 @@ body:not(.is-mobile) .modal-container.vaultmate-modal-top > .modal {
 .is-mobile .vaultmate-guide-close {
 	min-height: var(--touch-size-m);
 }
+
+/* Guide mocks: Where the story lives */
+.vaultmate-guide-mock .vaultmate-places {
+	max-height: none;
+	margin-top: 0;
+}
+
+.vaultmate-guide-mock .vaultmate-search-row {
+	gap: calc(var(--g) * 0.6);
+}
+
+.vaultmate-guide-mock .vaultmate-search-row .vaultmate-input {
+	flex: 1;
+	min-width: 0;
+	height: calc(var(--g) * 2.6);
+	font-size: var(--g);
+}
+
+.vaultmate-guide-mock .vaultmate-place {
+	padding: calc(var(--g) * 0.4) calc(var(--g) * 0.6);
+	font-size: var(--g);
+}
+
+.vaultmate-guide-mock .vaultmate-panel p {
+	margin: 0;
+}
+
+/* A pixel map: a coast and a few pins, no tiles. */
+.vaultmate-guide-map {
+	position: relative;
+	height: calc(var(--g) * 11);
+	overflow: hidden;
+	border: 1px solid var(--vaultmate-rule);
+	background-color: var(--vaultmate-surface-raised);
+	background-image:
+		linear-gradient(var(--vaultmate-rule) 1px, transparent 1px),
+		linear-gradient(90deg, var(--vaultmate-rule) 1px, transparent 1px);
+	background-size: calc(var(--g) * 2) calc(var(--g) * 2);
+}
+
+.vaultmate-guide-land {
+	position: absolute;
+	inset: 0;
+	background-color: color-mix(in srgb, var(--vaultmate-primary) 16%, var(--vaultmate-surface));
+	clip-path: polygon(0 0, 55% 0, 55% 18%, 72% 18%, 72% 40%, 86% 40%, 86% 66%, 100% 66%, 100% 100%, 0 100%);
+}
+
+.vaultmate-guide-pin {
+	position: absolute;
+	display: flex;
+	align-items: center;
+	gap: calc(var(--g) * 0.4);
+	line-height: 1;
+	white-space: nowrap;
+}
+
+.vaultmate-guide-pin::before {
+	width: calc(var(--g) * 0.9);
+	height: calc(var(--g) * 0.9);
+	border: 2px solid var(--vaultmate-text);
+	background-color: var(--vaultmate-seal);
+	content: "";
+	transform: rotate(45deg);
+}
+
+.vaultmate-guide-pin-label {
+	padding: 0 calc(var(--g) * 0.4);
+	background-color: var(--vaultmate-surface);
+	color: var(--vaultmate-text);
+	font-size: calc(var(--g) * 0.85);
+	font-weight: 700;
+}
+
+/* Guide mocks: A second reader */
+.vaultmate-guide-mock .vaultmate-source-row {
+	padding: calc(var(--g) * 0.3) 0;
+	font-size: var(--g);
+}
+
+.vaultmate-guide-mock .vaultmate-source-row:last-child {
+	border-bottom: none;
+}
+
+.vaultmate-guide-mock .vaultmate-section-header {
+	margin: 0;
+}
+
+.vaultmate-guide-mock .vaultmate-confirm {
+	margin-top: 0;
+	font-size: var(--g);
+}
+
+.vaultmate-guide-mock .vaultmate-actions {
+	margin-top: 0;
+}
+
+.vaultmate-guide-mock .vaultmate-panel.vaultmate-guide-compact {
+	padding: calc(var(--g) * 0.4) calc(var(--g) * 0.8);
+	box-shadow: none;
+}
+
+.vaultmate-guide-mock .vaultmate-question {
+	padding: calc(var(--g) * 0.4) 0;
+	font-size: var(--g);
+}
