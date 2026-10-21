@@ -12,6 +12,9 @@ import { registerWeeklyReview } from "./features/weekly-review/weekly-command";
 import { VaultMateSettingTab } from "./settings";
 import { watchInput } from "./ui/focus";
 import { runTagCheck } from "./ui/tag-check-modal";
+import { GuideModal } from "./ui/guide/guide-modal";
+import { shouldAutoOpen, withSeen } from "./ui/guide/auto-open";
+import { GUIDES } from "./ui/guide/registry";
 import { HUB_VIEW_TYPE, HubView, type HubPage } from "./ui/hub-view";
 import type { Sprite } from "./ui/pixel";
 import { animationsOn } from "./ui/system-motion";
@@ -37,7 +40,7 @@ export default class VaultMatePlugin extends Plugin {
 		this.addSettingTab(new VaultMateSettingTab(this));
 		watchInput(this);
 		addIcon(CAT_ICON_ID, CAT_ICON_SVG);
-		this.registerView(HUB_VIEW_TYPE, (leaf) => new HubView(leaf, () => this.sortedHubPages(), () => animationsOn(this.settings.ui.animations), () => this.settings.ui.banner));
+		this.registerView(HUB_VIEW_TYPE, (leaf) => new HubView(leaf, () => this.sortedHubPages(), () => animationsOn(this.settings.ui.animations), () => this.settings.ui.banner, { open: (id) => this.openGuide(id), visit: (id, quiet) => this.visitGuide(id, quiet) }));
 		this.addRibbonIcon(CAT_ICON_ID, "Open VaultMate", () => void this.openHub());
 		this.addCommand({
 			id: "open-panel",
@@ -85,6 +88,25 @@ export default class VaultMatePlugin extends Plugin {
 		if (animationsOn(this.settings.ui.animations)) playStampMoment(sprite);
 	}
 
+	/** Opens a page guide and remembers it as seen (saved once). */
+	public openGuide(id: string): void {
+		const guide = GUIDES.get(id);
+		if (!guide) return;
+		const seen = withSeen(this.settings.guides.seen, id);
+		if (seen) {
+			this.settings.guides.seen = seen;
+			void this.saveSettings();
+		}
+		new GuideModal(this.app, guide, animationsOn(this.settings.ui.animations)).open();
+	}
+
+	/** A page with a guide has drawn: the guide opens by itself on the first visit. */
+	private visitGuide(id: string, quiet: boolean): void {
+		const { guides } = this.settings;
+		const modalOpen = activeDocument.querySelector(".modal-container") !== null;
+		if (shouldAutoOpen({ id, seen: guides.seen, autoOpen: guides.autoOpen, modalOpen, quiet })) this.openGuide(id);
+	}
+
 	/** Adds or replaces (same `id`) a page of the hub, then redraws the open hubs. */
 	public registerHubPage(page: HubPage): void {
 		this.hubPages.set(page.id, page);
@@ -114,8 +136,11 @@ export default class VaultMatePlugin extends Plugin {
 		return null;
 	}
 
-	/** Opens the hub in the side panel, on the page `page` when given (and, on the Projects page, on the project `project`). */
-	public async openHub(page?: string, project?: string): Promise<void> {
+	/**
+	 * Opens the hub in the side panel, on the page `page` when given (and, on the Projects page, on the project `project`).
+	 * `quiet`: the page guide does not open by itself (the Weekly review uses it).
+	 */
+	public async openHub(page?: string, project?: string, quiet = false): Promise<void> {
 		const { workspace } = this.app;
 		let leaf: WorkspaceLeaf | null = workspace.getLeavesOfType(HUB_VIEW_TYPE)[0] ?? null;
 		if (!leaf) {
@@ -124,6 +149,6 @@ export default class VaultMatePlugin extends Plugin {
 		}
 		if (!leaf) return;
 		await workspace.revealLeaf(leaf);
-		if (page !== undefined && leaf.view instanceof HubView) leaf.view.showPage(page, project);
+		if (page !== undefined && leaf.view instanceof HubView) leaf.view.showPage(page, project, quiet);
 	}
 }

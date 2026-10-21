@@ -2,7 +2,7 @@ import { ItemView, setIcon, type ViewStateResult, type WorkspaceLeaf } from "obs
 
 import type { JournalKind } from "../features/journal/journal-line";
 import { SCOPES, type JournalScope } from "../features/journal/scope";
-import { createInfoPanel, createSectionHeader } from "./components";
+import { createIconButton, createInfoPanel, createSectionHeader } from "./components";
 import { focusFromInput } from "./focus";
 import { CAT_ICON_ID } from "./icon";
 import { createSprite, type Sprite } from "./pixel";
@@ -10,6 +10,17 @@ import { SceneBanner } from "./scene-banner";
 import { SPRITES } from "./sprites";
 
 export const HUB_VIEW_TYPE = "vaultmate-hub";
+
+/** What the hub asks of the page guides (the plugin owns the settings and the window). */
+export interface HubGuides {
+	/** Opens a guide with the "?" button. */
+	open(id: string): void;
+	/** The page showing guide `id` has drawn: opens it when it is the first visit (see `shouldAutoOpen`). `quiet`: the page was opened by the Weekly review. */
+	visit(id: string, quiet: boolean): void;
+}
+
+/** Wait after a page has drawn before its guide opens by itself, so the page is seen first. */
+const GUIDE_DELAY_MS = 500;
 
 const BACK_TO_HUB = "Back to VaultMate";
 
@@ -37,6 +48,11 @@ export interface HubPageContext {
 	 * says `HubPage.upLabel`. Call it on every redraw of the page; null when the arrow leaves the page.
 	 */
 	setUp(up: (() => void) | null): void;
+	/**
+	 * Says which page guide the "?" button opens: the guide `id` (see `ui/guide/registry`), or null for none.
+	 * Call it on every redraw, like `setUp`: a page with levels has one guide per level.
+	 */
+	setGuide(id: string | null): void;
 }
 
 /** A page of the hub that a feature contributes (register it with `plugin.registerHubPage`). */
@@ -64,9 +80,12 @@ export class HubView extends ItemView {
 	private banner: SceneBanner | null = null;
 	/** What the back arrow does instead of going to the landing page; set by the open page. */
 	private up: (() => void) | null = null;
+	/** The page was opened quietly (Weekly review): its guide does not open by itself until the next navigation. */
+	private quiet = false;
+	private guideTimer: number | null = null;
 
 	/** `animationsOn` and `bannerOn` are read at each redraw: the Animations setting with the system's reduced-motion preference, and the Scene banner setting. */
-	public constructor(leaf: WorkspaceLeaf, private readonly getPages: () => HubPage[], private readonly animationsOn: () => boolean, private readonly bannerOn: () => boolean) {
+	public constructor(leaf: WorkspaceLeaf, private readonly getPages: () => HubPage[], private readonly animationsOn: () => boolean, private readonly bannerOn: () => boolean, private readonly guides: HubGuides) {
 		super(leaf);
 	}
 
@@ -105,6 +124,7 @@ export class HubView extends ItemView {
 	}
 
 	protected onClose(): Promise<void> {
+		this.clearGuideTimer();
 		this.banner?.destroy();
 		this.banner = null;
 		return Promise.resolve();
@@ -116,12 +136,13 @@ export class HubView extends ItemView {
 	}
 
 	/** Opens a page from code (a command); `project` is the project page the Projects page shows. */
-	public showPage(id: string, project?: string): void {
+	public showPage(id: string, project?: string, quiet = false): void {
 		if (project !== undefined) this.state.project = project;
-		this.go(id);
+		this.go(id, quiet);
 	}
 
-	private go(page: string | null): void {
+	private go(page: string | null, quiet = false): void {
+		this.quiet = quiet;
 		const from = this.state.page;
 		this.state.page = page;
 		this.app.workspace.requestSaveLayout();
@@ -134,6 +155,7 @@ export class HubView extends ItemView {
 	 */
 	public render(focus: string | null = null): void {
 		const root = this.contentEl;
+		this.clearGuideTimer();
 		this.banner?.destroy();
 		this.banner = null;
 		root.empty();
@@ -144,6 +166,11 @@ export class HubView extends ItemView {
 		const page = pages.find((candidate) => candidate.id === this.state.page);
 		if (page) this.renderPage(root, page, focus !== null);
 		else this.renderLanding(root, pages, focus);
+	}
+
+	private clearGuideTimer(): void {
+		if (this.guideTimer !== null) window.clearTimeout(this.guideTimer);
+		this.guideTimer = null;
 	}
 
 	private renderLanding(root: HTMLElement, pages: HubPage[], focusId: string | null): void {
@@ -173,16 +200,30 @@ export class HubView extends ItemView {
 		back.addEventListener("click", () => (this.up ? this.up() : this.go(null)));
 		const title = bar.createEl("h1", { cls: "vaultmate-hub-title", text: page.title, attr: { tabindex: "-1" } });
 		if (focusTitle) focusFromInput(title);
-		void this.fill(page, root.createDiv({ cls: "vaultmate-hub-section" }), back);
+		void this.fill(page, root.createDiv({ cls: "vaultmate-hub-section" }), back, bar);
 	}
 
-	private async fill(page: HubPage, body: HTMLElement, back: HTMLElement): Promise<void> {
+	private async fill(page: HubPage, body: HTMLElement, back: HTMLElement, bar: HTMLElement): Promise<void> {
 		const setUp = (up: (() => void) | null): void => {
 			this.up = up;
 			back.setAttr("aria-label", up ? (page.upLabel ?? BACK_TO_HUB) : BACK_TO_HUB);
 		};
+		let help: { id: string; button: HTMLElement } | null = null;
+		const setGuide = (id: string | null): void => {
+			this.clearGuideTimer();
+			if (help?.id !== id) {
+				help?.button.remove();
+				help = id === null ? null : { id, button: createIconButton(bar, SPRITES.actionHelp, "How this page works", () => this.guides.open(id)) };
+			}
+			if (id === null) return;
+			// Only a page the user can see: a hub in a collapsed side panel stays quiet.
+			this.guideTimer = window.setTimeout(() => {
+				this.guideTimer = null;
+				if (this.contentEl.isShown()) this.guides.visit(id, this.quiet);
+			}, GUIDE_DELAY_MS);
+		};
 		try {
-			await page.render(body, { state: this.state, save: () => this.app.workspace.requestSaveLayout(), setUp });
+			await page.render(body, { state: this.state, save: () => this.app.workspace.requestSaveLayout(), setUp, setGuide });
 		} catch (error) {
 			console.error(`VaultMate: the "${page.id}" page failed`, error);
 			body.empty();

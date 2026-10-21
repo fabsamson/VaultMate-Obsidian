@@ -1843,3 +1843,631 @@ body:not(.is-mobile) .modal-container.vaultmate-modal-top > .modal {
 .is-mobile .vaultmate-page-search .search-input-container input {
 	min-height: 44px;
 }
+
+/*
+ * Page guide: the sheet that a page's "?" button opens. About 94vw by 92vh (at most 1200 by 760) and no scrolling
+ * from a 1024 by 640 window up: a grid of header, story cards, bottom row and footer, with sizes in clamp().
+ * Below that, and on a phone, everything stacks in one column and the sheet scrolls.
+ */
+.modal.vaultmate-guide {
+	display: flex;
+	flex-direction: column;
+	width: min(94vw, 1200px);
+	max-width: none;
+	height: min(92vh, 760px);
+	max-height: none;
+	padding: 0;
+	overflow: hidden;
+}
+
+.modal.vaultmate-guide .modal-header-button,
+.modal.vaultmate-guide .modal-close-button {
+	display: none;
+}
+
+.vaultmate-guide .modal-content.vaultmate-guide-sheet {
+	display: grid;
+	flex: 1;
+	grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+	gap: clamp(8px, 1.5vh, 16px);
+	min-height: 0;
+	margin: 0;
+	padding: 0 clamp(14px, 2.2vw, 28px) clamp(8px, 1.4vh, 14px);
+	overflow: hidden;
+	background-color: var(--vaultmate-surface);
+}
+
+.vaultmate-guide-sheet .vaultmate-pattern-band {
+	height: 12px;
+	margin: 0 calc(-1 * clamp(14px, 2.2vw, 28px));
+}
+
+.vaultmate-guide-head {
+	display: flex;
+	align-items: center;
+	gap: clamp(10px, 1.4vw, 16px);
+}
+
+.vaultmate-guide-heading {
+	flex: 1;
+	min-width: 0;
+}
+
+.vaultmate-guide-title {
+	margin: 0;
+	color: var(--vaultmate-text);
+	font-size: clamp(20px, 3.4vh, 28px);
+	font-weight: 900;
+	line-height: 1.3;
+}
+
+.vaultmate-guide-purpose {
+	margin: 2px 0 0;
+	color: var(--vaultmate-text-muted);
+	font-size: clamp(13px, 1.9vh, 15px);
+}
+
+.vaultmate-guide-close {
+	flex: none;
+	min-height: 36px;
+	padding: 0 var(--size-4-4);
+	border: 2px solid var(--vaultmate-border);
+	border-radius: 0;
+	background-color: var(--vaultmate-surface);
+	box-shadow: 2px 2px 0 var(--vaultmate-shadow);
+	color: var(--vaultmate-text);
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.vaultmate-guide-close:focus-visible,
+.vaultmate-guide-foot a:focus-visible {
+	outline: 2px solid var(--vaultmate-seal);
+	outline-offset: 2px;
+}
+
+/* The story: one card per step. Each card is a size container, so its picture scales with it. */
+.vaultmate-guide-steps {
+	display: grid;
+	grid-template-columns: repeat(var(--vaultmate-steps, 4), minmax(0, 1fr));
+	gap: clamp(10px, 1.5vw, 20px);
+	min-height: 0;
+	margin: 0;
+	padding: 0 2px 2px 0;
+	list-style: none;
+}
+
+.vaultmate-guide-step,
+.vaultmate-guide-write,
+.vaultmate-guide-tips {
+	border: 2px solid var(--vaultmate-border);
+	background-color: var(--vaultmate-surface-raised);
+	box-shadow: 2px 2px 0 var(--vaultmate-shadow);
+}
+
+.vaultmate-guide-step {
+	display: grid;
+	grid-template-rows: auto minmax(0, 1fr) auto;
+	gap: clamp(6px, 1.1vh, 10px);
+	min-height: 0;
+	margin: 0;
+	padding: clamp(8px, 1.4vh, 14px) clamp(8px, 1vw, 14px);
+	container-type: size;
+}
+
+.vaultmate-guide-step-head {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.vaultmate-guide-step-head h3 {
+	margin: 0;
+	color: var(--vaultmate-text);
+	font-size: clamp(14px, 2.2vh, 19px);
+	font-weight: 800;
+	line-height: 1.2;
+}
+
+.vaultmate-guide-step-text {
+	margin: 0;
+	color: var(--vaultmate-text);
+	font-size: clamp(12px, 1.95vh, 16px);
+	line-height: 1.4;
+}
+
+/* The picture: paper under the real components, drawn small and inert. */
+.vaultmate-guide-mock {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	min-height: 0;
+	padding: clamp(6px, 1vh, 10px);
+	overflow: hidden;
+	border: 2px solid var(--vaultmate-rule);
+	background-color: var(--vaultmate-surface);
+	pointer-events: none;
+	user-select: none;
+}
+
+/* Everything inside is sized in --g, one unit that follows the card: the tokens of the real components are redefined from it. */
+.vaultmate-guide-mock-inner {
+	--g: clamp(9px, min(5.1cqw, 3.6cqh), 16px);
+	--size-4-1: calc(var(--g) * 0.3);
+	--size-4-2: calc(var(--g) * 0.6);
+	--size-4-3: calc(var(--g) * 0.9);
+	--size-4-4: calc(var(--g) * 1.2);
+	--font-ui-smaller: calc(var(--g) * 0.85);
+	--font-ui-small: calc(var(--g) * 0.95);
+	--font-ui-medium: var(--g);
+	--font-ui-large: calc(var(--g) * 1.2);
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--g) * 0.6);
+	min-width: 0;
+	font-size: var(--g);
+	line-height: 1.3;
+}
+
+.vaultmate .vaultmate-guide-mock .vaultmate-sprite {
+	width: calc(var(--g) * 1.4);
+	height: calc(var(--g) * 1.4);
+}
+
+.vaultmate .vaultmate-guide-mock .vaultmate-sprite.vaultmate-sprite-small {
+	width: calc(var(--g) * 1.2);
+	height: calc(var(--g) * 1.2);
+}
+
+.vaultmate .vaultmate-guide-mock button.vaultmate-icon-button {
+	width: calc(var(--g) * 2.3);
+	min-width: calc(var(--g) * 2.3);
+	height: calc(var(--g) * 2.3);
+}
+
+.vaultmate .vaultmate-guide-mock .vaultmate-icon-button .vaultmate-sprite {
+	width: calc(var(--g) * 1.8);
+	height: calc(var(--g) * 1.8);
+}
+
+.vaultmate .vaultmate-guide-mock button.vaultmate-icon-button.mod-primary {
+	border-width: 1px;
+}
+
+.vaultmate .vaultmate-guide-mock .vaultmate-button {
+	min-height: calc(var(--g) * 2.6);
+	min-width: 0;
+	padding: 0 calc(var(--g) * 0.9);
+	font-size: var(--g);
+	align-self: flex-start;
+}
+
+.vaultmate .vaultmate-guide-mock .vaultmate-project-head .vaultmate-button {
+	align-self: center;
+}
+
+.vaultmate-guide-mock .vaultmate-progress-bar {
+	height: calc(var(--g) * 0.7);
+	border-width: 1px;
+}
+
+.vaultmate-guide-mock .vaultmate-progress-compact .vaultmate-progress-bar {
+	height: calc(var(--g) * 0.5);
+}
+
+.vaultmate-guide-mock .vaultmate-project-tile,
+.vaultmate-guide-mock .vaultmate-project-tile:hover {
+	min-height: 0;
+	width: auto;
+	margin: 0 2px 2px 0;
+	cursor: default;
+}
+
+.vaultmate-guide-mock .vaultmate-project-tile {
+	border-width: 1px;
+}
+
+.vaultmate-guide-mock .vaultmate-project-head {
+	margin: 0;
+	padding-bottom: calc(var(--g) * 0.3);
+}
+
+.vaultmate-guide-mock .vaultmate-project-head-progress {
+	flex: 1 1 5em;
+	min-width: 0;
+}
+
+.vaultmate-guide-mock .vaultmate-project-name {
+	font-size: var(--font-ui-large);
+	font-weight: 700;
+}
+
+.vaultmate-guide-mock .vaultmate-project-head-new {
+	margin-left: 0;
+	flex-basis: auto;
+}
+
+.vaultmate-guide-mock .vaultmate-idea-line,
+.vaultmate-guide-mock .vaultmate-entry-line {
+	min-height: 0;
+}
+
+.vaultmate-guide-mock .vaultmate-entry-line {
+	padding-left: 0;
+}
+
+.vaultmate-guide-mock .vaultmate-entry-main {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.vaultmate-guide-mock .vaultmate-track-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: calc(var(--g) * 0.4) calc(var(--g) * 0.6);
+}
+
+.vaultmate-guide-mock .vaultmate-track-line {
+	flex-wrap: wrap;
+}
+
+.vaultmate-guide-mock .vaultmate-progress span {
+	white-space: nowrap;
+}
+
+.vaultmate-guide-mock .vaultmate-track-line,
+.vaultmate-guide-mock .vaultmate-entry-line {
+	flex: 1 1 100%;
+}
+
+.vaultmate-guide-mock .vaultmate-idea-statement {
+	color: var(--vaultmate-text);
+	font-weight: 700;
+}
+
+.vaultmate-guide-mock .vaultmate-track-nonext {
+	margin: 0;
+}
+
+.vaultmate-guide-mock .vaultmate-page-search {
+	margin: 0;
+}
+
+.vaultmate-guide-mock .search-input-container,
+.vaultmate-guide-mock .search-input-container input {
+	width: 100%;
+	height: calc(var(--g) * 2.8);
+	font-size: var(--g);
+}
+
+.vaultmate-guide-mock .vaultmate-disclosure {
+	min-height: 0;
+	padding: 0;
+	font-size: var(--g);
+}
+
+/* A property row and a few lines of a note, as Obsidian draws them. */
+.vaultmate-guide-prop {
+	display: flex;
+	align-items: center;
+	gap: calc(var(--g) * 0.8);
+	padding: calc(var(--g) * 0.4) calc(var(--g) * 0.6);
+	border: 1px solid var(--vaultmate-rule);
+	background-color: var(--vaultmate-surface-raised);
+}
+
+.vaultmate-guide-prop-key {
+	color: var(--vaultmate-text-muted);
+}
+
+.vaultmate-guide-pill {
+	padding: 0 calc(var(--g) * 0.8);
+	border: 1px solid var(--vaultmate-border);
+	border-radius: 999px;
+	background-color: var(--vaultmate-surface);
+	color: var(--vaultmate-text);
+	font-weight: 700;
+}
+
+.vaultmate-guide-note-line {
+	color: var(--vaultmate-text);
+	font-weight: 800;
+	white-space: nowrap;
+}
+
+.vaultmate-guide-note-line.is-h1 {
+	font-size: calc(var(--g) * 1.3);
+}
+
+.vaultmate-guide-note-line.is-h2 {
+	padding-left: calc(var(--g) * 0.8);
+	font-size: calc(var(--g) * 1.05);
+}
+
+/* Bottom row: the Markdown to write and the tips. */
+.vaultmate-guide-bottom {
+	display: grid;
+	grid-template-columns: minmax(0, 6fr) minmax(0, 6fr);
+	gap: clamp(10px, 1.5vw, 20px);
+	padding: 0 2px 2px 0;
+}
+
+.vaultmate-guide-write,
+.vaultmate-guide-tips {
+	min-width: 0;
+	padding: clamp(8px, 1.3vh, 12px) clamp(10px, 1.2vw, 16px);
+}
+
+.vaultmate-guide-write-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 0 12px;
+	margin-bottom: clamp(2px, 0.6vh, 6px);
+}
+
+.vaultmate-guide-write-head h3 {
+	margin: 0;
+}
+
+.vaultmate-guide-write h3,
+.vaultmate-guide-tips h3 {
+	margin: 0 0 clamp(2px, 0.6vh, 6px);
+	color: var(--vaultmate-primary);
+	font-size: var(--font-ui-smaller);
+	font-weight: 900;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+}
+
+.vaultmate-guide-caption {
+	margin: 0;
+	color: var(--vaultmate-text-muted);
+	font-size: clamp(11px, 1.6vh, 13px);
+}
+
+.vaultmate-guide-code {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	justify-content: center;
+	padding: clamp(4px, 0.8vh, 8px) clamp(8px, 1vw, 12px);
+	border: 2px solid var(--vaultmate-rule);
+	border-left: 4px solid var(--vaultmate-primary);
+	background-color: var(--vaultmate-surface);
+	color: var(--vaultmate-text);
+	font-family: var(--font-monospace);
+	font-size: clamp(11px, 1.7vh, 14px);
+	line-height: 1.5;
+}
+
+.vaultmate-guide-code-line {
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
+.vaultmate-guide-code .is-tag {
+	color: var(--vaultmate-primary);
+	font-weight: 700;
+}
+
+.vaultmate-guide-code .is-date,
+.vaultmate-guide-code .is-mark {
+	color: var(--vaultmate-seal-text);
+}
+
+.vaultmate-guide-write,
+.vaultmate-guide-tips {
+	display: flex;
+	flex-direction: column;
+}
+
+.vaultmate-guide-tips ul {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	justify-content: space-evenly;
+	gap: clamp(3px, 0.8vh, 8px);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.vaultmate-guide-tips li {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	color: var(--vaultmate-text);
+	font-size: clamp(12px, 1.75vh, 14px);
+	line-height: 1.4;
+}
+
+.vaultmate-guide-tips li .vaultmate-sprite {
+	margin-top: 1px;
+}
+
+/* Footer: the cat with its bubble, and the way to the README. */
+.vaultmate-guide-foot {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.vaultmate-guide-foot a {
+	flex: none;
+	color: var(--vaultmate-primary);
+	font-size: clamp(12px, 1.75vh, 14px);
+	font-weight: 700;
+}
+
+.vaultmate-guide-cat {
+	display: flex;
+	flex-direction: row-reverse;
+	align-items: center;
+	gap: 10px;
+	min-width: 0;
+}
+
+.vaultmate-guide-bubble {
+	position: relative;
+	padding: 4px 12px;
+	border: 2px solid var(--vaultmate-border);
+	background-color: var(--vaultmate-surface-raised);
+	box-shadow: 2px 2px 0 var(--vaultmate-shadow);
+	color: var(--vaultmate-text);
+	font-size: clamp(12px, 1.75vh, 14px);
+	font-weight: 700;
+}
+
+/* The tail of the bubble points at the cat, on its left. */
+.vaultmate-guide-bubble::before {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: -7px;
+	width: 10px;
+	height: 10px;
+	border-bottom: 2px solid var(--vaultmate-border);
+	border-left: 2px solid var(--vaultmate-border);
+	background-color: var(--vaultmate-surface-raised);
+	transform: translateY(-50%) rotate(45deg);
+}
+
+/* The cards come in one after the other, in pixel steps (Animations setting; never with reduced motion). */
+.vaultmate-guide-sheet.is-animated .vaultmate-guide-step {
+	animation: vaultmate-guide-in 320ms steps(5, end) both;
+	animation-delay: calc(var(--vaultmate-step-index, 0) * 110ms);
+}
+
+@keyframes vaultmate-guide-in {
+	from {
+		opacity: 0;
+		transform: translateY(12px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.vaultmate-guide-sheet.is-animated .vaultmate-guide-step {
+		animation: none;
+	}
+}
+
+/* Smaller than 1024 by 640, and on a phone: one column that scrolls. */
+@media (max-width: 1023px), (max-height: 639px) {
+	.vaultmate-guide .modal-content.vaultmate-guide-sheet {
+		display: block;
+		overflow-y: auto;
+	}
+
+	.vaultmate-guide-sheet > * + * {
+		margin-top: 14px;
+	}
+
+	.vaultmate-guide-steps,
+	.vaultmate-guide-bottom {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.vaultmate-guide-step {
+		display: block;
+		container-type: inline-size;
+	}
+
+	.vaultmate-guide-step > * + * {
+		margin-top: 8px;
+	}
+
+	.vaultmate-guide-mock-inner {
+		--g: clamp(11px, 3.6cqw, 14px);
+	}
+
+	.vaultmate-guide-bottom {
+		display: grid;
+		gap: 14px;
+	}
+
+	.vaultmate-guide-foot {
+		flex-wrap: wrap;
+	}
+
+	.vaultmate-guide-head {
+		position: sticky;
+		top: 0;
+		z-index: 1;
+		padding: 8px 0;
+		background-color: var(--vaultmate-surface);
+	}
+
+	.vaultmate-guide-title {
+		font-size: 22px;
+	}
+}
+
+.is-mobile .modal.vaultmate-guide {
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	border: 0;
+	box-shadow: none;
+}
+
+.is-mobile .vaultmate-guide .modal-content.vaultmate-guide-sheet {
+	display: block;
+	overflow-y: auto;
+}
+
+.is-mobile .vaultmate-guide-sheet > * + * {
+	margin-top: 14px;
+}
+
+.is-mobile .vaultmate-guide-steps,
+.is-mobile .vaultmate-guide-bottom {
+	grid-template-columns: minmax(0, 1fr);
+}
+
+.is-mobile .vaultmate-guide-bottom {
+	display: grid;
+	gap: 14px;
+}
+
+.is-mobile .vaultmate-guide-step {
+	display: block;
+	container-type: inline-size;
+}
+
+.is-mobile .vaultmate-guide-step > * + * {
+	margin-top: 8px;
+}
+
+.is-mobile .vaultmate-guide-mock-inner {
+	--g: clamp(11px, 3.6cqw, 14px);
+}
+
+.is-mobile .vaultmate-guide-head {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	padding: 8px 0;
+	background-color: var(--vaultmate-surface);
+}
+
+.is-mobile .vaultmate-guide-title {
+	font-size: 22px;
+}
+
+.is-mobile .vaultmate-guide .modal-content.vaultmate-guide-sheet {
+	padding-bottom: max(14px, env(safe-area-inset-bottom));
+}
+
+.is-mobile .vaultmate-guide-close {
+	min-height: var(--touch-size-m);
+}
