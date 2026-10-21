@@ -271,7 +271,7 @@ export interface ProjectTrack {
 export interface ProjectModel {
 	/** Level of the section headings, null when the note has no recognized section. */
 	level: number | null;
-	/** Every recognized section at that level, in order (the legacy conversion uses them all). */
+	/** Every recognized section at that level, in order. */
 	sections: Section[];
 	ideasSection: Section | null;
 	tracksSection: Section | null;

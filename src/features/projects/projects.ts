@@ -3,7 +3,6 @@
 import { debounce, Notice, type Editor, type MarkdownFileInfo, type MarkdownView } from "obsidian";
 
 import { formatDate, startOfDay } from "../../core/dates";
-import { applyEditsToEditor } from "../../core/note-edit";
 import { readNoteLines } from "../../core/note-write";
 import { openFileAtLine } from "../../core/open-note";
 import type VaultMatePlugin from "../../main";
@@ -12,7 +11,6 @@ import { buildIdeaItem } from "../ideas/idea-line";
 import { noticeWithButton } from "../ideas/idea-modal";
 import { dropIdea as dropTaggedIdea, locateIdea, undoDrop } from "../ideas/idea-write";
 import { writeProject } from "./project-apply";
-import { convertProject, diffEdit } from "./project-convert";
 import { ProjectIndex, type ProjectContent } from "./project-index";
 import { PromoteModal, StatusModal, TaskModal } from "./project-modals";
 import { readProject, type ProjectIdea, type ProjectTrack, type TrackStatus } from "./project-note";
@@ -253,24 +251,6 @@ export class ProjectsFeature {
 				const track = found?.model.tracks.find((candidate) => lineIn(found.line, candidate.line, candidate.end));
 				if (!found || !track) return false;
 				if (!checking) this.addTask(found.path, track);
-				return true;
-			},
-		});
-		plugin.addCommand({
-			id: "convert-to-tracks",
-			name: "Convert this note to tracks",
-			icon: "compass",
-			editorCheckCallback: (checking, editor, ctx) => {
-				const found = this.context(editor, ctx);
-				if (!found || found.model.level === null) return false;
-				const converted = convertProject(found.lines, this.tracksTitle());
-				if (converted.lines === found.lines) return false;
-				if (!checking) {
-					const edit = diffEdit(found.lines, converted.lines);
-					if (edit) applyEditsToEditor(editor, [edit]);
-					new Notice(`Converted: ${converted.tracksCreated} ${converted.tracksCreated === 1 ? "track" : "tracks"}, ${converted.sectionsRemoved} ${converted.sectionsRemoved === 1 ? "section" : "sections"} removed`);
-					plugin.refreshHubs(PROJECTS_PAGE_ID);
-				}
 				return true;
 			},
 		});

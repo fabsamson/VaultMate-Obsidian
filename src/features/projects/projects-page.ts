@@ -272,7 +272,7 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 	const render = async (body: HTMLElement, ctx: HubPageContext): Promise<void> => {
 		const notes = host.notes();
 		if (notes.length === 0) {
-			createInfoPanel(body, { sprite: SPRITES.mascotSleep, title: "No projects yet", text: `A project is a note with ${host.projectTag()} in its tags property. Run Make this note a project on a note, or Convert this note to tracks on an older project note.` });
+			createInfoPanel(body, { sprite: SPRITES.mascotSleep, title: "No projects yet", text: `A project is a note with ${host.projectTag()} in its tags property. Run Make this note a project on a note.` });
 			return;
 		}
 		const controls = body.createDiv({ cls: "vaultmate-switcher" });
