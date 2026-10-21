@@ -40,6 +40,8 @@ export interface IdeaPortalHost extends IdeaWriteHost {
 	stampDone(): void;
 	/** The project notes (notes with the project tag); empty when the feature is off. */
 	projectNotes(): ProjectChoice[];
+	/** Opens New project, prefilled with `name`; `done` gets the note it created. */
+	newProject(name: string, done: (file: TFile) => void): void;
 	/** The titles of the tracks of a project note, to warn about a repeated name. */
 	trackTitles(path: string): Promise<string[]>;
 	/** The latest lessons of the journal for `kind`, for the New decision and New prediction forms. */
@@ -353,6 +355,7 @@ export class IdeaModal extends JournalModal {
 		let loading = 0;
 		let picked: ProjectChoice | null = null;
 		const chosen = (): ProjectChoice | null => (picked && picked.name === projectField.value.trim() ? picked : findProject(projects, projectField.value));
+		const create = panel.createEl("button", { cls: "vaultmate-button vaultmate-note-link", text: "New project…", attr: { type: "button" } });
 		const fields = addTrackFields(panel, { prefill: prefillName(statement), onChange: () => refresh(), onEnter: () => !confirm.disabled && confirm.click() });
 		const hint = panel.createEl("p", { cls: "vaultmate-muted" });
 		const confirm = this.confirmButton(panel, "Add track");
@@ -380,6 +383,17 @@ export class IdeaModal extends JournalModal {
 			const choice: NewTrackChoice = { status: fields.status(), shortName: trackState(project, fields.typedName(), fields.status(), []).name, ...(firstTask ? { firstTask } : {}) };
 			void this.run((located) => newTrackFromIdea(host, located, file, choice), refresh);
 		});
+
+		// The new project joins the list and is picked, ready for the track.
+		create.addEventListener("click", () =>
+			host.newProject(chosen() ? "" : projectField.value.trim(), (file) => {
+				picked = { path: file.path, name: file.basename };
+				projects.push(picked);
+				projectField.value = file.basename;
+				void loadTitles();
+				fields.focusName();
+			}),
+		);
 
 		const files = (): TFile[] => projects.flatMap((project) => this.app.vault.getFileByPath(project.path) ?? []);
 		const suggest = new NoteSuggest(this.app, projectField, "", files);

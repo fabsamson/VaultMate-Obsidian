@@ -18,6 +18,7 @@ import {
 	processedRows,
 	resultLabel,
 	seedCount,
+	seedItems,
 	seedLine,
 	tendSummary,
 	type ProcessedFilter,
@@ -43,6 +44,10 @@ export interface IdeasPageHost {
 	openItem(item: IdeaItem): void;
 	/** Opens the note an idea was sent to. */
 	openTarget(item: IdeaItem): void;
+	/** Whether the Projects feature is on (Launch needs it). */
+	projectsEnabled(): boolean;
+	/** Launches a project seed: opens New project, then closes the seed. */
+	launch(item: IdeaItem): void;
 	/** Opens the portal. */
 	process(item: IdeaItem): void;
 	/** Drops the idea without a note, and offers Undo. */
@@ -112,6 +117,22 @@ export function createIdeasPage(host: IdeasPageHost): HubPage {
 		if (done !== null) meta.createSpan({ text: done });
 	};
 
+	/** The project seeds, one line each: the text clamped to two lines, then Launch, Drop and Open in the note. */
+	const renderSeeds = (parent: HTMLElement, seeds: IdeaItem[]): void => {
+		const group = parent.createDiv({ cls: "vaultmate-review-group" });
+		group.createDiv({ cls: "vaultmate-review-group-title", text: `Project seeds · ${seeds.length}`, attr: { role: "heading", "aria-level": "3" } });
+		const list = group.createEl("ul", { cls: "vaultmate-idea-lines" });
+		for (const item of seeds) {
+			const text = itemStatement(item) || "(no text yet)";
+			const row = list.createEl("li", { cls: "vaultmate-idea-line" });
+			const lineText = row.createSpan({ cls: "vaultmate-idea-line-text", text, attr: { title: text } });
+			const actions = row.createDiv({ cls: "vaultmate-icon-actions" });
+			if (host.projectsEnabled()) createIconButton(actions, SPRITES.actionLaunch, "Launch", () => host.launch(item), { describedBy: lineText });
+			createIconButton(actions, SPRITES.actionDrop, "Drop", () => host.drop(item), { describedBy: lineText });
+			createIconButton(actions, SPRITES.actionOpenNote, "Open in the note", () => host.openItem(item), { describedBy: lineText });
+		}
+	};
+
 	const renderProcessed = (parent: HTMLElement, items: IdeaItem[]): void => {
 		createSectionHeader(parent, "Processed");
 		const results = parent.createDiv();
@@ -175,6 +196,8 @@ export function createIdeasPage(host: IdeasPageHost): HubPage {
 				const seeds = seedLine(seedCount(items, { tag: host.tag(), subtag: host.seedSubtag() }));
 				if (seeds !== null) content.createEl("p", { cls: "vaultmate-muted", text: seeds });
 				renderToTend(content.createDiv({ cls: "vaultmate-hub-section" }), items, startOfDay());
+				const waiting = seedItems(items, { tag: host.tag(), subtag: host.seedSubtag() });
+				if (waiting.length > 0) renderSeeds(content.createDiv({ cls: "vaultmate-hub-section" }), waiting);
 				renderProcessed(content.createDiv({ cls: "vaultmate-hub-section" }), items);
 			};
 			shown = PROCESSED_PAGE;

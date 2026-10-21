@@ -1,5 +1,5 @@
 // The small forms of the projects feature: the first or next task of a track, and the status picker.
-import { SuggestModal, type App } from "obsidian";
+import { SuggestModal, type App, type TFile } from "obsidian";
 
 import { parseDate } from "../../core/dates";
 import { createChipRow, createSectionHeader } from "../../ui/components";
@@ -7,6 +7,7 @@ import { createSmallSprite } from "../../ui/pixel";
 import { JournalModal, textField } from "../journal/journal-modals";
 import { STATUS_INFO, TRACK_STATUSES, type TrackStatus } from "./project-note";
 import { TRACK_SEALS } from "./track-seals";
+import { newProjectState } from "./project-new";
 import { prefillName, trackFormState } from "./track-form";
 
 export interface TaskFormResult {
@@ -199,5 +200,70 @@ export class StatusModal extends SuggestModal<TrackStatus> {
 
 	public onChooseSuggestion(status: TrackStatus): void {
 		this.onChoose(status);
+	}
+}
+
+export interface NewProjectOptions {
+	/** Prefills the name. */
+	name: string;
+	/** The vault path a typed name means, or null when it is empty. */
+	pathFor(name: string): string | null;
+	/** The note at this path, if there is one. */
+	existing(path: string): TFile | null;
+	/** Creates the project note; null after a notice when it could not. */
+	create(path: string): Promise<TFile | null>;
+	/** The project note is ready: `created` is false when the note already existed (it was not changed). */
+	done(file: TFile, created: boolean): void;
+}
+
+/** New project: a name, then a note with the project tag. A name that exists opens that note instead. */
+export class NewProjectModal extends JournalModal {
+	private busy = false;
+
+	public constructor(
+		app: App,
+		private readonly options: NewProjectOptions,
+	) {
+		super(app);
+	}
+
+	public onOpen(): void {
+		const { contentEl, options } = this;
+		createSectionHeader(contentEl, "New project");
+		const name = textField(contentEl, "Name", { placeholder: "Name of the project" }) as HTMLInputElement;
+		name.value = options.name;
+		const hint = contentEl.createEl("p", { cls: "vaultmate-muted" });
+		const actions = contentEl.createDiv({ cls: "vaultmate-actions" });
+		const path = (): string | null => options.pathFor(name.value);
+		const send = this.button(actions, "Create project", true, () => void submit());
+		this.button(actions, "Cancel", false, () => this.close());
+		const update = (): void => {
+			const where = path();
+			const state = newProjectState(where, where !== null && options.existing(where) !== null);
+			send.setText(state.label);
+			send.disabled = state.disabled || this.busy;
+			hint.setText(state.hint);
+		};
+		const submit = async (): Promise<void> => {
+			const where = path();
+			if (where === null || send.disabled) return;
+			const found = options.existing(where);
+			this.busy = true;
+			update();
+			const file = found ?? (await options.create(where));
+			this.busy = false;
+			if (!file) {
+				update();
+				return;
+			}
+			this.written = found === null;
+			this.close();
+			options.done(file, found === null);
+		};
+		name.addEventListener("input", update);
+		this.submitOnEnter(name, () => void submit());
+		update();
+		name.focus();
+		name.select();
 	}
 }

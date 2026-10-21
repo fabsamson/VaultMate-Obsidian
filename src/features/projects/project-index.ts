@@ -5,6 +5,7 @@ import { debounce, TFile, type EventRef } from "obsidian";
 
 import type VaultMatePlugin from "../../main";
 import { readProject, trackCounts, type ProjectModel } from "./project-note";
+import { isProjectTemplate } from "./project-new";
 import { hasProjectTag } from "./project-tag";
 import { projectTags, type ProjectCounts } from "./projects-model";
 
@@ -27,8 +28,9 @@ export class ProjectIndex {
 	private readonly listeners = new Set<() => void>();
 	private readonly versions = new Map<string, number>();
 	private built = false;
-	/** The project tag the index was built for. */
+	/** The project tag and the template note the index was built for. */
 	private builtTag = "";
+	private builtTemplate = "";
 	private readonly notify = debounce(() => this.listeners.forEach((listener) => listener()), 200, true);
 
 	public constructor(private readonly plugin: VaultMatePlugin) {}
@@ -38,9 +40,10 @@ export class ProjectIndex {
 		return this.built;
 	}
 
-	/** Whether the project tag setting changed since the last build, so the index must be rebuilt. */
+	/** Whether the project tag or the template setting changed since the last build, so the index must be rebuilt. */
 	public get stale(): boolean {
-		return this.built && this.builtTag !== this.plugin.settings.projects.tag;
+		const { tag, newProjectTemplate } = this.plugin.settings.projects;
+		return this.built && (this.builtTag !== tag || this.builtTemplate !== newProjectTemplate);
 	}
 
 	/** Registers the vault events; the index stays empty until `sync` runs. */
@@ -69,6 +72,7 @@ export class ProjectIndex {
 		this.byPath.clear();
 		this.built = false;
 		this.builtTag = this.plugin.settings.projects.tag;
+		this.builtTemplate = this.plugin.settings.projects.newProjectTemplate;
 		if (this.plugin.settings.projects.enabled) {
 			await Promise.all(this.plugin.app.vault.getMarkdownFiles().map((file) => this.update(file, false)));
 			this.built = true;
@@ -104,7 +108,9 @@ export class ProjectIndex {
 		if (!this.plugin.settings.projects.enabled || (notify && !this.built) || file.extension !== "md") return;
 		const version = (this.versions.get(file.path) ?? 0) + 1;
 		this.versions.set(file.path, version);
-		if (!hasProjectTag(this.plugin.app.metadataCache.getFileCache(file)?.frontmatter, this.plugin.settings.projects.tag)) {
+		// The template note often carries the project tag, but it is not a project.
+		const { tag, newProjectTemplate } = this.plugin.settings.projects;
+		if (isProjectTemplate(file.path, newProjectTemplate) || !hasProjectTag(this.plugin.app.metadataCache.getFileCache(file)?.frontmatter, tag)) {
 			if (this.byPath.delete(file.path) && notify) this.notify();
 			return;
 		}

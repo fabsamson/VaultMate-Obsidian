@@ -12,13 +12,13 @@ import { wantsBack } from "../app-link/back-link";
 import { createIdeaBadgeExtension } from "./idea-badge";
 import { IdeaIndex } from "./idea-index";
 import { noteCandidates, parseIdeaLink, resolveIdeaLine } from "./idea-link";
-import { buildIdeaItem, canTrackAsIdea, type IdeaItem } from "./idea-line";
+import { buildIdeaItem, canTrackAsIdea, titleFromIdea, type IdeaItem } from "./idea-line";
 import { SPRITES } from "../../ui/sprites";
 import { recentLessons } from "../journal/track-record";
 import { IdeaModal, noticeWithButton, type IdeaPortalHost } from "./idea-modal";
-import { dropIdea, locateIdea, undoDrop } from "./idea-write";
+import { closeAsNewNote, dropIdea, locateIdea, undoDrop } from "./idea-write";
 import { createIdeasPage, IDEAS_PAGE_ID } from "./ideas-page";
-import { isOpenIdea, tendQueue } from "./ideas-model";
+import { isOpenIdea, itemStatement, tendQueue } from "./ideas-model";
 
 export class IdeasFeature {
 	public readonly index: IdeaIndex;
@@ -99,6 +99,8 @@ export class IdeasFeature {
 				openTarget: (item) => this.openTarget(item),
 				process: (item) => this.openPortal(item),
 				drop: (item) => void this.dropWithUndo(item),
+				projectsEnabled: () => plugin.projects.enabled(),
+				launch: (item) => this.launchSeed(item),
 				tend: (items) => this.tend(items),
 			}),
 		);
@@ -205,6 +207,7 @@ export class IdeasFeature {
 			projectsEnabled: () => plugin.projects.enabled(),
 			stampDone: () => plugin.stampMoment(SPRITES.stampDone),
 			projectNotes: () => (plugin.projects.enabled() ? plugin.projects.index.notes().map((note) => ({ path: note.path, name: note.name })) : []),
+			newProject: (name, done) => plugin.projects.newProject(name, done),
 			trackTitles: async (path) => (await plugin.projects.index.read(path))?.model.tracks.map((track) => track.title) ?? [],
 			lessons: (kind) => recentLessons(plugin.journal.index.entries(), kind),
 		};
@@ -235,6 +238,22 @@ export class IdeasFeature {
 		noticeWithButton("Idea dropped.", "Undo", () => {
 			// The dropped line is now `closed`: find it again, then put the original back.
 			void locateIdea(host, { ...located, raw: closed }).then((at) => (at ? undoDrop(host, { ...located, line: at.line }, closed) : false));
+		});
+	}
+
+	/**
+	 * Launches a project seed: New project opens with the seed's short name; once the note exists, the seed
+	 * closes as a new note (`New note: [[Project]]`) and the project note opens.
+	 */
+	private launchSeed(item: IdeaItem): void {
+		const { plugin } = this;
+		plugin.projects.newProject(titleFromIdea(itemStatement(item)), (file) => {
+			void (async () => {
+				const host = this.portalHost();
+				const located = await locateIdea(host, item);
+				if (located && (await closeAsNewNote(host, located, file, ""))) plugin.stampMoment(SPRITES.stampDone);
+				await plugin.app.workspace.getLeaf(false).openFile(file);
+			})();
 		});
 	}
 

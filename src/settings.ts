@@ -113,7 +113,7 @@ export class VaultMateSettingTab extends PluginSettingTab {
 				items: [
 					{
 						name: "Enable projects",
-						desc: "Move the tracks of a project note between statuses (explore, backlog, in progress, done, dropped), promote its ideas to tracks and convert older notes.",
+						desc: "Move the tracks of a project note between statuses (explore, backlog, in progress, done, dropped), promote its ideas to tracks and start new projects.",
 						control: { type: "toggle", key: "projects.enabled" },
 					},
 					{
@@ -125,6 +125,16 @@ export class VaultMateSettingTab extends PluginSettingTab {
 						name: "Tracks section title",
 						desc: "Heading of the Tracks section VaultMate creates in a note that has none. It needs the \u{1F9ED} symbol or the word track or tracks.",
 						control: { type: "text", key: "projects.tracksTitle", placeholder: DEFAULT_SETTINGS.projects.tracksTitle, validate: validateTracksTitle },
+					},
+					{
+						name: "Project folder",
+						desc: "Folder of the notes created by New project. Leave empty to use the vault root.",
+						control: { type: "folder", key: "projects.newProjectFolder", placeholder: "Vault root" },
+					},
+					{
+						name: "Project template",
+						desc: "Optional note used as the template of new projects. It can use {{title}} and {{date}}; VaultMate adds the project tag to its tags property. Leave empty for the built-in skeleton (Ideas and Notes sections).",
+						control: { type: "file", key: "projects.newProjectTemplate", placeholder: "Built-in skeleton", filter: (file) => file.extension === "md" },
 					},
 				],
 			},
