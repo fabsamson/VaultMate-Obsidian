@@ -89,9 +89,14 @@ function isOpenSeed(item: IdeaItem, seed: SeedFilter | undefined): boolean {
 	return seed !== undefined && isOpenIdea(item.idea) && isProjectSeed(item.raw, seed.tag, seed.subtag);
 }
 
+/** The project seeds waiting in these items, the oldest first. */
+export function seedItems(items: readonly IdeaItem[], seed: SeedFilter): IdeaItem[] {
+	return items.filter((item) => isOpenSeed(item, seed)).sort(byAge);
+}
+
 /** How many project seeds wait in these items. */
 export function seedCount(items: readonly IdeaItem[], seed: SeedFilter): number {
-	return items.filter((item) => isOpenSeed(item, seed)).length;
+	return seedItems(items, seed).length;
 }
 
 export type OpenGroups = Record<AgeGroup, IdeaItem[]>;

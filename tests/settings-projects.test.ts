@@ -14,7 +14,7 @@ describe("validateTracksTitle", () => {
 
 describe("normalizeSettings for projects", () => {
 	it("defaults to projects on with the generic title", () => {
-		expect(DEFAULT_SETTINGS.projects).toEqual({ enabled: true, tag: "project", tracksTitle: "🧭 Tracks" });
+		expect(DEFAULT_SETTINGS.projects).toEqual({ enabled: true, tag: "project", tracksTitle: "🧭 Tracks", newProjectFolder: "", newProjectTemplate: "" });
 		for (const data of [undefined, {}, { projects: null }, { projects: [] }, { projects: "x" }]) {
 			expect(normalizeSettings(data).projects).toEqual(DEFAULT_SETTINGS.projects);
 		}

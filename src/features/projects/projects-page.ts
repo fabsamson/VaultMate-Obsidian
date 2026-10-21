@@ -4,7 +4,7 @@
 import { Menu } from "obsidian";
 
 import { dueLabel, keepTogether, parseDate, startOfDay } from "../../core/dates";
-import { createDisclosure, createIconButton, createInfoPanel, createMark } from "../../ui/components";
+import { createDisclosure, createIconButton, createInfoPanel, createMark, createSpriteButton } from "../../ui/components";
 import type { HubPage, HubPageContext } from "../../ui/hub-view";
 import { createSmallSprite, type Sprite } from "../../ui/pixel";
 import { SPRITES } from "../../ui/sprites";
@@ -56,6 +56,8 @@ export interface ProjectsPageHost {
 	track(item: JournalItem): void;
 	/** Opens the note at a 0-based line. */
 	open(path: string, line: number): void;
+	/** Opens the New project form. */
+	newProject(): void;
 	/** Opens the Promote form for an idea of the project. */
 	promote(project: ProjectContent, idea: ProjectIdea): void;
 	drop(path: string, idea: ProjectIdea): void;
@@ -272,7 +274,8 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 	const render = async (body: HTMLElement, ctx: HubPageContext): Promise<void> => {
 		const notes = host.notes();
 		if (notes.length === 0) {
-			createInfoPanel(body, { sprite: SPRITES.mascotSleep, title: "No projects yet", text: `A project is a note with ${host.projectTag()} in its tags property. Run Make this note a project on a note.` });
+			const empty = createInfoPanel(body, { sprite: SPRITES.mascotSleep, title: "No projects yet", text: `A project is a note with ${host.projectTag()} in its tags property. Run Make this note a project on a note, or start a new one.` });
+			createSpriteButton(empty, { sprite: SPRITES.actionNewProject, text: "New project", cta: true }).addEventListener("click", () => host.newProject());
 			return;
 		}
 		const controls = body.createDiv({ cls: "vaultmate-switcher" });
@@ -321,6 +324,7 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 			}
 			const today = startOfDay();
 			renderDashboard(content, projects.map((entry) => summarizeProject(entry.project, entry, today, host.progressProperty(entry.project.path))), (path) => openProject(path));
+			createSpriteButton(content.createDiv({ cls: "vaultmate-hub-section" }), { sprite: SPRITES.actionNewProject, text: "New project" }).addEventListener("click", () => host.newProject());
 			if (focusTile) content.querySelector<HTMLElement>(`[data-path="${CSS.escape(focusTile)}"]`)?.focus();
 		};
 		await draw(false);

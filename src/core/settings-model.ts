@@ -30,6 +30,10 @@ export interface ProjectsSettings {
 	tag: string;
 	/** Heading text of the Tracks section the plugin creates (reading recognizes more forms). */
 	tracksTitle: string;
+	/** Folder of the notes created by New project; empty = the vault root. */
+	newProjectFolder: string;
+	/** Path of the template note for those notes; empty = the built-in skeleton. */
+	newProjectTemplate: string;
 }
 
 export interface AiSettings {
@@ -118,7 +122,7 @@ export interface VaultMateSettings {
 export const DEFAULT_SETTINGS: VaultMateSettings = {
 	journal: { enabled: true, decisionTag: "decision", predictionTag: "prediction" },
 	ideas: { enabled: true, tag: "idea", newNoteFolder: "", newNoteTemplate: "", seedSubtag: "" },
-	projects: { enabled: true, tag: "project", tracksTitle: "\u{1F9ED} Tracks" },
+	projects: { enabled: true, tag: "project", tracksTitle: "\u{1F9ED} Tracks", newProjectFolder: "", newProjectTemplate: "" },
 	ai: { enabled: true, baseUrl: "https://api.openai.com/v1", model: "gpt-5.6-luna", apiKeySecret: "", actionsFolder: "VaultMate/AI actions" },
 	aiState: { confirmed: {}, notInterested: {} },
 	collections: { folder: "", typeProperty: "type", ratingProperty: "rating" },
@@ -324,6 +328,8 @@ export function normalizeSettings(value: unknown): VaultMateSettings {
 			enabled: typeof projects.enabled === "boolean" ? projects.enabled : projectDefaults.enabled,
 			tag: typeof projects.tag === "string" && validateProjectTag(projects.tag) === undefined ? cleanProjectTag(projects.tag) : projectDefaults.tag,
 			tracksTitle: typeof projects.tracksTitle === "string" && validateTracksTitle(projects.tracksTitle) === undefined ? projects.tracksTitle.trim() : projectDefaults.tracksTitle,
+			newProjectFolder: typeof projects.newProjectFolder === "string" ? cleanFolderPath(projects.newProjectFolder) : projectDefaults.newProjectFolder,
+			newProjectTemplate: typeof projects.newProjectTemplate === "string" ? cleanFolderPath(projects.newProjectTemplate) : projectDefaults.newProjectTemplate,
 		},
 		ideas: {
 			enabled: typeof ideas.enabled === "boolean" ? ideas.enabled : ideaDefaults.enabled,

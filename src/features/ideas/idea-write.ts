@@ -223,7 +223,7 @@ async function newNoteTemplate(app: App, setting: string): Promise<string> {
 	return DEFAULT_NEW_NOTE;
 }
 
-async function createFolders(app: App, path: string): Promise<void> {
+export async function createFolders(app: App, path: string): Promise<void> {
 	const parts = path.split("/").slice(0, -1);
 	for (let i = 1; i <= parts.length; i++) {
 		const folder = parts.slice(0, i).join("/");
@@ -238,7 +238,7 @@ async function createFolders(app: App, path: string): Promise<void> {
  */
 export async function createNoteFromIdea(host: IdeaWriteHost, item: IdeaItem, name: string, note: string): Promise<NewNoteResult> {
 	const { app } = host;
-	const { newNoteFolder, newNoteTemplate: templatePath, tag } = host.settings.ideas;
+	const { newNoteFolder, newNoteTemplate: templatePath } = host.settings.ideas;
 	const statement = statementOf(item);
 	if (statement === "") {
 		new Notice("This idea has no text yet.");
@@ -273,8 +273,20 @@ export async function createNoteFromIdea(host: IdeaWriteHost, item: IdeaItem, na
 		return { status: "failed" };
 	}
 
-	const linkText = app.metadataCache.fileToLinktext(file, item.path, true);
-	const { line, subItem } = closeParts(item, tag, "new-note", formatDate(startOfDay()), linkText, note);
-	if (!(await writeEntryLine(app, item, line, subItem, undefined, null))) new Notice(`Created ${linkText}, but the idea line changed: mark it yourself.`);
+	await closeAsNewNote(host, item, file, note);
 	return { status: "created", file };
+}
+
+/**
+ * Closes the idea as `new-note` with a `New note: [[file]]` sub-item (a launched project seed closes the same
+ * way). The idea line must still be the one that was read; else a notice asks to mark it by hand. Returns
+ * whether the idea was closed.
+ */
+export async function closeAsNewNote(host: IdeaWriteHost, item: IdeaItem, file: TFile, note: string): Promise<boolean> {
+	const { app, settings } = host;
+	const linkText = app.metadataCache.fileToLinktext(file, item.path, true);
+	const { line, subItem } = closeParts(item, settings.ideas.tag, "new-note", formatDate(startOfDay()), linkText, note);
+	if (await writeEntryLine(app, item, line, subItem, undefined, null)) return true;
+	new Notice(`Created ${linkText}, but the idea line changed: mark it yourself.`);
+	return false;
 }

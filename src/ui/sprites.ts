@@ -3,10 +3,12 @@ import actionAddToNote from "../../assets/sprites/action_add_to_note.png";
 import actionCopy from "../../assets/sprites/action_copy.png";
 import actionDismiss from "../../assets/sprites/action_dismiss.png";
 import actionDrop from "../../assets/sprites/action_drop.png";
+import actionLaunch from "../../assets/sprites/action_launch.png";
 import actionLink from "../../assets/sprites/action_link.png";
 import actionLocate from "../../assets/sprites/action_locate.png";
 import actionMove from "../../assets/sprites/action_move.png";
 import actionNewNote from "../../assets/sprites/action_new_note.png";
+import actionNewProject from "../../assets/sprites/action_new_project.png";
 import actionNewTrack from "../../assets/sprites/action_new_track.png";
 import actionOpenNote from "../../assets/sprites/action_open_note.png";
 import actionPickerCaret from "../../assets/sprites/action_picker_caret.png";
@@ -80,10 +82,12 @@ export const SPRITES = {
 	actionCopy: { src: actionCopy, pixels: 16 },
 	actionDismiss: { src: actionDismiss, pixels: 16 },
 	actionDrop: { src: actionDrop, pixels: 16 },
+	actionLaunch: { src: actionLaunch, pixels: 16 },
 	actionLink: { src: actionLink, pixels: 16 },
 	actionLocate: { src: actionLocate, pixels: 16 },
 	actionMove: { src: actionMove, pixels: 16 },
 	actionNewNote: { src: actionNewNote, pixels: 16 },
+	actionNewProject: { src: actionNewProject, pixels: 16 },
 	actionNewTrack: { src: actionNewTrack, pixels: 16 },
 	actionOpenNote: { src: actionOpenNote, pixels: 16 },
 	actionPickerCaret: { src: actionPickerCaret, pixels: 16 },

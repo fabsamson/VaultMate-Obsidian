@@ -1,6 +1,6 @@
 // The projects feature: tracks and ideas of the project notes. It wires the project-note index, the hub
 // page, the writes (through the Editor for the active note, Vault.process otherwise) and the commands.
-import { debounce, Notice, type Editor, type MarkdownFileInfo, type MarkdownView } from "obsidian";
+import { debounce, normalizePath, Notice, type Editor, type MarkdownFileInfo, type MarkdownView, type TFile } from "obsidian";
 
 import { formatDate, startOfDay } from "../../core/dates";
 import { readNoteLines } from "../../core/note-write";
@@ -11,8 +11,10 @@ import { buildIdeaItem } from "../ideas/idea-line";
 import { noticeWithButton } from "../ideas/idea-modal";
 import { dropIdea as dropTaggedIdea, locateIdea, undoDrop } from "../ideas/idea-write";
 import { writeProject } from "./project-apply";
+import { createProjectNote } from "./project-create";
 import { ProjectIndex, type ProjectContent } from "./project-index";
-import { PromoteModal, StatusModal, TaskModal } from "./project-modals";
+import { NewProjectModal, PromoteModal, StatusModal, TaskModal } from "./project-modals";
+import { newProjectPath } from "./project-new";
 import { readProject, type ProjectIdea, type ProjectTrack, type TrackStatus } from "./project-note";
 import { addTrackTask, dropIdea, promoteIdea, refusalMessage, setTrackStatus, undoDropIdea, type NewTask } from "./project-write";
 import { createProjectsPage, PROJECTS_PAGE_ID } from "./projects-page";
@@ -70,6 +72,7 @@ export class ProjectsFeature {
 				openReview: (item) => plugin.journal.openReview(item),
 				track: (item) => plugin.journal.track(item),
 				open: (path, line) => this.open(path, line),
+				newProject: () => this.newProject(),
 				promote: (project, idea) => this.promoteDialog(project.path, project.model.tracks.map((track) => track.title), idea),
 				drop: (path, idea) => void this.dropIdea(path, idea),
 				move: (path, track, status) => this.move(path, track, status),
@@ -88,6 +91,24 @@ export class ProjectsFeature {
 	private open(path: string, line: number): void {
 		const file = this.plugin.app.vault.getFileByPath(path);
 		if (file) void openFileAtLine(this.plugin.app.workspace.getLeaf(false), file, line);
+	}
+
+	/**
+	 * Opens the New project form. A created note goes to `done` (default: it is opened); a name that already
+	 * exists opens that note instead and `done` is not called.
+	 */
+	public newProject(name = "", done?: (file: TFile) => void): void {
+		const { app, settings } = this.plugin;
+		new NewProjectModal(app, {
+			name,
+			pathFor: (typed) => newProjectPath(typed, settings.projects.newProjectFolder),
+			existing: (path) => app.vault.getFileByPath(normalizePath(path)),
+			create: (path) => createProjectNote(app, settings, path),
+			done: (file, created) => {
+				if (created && done) done(file);
+				else void app.workspace.getLeaf(false).openFile(file);
+			},
+		}).open();
 	}
 
 	// ---- Writes -------------------------------------------------------------------------------------
@@ -214,6 +235,16 @@ export class ProjectsFeature {
 							() => new Notice("VaultMate could not change the tags of this note."),
 						);
 				}
+				return true;
+			},
+		});
+		plugin.addCommand({
+			id: "new-project",
+			name: "New project…",
+			icon: "compass",
+			checkCallback: (checking) => {
+				if (!this.enabled()) return false;
+				if (!checking) this.newProject();
 				return true;
 			},
 		});
