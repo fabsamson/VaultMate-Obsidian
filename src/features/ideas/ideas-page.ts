@@ -1,6 +1,6 @@
 // The hub's "Ideas" page: what to tend (open ideas by age) and what became of the others.
 import { keepTogether, startOfDay } from "../../core/dates";
-import { createChipRow, createInfoPanel, createPanel, createSectionHeader } from "../../ui/components";
+import { createChipRow, createIconButton, createInfoPanel, createPanel, createSectionHeader, createSpriteButton } from "../../ui/components";
 import type { HubPage } from "../../ui/hub-view";
 import { SPRITES } from "../../ui/sprites";
 import { baseName } from "../context/note-meta";
@@ -71,11 +71,9 @@ export function createIdeasPage(host: IdeasPageHost): HubPage {
 		const open = card.createEl("button", { cls: "vaultmate-idea-statement", text: statement, attr: { type: "button", "aria-label": `Open the note at this idea: ${statement}` } });
 		open.addEventListener("click", () => host.openItem(item));
 		card.createEl("p", { cls: "vaultmate-muted", text: `in ${baseName(item.path)} · ${keepTogether(ageText(ideaAge(item.date, today)))}` });
-		const actions = card.createDiv({ cls: "vaultmate-related-actions" });
-		const process = actions.createEl("button", { cls: "vaultmate-button", text: "Process", attr: { type: "button", "aria-label": `Process idea: ${statement}` } });
-		process.addEventListener("click", () => host.process(item));
-		const drop = actions.createEl("button", { cls: "vaultmate-button", text: "Drop", attr: { type: "button", "aria-label": `Drop idea: ${statement}` } });
-		drop.addEventListener("click", () => host.drop(item));
+		const actions = card.createDiv({ cls: "vaultmate-related-actions vaultmate-icon-actions" });
+		createIconButton(actions, SPRITES.actionProcess, `Process idea: ${statement}`, () => host.process(item));
+		createIconButton(actions, SPRITES.actionDrop, `Drop idea: ${statement}`, () => host.drop(item));
 	};
 
 	const renderToTend = (parent: HTMLElement, items: IdeaItem[], today: Date): void => {
@@ -86,7 +84,7 @@ export function createIdeasPage(host: IdeasPageHost): HubPage {
 			return;
 		}
 		if (groups.fresh.length > 0) {
-			const tend = parent.createEl("button", { cls: "vaultmate-button mod-cta", text: "Tend fresh ideas", attr: { type: "button" } });
+			const tend = createSpriteButton(parent, { sprite: SPRITES.actionProcess, text: "Tend fresh ideas", cta: true });
 			tend.addEventListener("click", () => host.tend(groups.fresh));
 		}
 		for (const { group, title } of GROUPS) {

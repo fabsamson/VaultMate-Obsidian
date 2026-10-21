@@ -1,5 +1,7 @@
 // The result cards of the `suggestions` output. Everything shown has passed the guard.
-import { createPanel } from "../../ui/components";
+import { createIconButton, createPanel } from "../../ui/components";
+import { createSprite } from "../../ui/pixel";
+import { SPRITES } from "../../ui/sprites";
 import type { RatedTitle } from "./collection-profile";
 import { becauseLine, type Suggestion } from "./suggestions";
 
@@ -22,18 +24,18 @@ export function renderSuggestionCards(parent: HTMLElement, suggestions: Suggesti
 		if (because) card.createDiv({ cls: "vaultmate-suggestion-because", text: because });
 		if (suggestion.why) card.createDiv({ text: suggestion.why });
 
-		const buttons = card.createDiv({ cls: "vaultmate-suggestion-actions" });
-		const button = (text: string, onClick: () => void): HTMLButtonElement => {
-			const el = buttons.createEl("button", { cls: "vaultmate-button", text, attr: { type: "button" } });
-			el.addEventListener("click", onClick);
-			return el;
-		};
-		button("Search", () => actions.search(suggestion));
-		button("Copy title", () => actions.copyTitle(suggestion));
+		const buttons = card.createDiv({ cls: "vaultmate-suggestion-actions vaultmate-icon-actions" });
+		createIconButton(buttons, SPRITES.actionSearch, `Search: ${suggestion.title}`, () => actions.search(suggestion));
+		createIconButton(buttons, SPRITES.actionCopy, `Copy title: ${suggestion.title}`, () => actions.copyTitle(suggestion));
 		let rejected = false;
-		const toggle = button("Not interested", () => {
+		const toggle = createIconButton(buttons, SPRITES.actionDismiss, `Not interested: ${suggestion.title}`, () => {
 			rejected = !rejected;
-			toggle.setText(rejected ? "Undo" : "Not interested");
+			toggle.replaceChildren();
+			createSprite(toggle, rejected ? SPRITES.actionUndo : SPRITES.actionDismiss, 32);
+			const label = rejected ? `Undo Not interested: ${suggestion.title}` : `Not interested: ${suggestion.title}`;
+			toggle.setAttribute("aria-label", label);
+			toggle.title = label;
+			toggle.setAttribute("aria-pressed", String(rejected));
 			card.toggleClass("is-dimmed", rejected);
 			actions.setNotInterested(suggestion, rejected);
 		});

@@ -1,8 +1,8 @@
 // The hub's "New connections" page: the notes not connected yet with the context note whose ideas could
 // work with it, each with the words both use, where it is, a passage from both notes and the reasons.
-import { setIcon, setTooltip, type TFile } from "obsidian";
+import { setIcon, type TFile } from "obsidian";
 
-import { createInfoPanel, createPanel } from "../../ui/components";
+import { createIconButton, createInfoPanel, createPanel } from "../../ui/components";
 import type { HubPage } from "../../ui/hub-view";
 import { SPRITES } from "../../ui/sprites";
 import type { BuildProgress, ContextStats } from "./context-index";
@@ -134,22 +134,20 @@ function renderCards(parent: HTMLElement, host: ContextPageHost, file: TFile, co
 			}
 		}
 
-		const actions = card.createDiv({ cls: "vaultmate-related-actions" });
-		const insert = actions.createEl("button", { cls: "vaultmate-button", text: "Insert link", attr: { type: "button", "aria-label": `Insert link to ${title}` } });
-		if (canInsert) {
-			insert.addEventListener("click", () => host.insertLink(file, connection.path));
-		} else {
+		const actions = card.createDiv({ cls: "vaultmate-related-actions vaultmate-icon-actions" });
+		const insert = createIconButton(actions, SPRITES.actionLink, `Insert link to ${title}`, () => {
+			if (canInsert) host.insertLink(file, connection.path);
+		});
+		if (!canInsert) {
 			// Not `disabled`, so that the tooltip and screen readers still reach the button.
 			insert.setAttribute("aria-disabled", "true");
-			setTooltip(insert, "Open the note to insert a link");
+			insert.title = "Open the note to insert a link";
 		}
-		const copy = actions.createEl("button", { cls: "vaultmate-button", text: "Copy link", attr: { type: "button", "aria-label": `Copy link to ${title}` } });
-		copy.addEventListener("click", () => host.copyLink(file, connection.path));
-		const dismiss = actions.createEl("button", { cls: "vaultmate-button", text: "Not useful", attr: { type: "button", "aria-label": `Not useful: ${title}` } });
-		setTooltip(dismiss, "Never propose this pair of notes again");
-		dismiss.addEventListener("click", () => {
+		createIconButton(actions, SPRITES.actionCopy, `Copy link to ${title}`, () => host.copyLink(file, connection.path));
+		const dismiss = createIconButton(actions, SPRITES.actionDismiss, `Not useful: ${title}`, () => {
 			item.remove();
 			host.dismiss(file, connection.path);
 		});
+		dismiss.title = `Not useful: ${title}. Never propose this pair of notes again`;
 	}
 }

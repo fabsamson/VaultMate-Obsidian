@@ -1,6 +1,6 @@
 // The "Reviews" block of the journal page: open entries grouped by review date.
 import { dueLabel, keepTogether, parseDate, startOfDay } from "../../core/dates";
-import { createInfoPanel } from "../../ui/components";
+import { createIconButton, createInfoPanel } from "../../ui/components";
 import { createSprite } from "../../ui/pixel";
 import { SPRITES } from "../../ui/sprites";
 import type { JournalItem } from "./journal-index";
@@ -34,12 +34,10 @@ function renderRow(host: ReviewsHost, list: HTMLElement, item: JournalItem, toda
 	main.createSpan({ cls: "vaultmate-muted", text: `${noteName(item.path)} · ${due ? keepTogether(dueLabel(due, today)) : "no review date"}` });
 	main.addEventListener("click", () => host.openItem(item));
 	if (untracked) {
-		const track = row.createEl("button", { cls: "vaultmate-button", text: `Track as ${kindName(entry.kind)}`, attr: { type: "button", "aria-label": `Track as ${kindName(entry.kind)}: ${entry.statement}` } });
-		track.addEventListener("click", () => host.track(item));
+		createIconButton(row, SPRITES.actionTrack, `Track as ${kindName(entry.kind)}: ${entry.statement}`, () => host.track(item));
 		return;
 	}
-	const review = row.createEl("button", { cls: "vaultmate-button", text: "Review", attr: { type: "button", "aria-label": `Review ${kindName(entry.kind)}: ${entry.statement}` } });
-	review.addEventListener("click", () => host.openReview(item));
+	createIconButton(row, SPRITES.actionReview, `Review ${kindName(entry.kind)}: ${entry.statement}`, () => host.openReview(item));
 }
 
 /** Returns the function that draws the reviews of `items` (open entries of one kind) into a body. */

@@ -4,9 +4,9 @@
 import { Menu } from "obsidian";
 
 import { dueLabel, keepTogether, parseDate, startOfDay } from "../../core/dates";
-import { createDisclosure, createInfoPanel } from "../../ui/components";
+import { createDisclosure, createIconButton, createInfoPanel, createMark, createSpriteButton } from "../../ui/components";
 import type { HubPage, HubPageContext } from "../../ui/hub-view";
-import { createSmallSprite, createSprite, type Sprite } from "../../ui/pixel";
+import { createSmallSprite, type Sprite } from "../../ui/pixel";
 import { SPRITES } from "../../ui/sprites";
 import type { JournalItem } from "../journal/journal-index";
 import { isUntracked, kindName } from "../journal/journal-line";
@@ -67,6 +67,8 @@ const SEALS = TRACK_SEALS;
 
 /** Seals and sprites of headings, chips and counters are 16 px. */
 const SMALL = 16;
+/** The mark of each section chip: a track status chip shows its seal. */
+const CHIP_SPRITES: Record<SectionId, Sprite> = { ideas: SPRITES.stateIdea, reviews: SPRITES.actionReview, closed: SEALS.done, progress: SEALS.progress, backlog: SEALS.backlog, explore: SEALS.explore };
 /** The open statuses, in the order of the page. */
 const OPEN_STATUSES = ["progress", "backlog", "explore"] as const;
 
@@ -84,15 +86,6 @@ interface ProjectView {
 export function createProjectsPage(host: ProjectsPageHost): HubPage {
 	let showOther = false;
 	let showClosed = false;
-
-	const button = (parent: HTMLElement, text: string, label: string, cta = false): HTMLButtonElement =>
-		parent.createEl("button", { cls: cta ? "vaultmate-button mod-cta" : "vaultmate-button", text, attr: { type: "button", "aria-label": label } });
-
-	const iconButton = (parent: HTMLElement, sprite: Sprite, label: string, onClick: () => void): void => {
-		const icon = parent.createEl("button", { cls: "vaultmate-icon-button", attr: { type: "button", "aria-label": label, title: label } });
-		createSprite(icon, sprite, 32);
-		icon.addEventListener("click", onClick);
-	};
 
 	const sealCounter = (parent: HTMLElement, status: TrackStatus, count: number): void => {
 		const counter = parent.createSpan({ cls: "vaultmate-seal-count", attr: { role: "img", "aria-label": `${count} ${STATUS_INFO[status].label.toLowerCase()}` } });
@@ -148,23 +141,23 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 	const sectionTitle = (parent: HTMLElement, id: string, sprite: Sprite, text: string): HTMLElement => {
 		const section = parent.createDiv({ cls: "vaultmate-project-section", attr: { "data-section": id } });
 		const title = section.createDiv({ cls: "vaultmate-project-section-title", attr: { role: "heading", "aria-level": "3" } });
-		createSmallSprite(title, sprite, SMALL);
+		createMark(title, sprite, SMALL);
 		title.createSpan({ text });
 		return section;
 	};
 
 	const renderIdeas = (parent: HTMLElement, project: ProjectContent): HTMLElement => {
 		const { ideas } = project.model;
-		const section = sectionTitle(parent, "ideas", SPRITES.moduleIdea, `Ideas · ${ideas.length}`);
+		const section = sectionTitle(parent, "ideas", SPRITES.stateIdea, `Ideas · ${ideas.length}`);
 		const list = section.createEl("ul", { cls: "vaultmate-idea-lines" });
 		for (const idea of ideas) {
 			const text = idea.text || "(no text yet)";
 			const row = list.createEl("li", { cls: "vaultmate-idea-line" });
 			row.createSpan({ cls: "vaultmate-idea-line-text", text, attr: { title: text } });
 			const actions = row.createDiv({ cls: "vaultmate-icon-actions" });
-			iconButton(actions, SPRITES.actionPromote, `Promote idea to a track: ${text}`, () => host.promote(project, idea));
-			iconButton(actions, SPRITES.actionDrop, `Drop idea: ${text}`, () => host.drop(project.path, idea));
-			iconButton(actions, SPRITES.actionOpenNote, `Open the note at this idea: ${text}`, () => host.open(project.path, idea.line));
+			createIconButton(actions, SPRITES.actionPromote, `Promote idea to a track: ${text}`, () => host.promote(project, idea));
+			createIconButton(actions, SPRITES.actionDrop, `Drop idea: ${text}`, () => host.drop(project.path, idea));
+			createIconButton(actions, SPRITES.actionOpenNote, `Open the note at this idea: ${text}`, () => host.open(project.path, idea.line));
 		}
 		return section;
 	};
@@ -173,7 +166,7 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 	const renderEntry = (parent: HTMLElement, item: JournalItem, projectPath: string, today: Date): void => {
 		const { entry } = item;
 		const row = parent.createDiv({ cls: "vaultmate-entry-line" });
-		createSmallSprite(row, entry.kind === "decision" ? SPRITES.moduleDecision : SPRITES.modulePrediction, SMALL);
+		createMark(row, entry.kind === "decision" ? SPRITES.stateDecision : SPRITES.statePrediction, SMALL);
 		const main = row.createEl("button", { cls: "vaultmate-entry-main", attr: { type: "button", "aria-label": `Open the note at this ${kindName(entry.kind)}: ${entry.statement}` } });
 		main.createSpan({ cls: "vaultmate-entry-statement", text: entry.statement || "(no text)" });
 		const due = entry.due === null ? null : parseDate(entry.due);
@@ -181,11 +174,10 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		main.createSpan({ cls: "vaultmate-muted vaultmate-entry-due", text: `${where}${due ? keepTogether(dueLabel(due, today)) : "not tracked yet"}` });
 		main.addEventListener("click", () => host.open(item.path, item.line));
 		if (isUntracked(entry)) {
-			const label = `Track as ${kindName(entry.kind)}`;
-			button(row, label, `${label}: ${entry.statement}`).addEventListener("click", () => host.track(item));
+			createIconButton(row, SPRITES.actionTrack, `Track as ${kindName(entry.kind)}: ${entry.statement}`, () => host.track(item));
 			return;
 		}
-		button(row, "Review", `Review ${kindName(entry.kind)}: ${entry.statement}`).addEventListener("click", () => host.openReview(item));
+		createIconButton(row, SPRITES.actionReview, `Review ${kindName(entry.kind)}: ${entry.statement}`, () => host.openReview(item));
 	};
 
 	const renderTrack = (parent: HTMLElement, view: ProjectView, index: number, today: Date): void => {
@@ -199,9 +191,8 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		main.createSpan({ cls: "vaultmate-muted vaultmate-track-meta", text: taskSummary(track) });
 		const actions = row.createDiv({ cls: "vaultmate-track-actions" });
 		const primary = primaryAction(track.status);
-		button(actions, primary.label, `${primary.label}: ${track.title}`, true).addEventListener("click", () => host.move(project.path, track, primary.target));
-		const more = actions.createEl("button", { cls: "vaultmate-icon-button vaultmate-more", text: "⋯", attr: { type: "button", "aria-label": `More for ${track.title}`, title: "More" } });
-		more.addEventListener("click", (event) =>
+		createSpriteButton(actions, { sprite: SEALS[primary.target], text: primary.label, label: `${primary.label}: ${track.title}`, cta: true }).addEventListener("click", () => host.move(project.path, track, primary.target));
+		createIconButton(actions, SPRITES.actionMore, `More for ${track.title}`, (event) =>
 			menuAt(event, (menu) => {
 				menu.addItem((item) => item.setTitle("Move to…").onClick(() => menuAt(event, (moves) => {
 					for (const status of moveTargets(track.status)) moves.addItem((entry) => entry.setTitle(STATUS_INFO[status].label).onClick(() => host.move(project.path, track, status)));
@@ -212,7 +203,7 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		if (needsNextTask(track)) {
 			const flag = card.createDiv({ cls: "vaultmate-track-nonext" });
 			flag.createSpan({ cls: "vaultmate-track-flag", text: "No next task" });
-			button(flag, "Add task", `Add a task to ${track.title}`).addEventListener("click", () => host.addTask(project.path, track));
+			createIconButton(flag, SPRITES.actionAddTask, `Add a task to ${track.title}`, () => host.addTask(project.path, track));
 		}
 		for (const item of view.byTrack[index] ?? []) renderEntry(card, item, project.path, today);
 	};
@@ -246,7 +237,7 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 			sections.set(status, section);
 		}
 		if (view.outside.length > 0) {
-			const section = sectionTitle(page, "reviews", SPRITES.moduleDecision, `Reviews · ${view.outside.length}`);
+			const section = sectionTitle(page, "reviews", SPRITES.actionReview, `Reviews · ${view.outside.length}`);
 			for (const item of view.outside) renderEntry(section, item, project.path, today);
 			sections.set("reviews", section);
 		}
@@ -265,10 +256,8 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		for (const chip of chips) {
 			const label = chip.id === "ideas" ? `Ideas · ${chip.count}` : chip.id === "reviews" ? `Reviews · ${chip.count}` : chip.id === "closed" ? `Closed tracks · ${chip.count}` : `${STATUS_INFO[chip.id].label} · ${chip.count}`;
 			const element = chipRow.createEl("button", { cls: "vaultmate-button vaultmate-section-chip", attr: { type: "button", "aria-label": `Go to ${label}`, title: label } });
-			if (chip.id === "progress" || chip.id === "backlog" || chip.id === "explore") {
-				createSmallSprite(element, SEALS[chip.id], SMALL);
-				element.createSpan({ text: String(chip.count) });
-			} else element.setText(label);
+			createMark(element, CHIP_SPRITES[chip.id], SMALL);
+			element.createSpan({ text: String(chip.count) });
 			element.addEventListener("click", () => {
 				if (chip.id === "closed") {
 					showClosed = true;

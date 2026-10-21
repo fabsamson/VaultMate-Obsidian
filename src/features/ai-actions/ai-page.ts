@@ -1,6 +1,6 @@
 // The hub's "AI actions" page: the valid actions as compact cards.
 import type { HubPage } from "../../ui/hub-view";
-import { createInfoPanel, createPanel } from "../../ui/components";
+import { createIconButton, createInfoPanel, createPanel } from "../../ui/components";
 import { SPRITES } from "../../ui/sprites";
 import type { ActionDefinition, ActionEntry } from "./definition";
 import { createActionIcon } from "./run-modal";
@@ -47,8 +47,7 @@ export function createAiPage(host: AiPageHost): HubPage {
 				const text = card.createDiv({ cls: "vaultmate-action-text" });
 				text.createDiv({ cls: "vaultmate-action-name", text: action.name });
 				if (action.description) text.createDiv({ cls: "vaultmate-muted", text: action.description });
-				const run = card.createEl("button", { cls: "vaultmate-button", text: "Run", attr: { type: "button", "aria-label": `Run ${action.name}` } });
-				run.addEventListener("click", () => host.run(action));
+				createIconButton(card, SPRITES.actionRun, `Run ${action.name}`, () => host.run(action));
 			}
 			if (invalid > 0) body.createEl("p", { cls: "vaultmate-muted", text: `${invalid} unavailable action${invalid === 1 ? "" : "s"}. Run Open AI actions to see why.` });
 		},

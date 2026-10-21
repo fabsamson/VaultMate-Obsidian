@@ -1,6 +1,6 @@
 // The hub's "Places" page: the location of the context note, and the ways to set it.
 import type { HubPage } from "../../ui/hub-view";
-import { createInfoPanel, createPanel } from "../../ui/components";
+import { createInfoPanel, createPanel, createSpriteButton } from "../../ui/components";
 import { SPRITES } from "../../ui/sprites";
 import { openStreetMapUrl, type LatLng } from "./nominatim";
 
@@ -55,9 +55,9 @@ export function createLocationPage(host: LocationPageHost): HubPage {
 				panel.createEl("p", { cls: "vaultmate-empty-title", text: "No location yet" });
 			}
 			const actions = body.createDiv({ cls: "vaultmate-actions" });
-			actions.createEl("button", { cls: "vaultmate-button mod-cta", text: "Search a place", attr: { type: "button" } }).addEventListener("click", () => host.search());
+			createSpriteButton(actions, { sprite: SPRITES.actionSearch, text: "Search a place", cta: true }).addEventListener("click", () => host.search());
 			if (host.canAddCurrent()) {
-				actions.createEl("button", { cls: "vaultmate-button", text: "Add current location", attr: { type: "button" } }).addEventListener("click", () => host.addCurrent());
+				createSpriteButton(actions, { sprite: SPRITES.actionLocate, text: "Add current location" }).addEventListener("click", () => host.addCurrent());
 			}
 		},
 	};
