@@ -210,6 +210,8 @@ export class HubView extends ItemView {
 		};
 		let help: { id: string; button: HTMLElement } | null = null;
 		const setGuide = (id: string | null): void => {
+			// A redraw that was overtaken by a newer one must not start a timer for its page.
+			if (!bar.isConnected) return;
 			this.clearGuideTimer();
 			if (help?.id !== id) {
 				help?.button.remove();
