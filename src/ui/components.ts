@@ -1,6 +1,41 @@
 // Reusable DOM pieces in VaultMate's look (styles.css). Parents must sit inside a `.vaultmate` element
 // (the hub, or a modal whose `modalEl` has the class) so the palette tokens apply.
 import { createSmallSprite, createSprite, type Sprite } from "./pixel";
+import { SPRITES } from "./sprites";
+
+/** A mark of `cssPixels`: a 16 px source is drawn crisp, a larger one (a 48 px seal) is shrunk smoothed. */
+export function createMark(parent: HTMLElement, sprite: Sprite, cssPixels: number): HTMLImageElement {
+	return sprite.pixels <= cssPixels ? createSprite(parent, sprite, cssPixels) : createSmallSprite(parent, sprite, cssPixels);
+}
+
+/**
+ * An icon-only button for an action repeated on each row of a list: a 16 px sprite drawn crisp at 32 px in a
+ * 40 px target (44 px on a phone). `label` names the action and its object; it is also the tooltip.
+ */
+export function createIconButton(parent: HTMLElement, sprite: Sprite, label: string, onClick: (event: MouseEvent) => void): HTMLButtonElement {
+	const button = parent.createEl("button", { cls: "vaultmate-icon-button", attr: { type: "button", "aria-label": label, title: label } });
+	createSprite(button, sprite, 32);
+	button.addEventListener("click", onClick);
+	return button;
+}
+
+export interface SpriteButtonOptions {
+	sprite: Sprite;
+	text: string;
+	/** Accessible name when it must say more than `text`. */
+	label?: string;
+	/** The filled style of the main action. */
+	cta?: boolean;
+}
+
+/** A button with a 16 px sprite before its word, for a page's main actions. */
+export function createSpriteButton(parent: HTMLElement, options: SpriteButtonOptions): HTMLButtonElement {
+	const button = parent.createEl("button", { cls: options.cta ? "vaultmate-button vaultmate-sprite-button mod-cta" : "vaultmate-button vaultmate-sprite-button", attr: { type: "button" } });
+	if (options.label) button.setAttribute("aria-label", options.label);
+	createMark(button, options.sprite, 16);
+	button.createSpan({ text: options.text });
+	return button;
+}
 
 /** Small capitals label and a rule (SectionHeader.kt). */
 export function createSectionHeader(parent: HTMLElement, label: string): HTMLElement {
@@ -59,6 +94,8 @@ export interface Choice<T extends string> {
 	label: string;
 	/** A 16 px mark before the label (a status seal); the label still carries the meaning. */
 	sprite?: Sprite;
+	/** Why the choice cannot be picked now (its tooltip); it stays visible but the keyboard skips it. */
+	disabled?: string;
 }
 
 export interface ChoiceGroupOptions<T extends string> {
@@ -76,19 +113,29 @@ export interface ChoiceGroup<T extends string> {
 	setValue(value: T | null): void;
 }
 
-/** Index to focus after an arrow, Home or End key in a radio group, or null for any other key. Arrows wrap. */
-export function nextChoiceIndex(key: string, current: number, count: number): number | null {
+/**
+ * Index to focus after an arrow, Home or End key in a radio group, or null for any other key (or when no
+ * option can take focus). Arrows wrap; options flagged in `disabled` are skipped.
+ */
+export function nextChoiceIndex(key: string, current: number, count: number, disabled: readonly boolean[] = []): number | null {
+	const from = (start: number, step: number): number | null => {
+		for (let tried = 0; tried < count; tried++) {
+			const index = (((start + step * tried) % count) + count) % count;
+			if (!disabled[index]) return index;
+		}
+		return null;
+	};
 	switch (key) {
 		case "ArrowRight":
 		case "ArrowDown":
-			return (current + 1) % count;
+			return from(current + 1, 1);
 		case "ArrowLeft":
 		case "ArrowUp":
-			return (current - 1 + count) % count;
+			return from(current - 1, -1);
 		case "Home":
-			return 0;
+			return from(0, 1);
 		case "End":
-			return count - 1;
+			return from(count - 1, -1);
 		default:
 			return null;
 	}
@@ -99,23 +146,27 @@ function createChoiceGroup<T extends string>(parent: HTMLElement, groupCls: stri
 	let value = options.value;
 	const buttons = options.choices.map((choice) => {
 		const button = el.createEl("button", { cls: "vaultmate-choice-option", attr: { type: "button", role: "radio" } });
-		if (choice.sprite) createSmallSprite(button, choice.sprite, 16);
+		if (choice.disabled) button.setAttr("aria-disabled", "true");
+		if (choice.disabled) button.setAttr("title", choice.disabled);
+		if (choice.sprite) createMark(button, choice.sprite, 16);
 		button.createSpan({ text: choice.label });
 		return button;
 	});
+	const disabled = options.choices.map((choice) => !!choice.disabled);
+	const firstEnabled = disabled.indexOf(false);
 
 	// Roving tabindex: one tab stop per group, on the selected option (or the first when none is selected).
 	const sync = (): void => {
 		const selected = options.choices.findIndex((choice) => choice.value === value);
 		buttons.forEach((button, index) => {
 			button.setAttribute("aria-checked", String(index === selected));
-			button.tabIndex = index === (selected < 0 ? 0 : selected) ? 0 : -1;
+			button.tabIndex = index === (selected < 0 || disabled[selected] ? firstEnabled : selected) ? 0 : -1;
 			button.toggleClass("is-selected", index === selected);
 		});
 	};
 	const select = (index: number): void => {
 		const choice = options.choices[index];
-		if (!choice) return;
+		if (!choice || disabled[index]) return;
 		value = choice.value;
 		sync();
 		options.onChange(choice.value);
@@ -124,7 +175,7 @@ function createChoiceGroup<T extends string>(parent: HTMLElement, groupCls: stri
 	buttons.forEach((button, index) => {
 		button.addEventListener("click", () => select(index));
 		button.addEventListener("keydown", (event) => {
-			const next = nextChoiceIndex(event.key, index, buttons.length);
+			const next = nextChoiceIndex(event.key, index, buttons.length, disabled);
 			if (next === null) return;
 			event.preventDefault();
 			buttons[next]?.focus();
@@ -160,9 +211,11 @@ export interface Disclosure {
 	setOpen(open: boolean): void;
 }
 
-/** A toggle button (`aria-expanded`, a triangle that turns) that shows or hides a block. The label stays the same. */
+/** A toggle button (`aria-expanded`, a pixel caret that turns a quarter) that shows or hides a block. The label stays the same. */
 export function createDisclosure(parent: HTMLElement, options: { label: string; open?: boolean; onToggle?: (open: boolean) => void }): Disclosure {
-	const button = parent.createEl("button", { cls: "vaultmate-link vaultmate-disclosure", text: options.label, attr: { type: "button", "aria-expanded": "false" } });
+	const button = parent.createEl("button", { cls: "vaultmate-link vaultmate-disclosure", attr: { type: "button", "aria-expanded": "false" } });
+	createSprite(button, SPRITES.actionPickerCaret, 16);
+	button.createSpan({ text: options.label });
 	const body = parent.createDiv();
 	const setOpen = (open: boolean): void => {
 		button.setAttribute("aria-expanded", String(open));

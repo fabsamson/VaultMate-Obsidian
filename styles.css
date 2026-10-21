@@ -209,6 +209,21 @@
 	gap: var(--size-4-2);
 }
 
+/* A long label (This note and sub-notes) wraps inside its chip, next to its sprite. */
+.vaultmate-chips .vaultmate-choice-option {
+	text-align: left;
+}
+
+.vaultmate-choice-option .vaultmate-sprite {
+	flex: none;
+}
+
+/* A choice that does not apply stays visible, dimmed, with its reason as tooltip. */
+.vaultmate-choice-option[aria-disabled="true"] {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
 /* Modal forms: labelled fields, actions and the read-only context of a review. */
 .vaultmate-field {
 	display: flex;
@@ -282,6 +297,12 @@
 	cursor: not-allowed;
 }
 
+.vaultmate-sprite-button {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--size-4-2);
+}
+
 .vaultmate-button:focus-visible,
 .vaultmate-link:focus-visible,
 .vaultmate-review-main:focus-visible {
@@ -328,7 +349,7 @@
 	flex-wrap: wrap;
 	align-items: center;
 	gap: var(--size-4-2);
-	padding: var(--size-4-1) 0;
+	padding: 2px 0;
 	border-bottom: 1px solid var(--vaultmate-rule);
 }
 
@@ -360,10 +381,9 @@
 	background-color: var(--vaultmate-surface);
 }
 
-.vaultmate-review-row > .vaultmate-button {
-	flex: none;
-	width: auto;
-	height: auto;
+.vaultmate-review-row > .vaultmate-icon-button,
+.vaultmate-review-row > .vaultmate-icon-actions {
+	margin-left: auto;
 }
 
 .vaultmate-review-statement {
@@ -755,8 +775,7 @@ button.vaultmate-badge:focus-visible {
 }
 
 .vaultmate-tile:focus-visible,
-.vaultmate-back:focus-visible,
-.vaultmate-scope:focus-visible {
+.vaultmate-back:focus-visible {
 	outline: 2px solid var(--vaultmate-seal);
 	outline-offset: 2px;
 }
@@ -810,11 +829,6 @@ button.vaultmate-badge:focus-visible {
 
 .vaultmate-switcher .vaultmate-muted {
 	margin: 0;
-}
-
-.vaultmate-scope {
-	width: 100%;
-	min-height: 40px;
 }
 
 /* Location: search row and result list. */
@@ -995,11 +1009,6 @@ button.vaultmate-badge:focus-visible {
 	flex-wrap: wrap;
 	gap: var(--size-4-2);
 	margin-top: var(--size-4-3);
-}
-
-.vaultmate-related-actions > .vaultmate-button {
-	width: auto;
-	height: auto;
 }
 
 .vaultmate-button[aria-disabled="true"] {
@@ -1364,6 +1373,11 @@ button.vaultmate-badge:focus-visible {
 	background-color: var(--vaultmate-surface-raised);
 }
 
+.vaultmate-icon-button[aria-disabled="true"] {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
 .vaultmate-icon-button:focus-visible {
 	outline: 2px solid var(--vaultmate-seal);
 	outline-offset: -2px;
@@ -1451,12 +1465,6 @@ button.vaultmate-badge:focus-visible {
 	border-bottom: 1px solid var(--vaultmate-rule);
 }
 
-.vaultmate .vaultmate-entry-line > .vaultmate-button {
-	flex: none;
-	width: auto;
-	height: auto;
-}
-
 .vaultmate button.vaultmate-entry-main,
 .is-mobile .vaultmate button.vaultmate-entry-main {
 	display: flex;
@@ -1501,12 +1509,20 @@ button.vaultmate-badge:focus-visible {
 	justify-content: flex-start;
 }
 
-.vaultmate-disclosure::before {
-	content: "\25B8\00a0";
+.vaultmate .vaultmate-disclosure {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--size-4-1);
 }
 
-.vaultmate-disclosure[aria-expanded="true"]::before {
-	content: "\25BE\00a0";
+/* The caret sprite points down: a quarter turn makes it point right while closed (no transition, so no motion to reduce). */
+.vaultmate-disclosure .vaultmate-sprite {
+	flex: none;
+	transform: rotate(-90deg);
+}
+
+.vaultmate-disclosure[aria-expanded="true"] .vaultmate-sprite {
+	transform: none;
 }
 
 /* A hidden row (the actions behind More…) must not be shown by the flex layout, and it sits close under the first row. */

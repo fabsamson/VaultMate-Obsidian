@@ -1,6 +1,19 @@
+import actionAddTask from "../../assets/sprites/action_add_task.png";
+import actionCopy from "../../assets/sprites/action_copy.png";
+import actionDismiss from "../../assets/sprites/action_dismiss.png";
 import actionDrop from "../../assets/sprites/action_drop.png";
+import actionLink from "../../assets/sprites/action_link.png";
+import actionLocate from "../../assets/sprites/action_locate.png";
+import actionMore from "../../assets/sprites/action_more.png";
 import actionOpenNote from "../../assets/sprites/action_open_note.png";
+import actionPickerCaret from "../../assets/sprites/action_picker_caret.png";
+import actionProcess from "../../assets/sprites/action_process.png";
 import actionPromote from "../../assets/sprites/action_promote.png";
+import actionReview from "../../assets/sprites/action_review.png";
+import actionRun from "../../assets/sprites/action_run.png";
+import actionSearch from "../../assets/sprites/action_search.png";
+import actionTrack from "../../assets/sprites/action_track.png";
+import actionUndo from "../../assets/sprites/action_undo.png";
 import heroDay from "../../assets/sprites/hero_day.png";
 import heroEvening from "../../assets/sprites/hero_evening.png";
 import heroMorning from "../../assets/sprites/hero_morning.png";
@@ -33,9 +46,9 @@ import moduleContext from "../../assets/sprites/module_context.png";
 import moduleDecision from "../../assets/sprites/module_decision.png";
 import moduleIdea from "../../assets/sprites/module_idea.png";
 import moduleLocation from "../../assets/sprites/module_location.png";
+import modulePrediction from "../../assets/sprites/module_prediction.png";
 import moduleProjects from "../../assets/sprites/module_projects.png";
 import moduleQuestions from "../../assets/sprites/module_questions.png";
-import modulePrediction from "../../assets/sprites/module_prediction.png";
 import patternSeigaiha from "../../assets/sprites/pattern_seigaiha.png";
 import sealTrackBacklog from "../../assets/sprites/seal_track_backlog.png";
 import sealTrackDone from "../../assets/sprites/seal_track_done.png";
@@ -46,23 +59,42 @@ import stampDone from "../../assets/sprites/stamp_done.png";
 import stampHit from "../../assets/sprites/stamp_hit.png";
 import stampMiss from "../../assets/sprites/stamp_miss.png";
 import stampReview from "../../assets/sprites/stamp_review.png";
+import stateDecision from "../../assets/sprites/state_decision.png";
+import stateIdea from "../../assets/sprites/state_idea.png";
+import statePrediction from "../../assets/sprites/state_prediction.png";
+import stateScopeNote from "../../assets/sprites/state_scope_note.png";
+import stateScopeTree from "../../assets/sprites/state_scope_tree.png";
+import stateScopeVault from "../../assets/sprites/state_scope_vault.png";
 
 import type { Sprite } from "./pixel";
 
 // Sprites are drawn and built in obsidian_widget/tools/sprites; `npm run sync-sprites` copies them here.
 export const SPRITES = {
+	actionAddTask: { src: actionAddTask, pixels: 16 },
+	actionCopy: { src: actionCopy, pixels: 16 },
+	actionDismiss: { src: actionDismiss, pixels: 16 },
 	actionDrop: { src: actionDrop, pixels: 16 },
+	actionLink: { src: actionLink, pixels: 16 },
+	actionLocate: { src: actionLocate, pixels: 16 },
+	actionMore: { src: actionMore, pixels: 16 },
 	actionOpenNote: { src: actionOpenNote, pixels: 16 },
+	actionPickerCaret: { src: actionPickerCaret, pixels: 16 },
+	actionProcess: { src: actionProcess, pixels: 16 },
 	actionPromote: { src: actionPromote, pixels: 16 },
+	actionReview: { src: actionReview, pixels: 16 },
+	actionRun: { src: actionRun, pixels: 16 },
+	actionSearch: { src: actionSearch, pixels: 16 },
+	actionTrack: { src: actionTrack, pixels: 16 },
+	actionUndo: { src: actionUndo, pixels: 16 },
 	mascotSleep: { src: mascotSleep, pixels: 48 },
 	mascotTea: { src: mascotTea, pixels: 48 },
 	moduleContext: { src: moduleContext, pixels: 24 },
 	moduleDecision: { src: moduleDecision, pixels: 24 },
 	moduleIdea: { src: moduleIdea, pixels: 24 },
 	moduleLocation: { src: moduleLocation, pixels: 24 },
+	modulePrediction: { src: modulePrediction, pixels: 24 },
 	moduleProjects: { src: moduleProjects, pixels: 24 },
 	moduleQuestions: { src: moduleQuestions, pixels: 24 },
-	modulePrediction: { src: modulePrediction, pixels: 24 },
 	patternSeigaiha: { src: patternSeigaiha, pixels: 16 },
 	sealTrackBacklog: { src: sealTrackBacklog, pixels: 48 },
 	sealTrackDone: { src: sealTrackDone, pixels: 48 },
@@ -73,6 +105,12 @@ export const SPRITES = {
 	stampHit: { src: stampHit, pixels: 20 },
 	stampMiss: { src: stampMiss, pixels: 20 },
 	stampReview: { src: stampReview, pixels: 20 },
+	stateDecision: { src: stateDecision, pixels: 16 },
+	stateIdea: { src: stateIdea, pixels: 16 },
+	statePrediction: { src: statePrediction, pixels: 16 },
+	stateScopeNote: { src: stateScopeNote, pixels: 16 },
+	stateScopeTree: { src: stateScopeTree, pixels: 16 },
+	stateScopeVault: { src: stateScopeVault, pixels: 16 },
 } satisfies Record<string, Sprite>;
 
 /**
