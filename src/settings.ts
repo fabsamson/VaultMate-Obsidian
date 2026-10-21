@@ -38,6 +38,11 @@ export class VaultMateSettingTab extends PluginSettingTab {
 						desc: "Animate the scene at the top of the VaultMate panel and the stamp that lands when you close a review, sort an idea or finish a track. They are always still when your system asks for reduced motion.",
 						control: { type: "toggle", key: "ui.animations" },
 					},
+					{
+						name: "Open page guides on first visit",
+						desc: "Open the guide of a page of the VaultMate panel by itself the first time you visit it. The ? button at the top right of the page always opens it.",
+						control: { type: "toggle", key: "guides.autoOpen" },
+					},
 				],
 			},
 			{
