@@ -10,6 +10,7 @@ import { SPRITES } from "../../ui/sprites";
 import type { Sprite } from "../../ui/pixel";
 import type { JournalKind } from "../journal/journal-line";
 import { JournalModal, NewEntryModal, textField } from "../journal/journal-modals";
+import type { LessonHint } from "../journal/track-record";
 import { addTrackFields } from "../projects/project-modals";
 import { prefillName } from "../projects/track-form";
 import { ideaAge, titleFromIdea, type IdeaItem } from "./idea-line";
@@ -41,6 +42,8 @@ export interface IdeaPortalHost extends IdeaWriteHost {
 	projectNotes(): ProjectChoice[];
 	/** The titles of the tracks of a project note, to warn about a repeated name. */
 	trackTitles(path: string): Promise<string[]>;
+	/** The latest lessons of the journal for `kind`, for the New decision and New prediction forms. */
+	lessons(kind: JournalKind): LessonHint[];
 }
 
 /** A notice with one button, for a few seconds (Undo after a drop, Open after a note was created). */
@@ -211,7 +214,7 @@ export class IdeaModal extends JournalModal {
 
 	/** Decision and Prediction open the journal form over the portal, prefilled with the idea. */
 	private openJournal(kind: JournalKind, statement: string): void {
-		new NewEntryModal(this.app, kind, (result) => void this.run((located) => trackIdeaAs(this.host, located, kind, result), () => undefined), statement).open();
+		new NewEntryModal(this.app, kind, (result) => void this.run((located) => trackIdeaAs(this.host, located, kind, result), () => undefined), statement, this.host.lessons(kind)).open();
 	}
 
 	private renderPanel(panel: HTMLElement, action: PortalAction, item: IdeaItem, statement: string): void {

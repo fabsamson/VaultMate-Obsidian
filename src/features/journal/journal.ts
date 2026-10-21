@@ -30,6 +30,7 @@ import {
 	type JournalTags,
 } from "./journal-line";
 import { NewEntryModal, ReviewModal, TrackModal, type ReviewInput } from "./journal-modals";
+import { recentLessons } from "./track-record";
 import { getChildren, isEmptyLine, newEntryLines, replaceEmptyLineText, reviewItemText, usesTabs } from "./journal-note";
 import { writeEntryLine } from "./journal-write";
 import { resolveReviewLine } from "./review-link";
@@ -189,7 +190,7 @@ export class JournalFeature {
 				editor.replaceRange(replaceEmptyLineText(current, next, lines), { line: lineNo, ch: 0 }, { line: lineNo, ch: current.length });
 			} else editor.replaceRange(`\n${lines.join("\n")}`, { line: lineNo, ch: current.length });
 			new Notice(`${kind === "decision" ? "Decision" : "Prediction"} added.`);
-		}).open();
+		}, "", recentLessons(this.index.entries(), kind)).open();
 	}
 
 	// ---- Track a line -------------------------------------------------------------------------------

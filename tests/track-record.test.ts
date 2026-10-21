@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { parseJournalLine, type JournalEntry } from "../src/features/journal/journal-line";
-import { computeTrackRecord, decisionStats, parseLesson, predictionStats } from "../src/features/journal/track-record";
+import { computeTrackRecord, decisionStats, parseLesson, predictionStats, recentLessons } from "../src/features/journal/track-record";
 
 const TAGS = { decisionTag: "decision", predictionTag: "prediction" };
 
@@ -140,5 +140,26 @@ describe("computeTrackRecord", () => {
 		const record = computeTrackRecord([]);
 		expect(record).toMatchObject({ lessons: [], reviewsDone: 0 });
 		expect(record.predictions.brier).toBeNull();
+	});
+});
+
+describe("recentLessons", () => {
+	const item = (line: string, review: string): { entry: JournalEntry; children: string[] } => ({ entry: entry(line), children: [review] });
+	const items = [
+		item("- [x] First pick #decision [outcome: as-expected] [quality: good]", "Review 2026-01-10: ok. Lesson: sleep on it."),
+		item("- [x] Second pick #decision [outcome: as-expected] [quality: good]", "Review 2026-03-10: ok. Lesson: ask early."),
+		item("- [x] Third pick #decision [outcome: as-expected] [quality: good]", "Review 2026-02-10: ok. Lesson: write it down."),
+		item("- [x] A guess #prediction [confidence: 60%] [result: yes]", "Review 2026-04-10: ok. Lesson: not mine."),
+	];
+
+	it("keeps the 2 most recent lessons of the kind, most recent first", () => {
+		expect(recentLessons(items, "decision")).toEqual([
+			{ text: "ask early.", statement: "Second pick", date: "2026-03-10" },
+			{ text: "write it down.", statement: "Third pick", date: "2026-02-10" },
+		]);
+	});
+
+	it("is empty when the kind has no lesson", () => {
+		expect(recentLessons(items.slice(0, 3), "prediction")).toEqual([]);
 	});
 });

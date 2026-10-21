@@ -248,6 +248,32 @@
 	font-weight: 700;
 }
 
+.vaultmate-lessons-hint {
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-4-1);
+	margin: var(--size-4-2) 0;
+}
+
+.vaultmate-lessons-hint-row {
+	display: flex;
+	flex-direction: column;
+}
+
+.vaultmate-lessons-hint-row > :first-child {
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.vaultmate-lessons-hint-row .vaultmate-muted {
+	margin: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
 .vaultmate-answer {
 	margin: var(--size-4-1) 0 0;
 	color: var(--vaultmate-text);

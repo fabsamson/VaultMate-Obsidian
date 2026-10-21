@@ -14,6 +14,7 @@ import { IdeaIndex } from "./idea-index";
 import { noteCandidates, parseIdeaLink, resolveIdeaLine } from "./idea-link";
 import { buildIdeaItem, canTrackAsIdea, type IdeaItem } from "./idea-line";
 import { SPRITES } from "../../ui/sprites";
+import { recentLessons } from "../journal/track-record";
 import { IdeaModal, noticeWithButton, type IdeaPortalHost } from "./idea-modal";
 import { dropIdea, locateIdea, undoDrop } from "./idea-write";
 import { createIdeasPage, IDEAS_PAGE_ID } from "./ideas-page";
@@ -205,6 +206,7 @@ export class IdeasFeature {
 			stampDone: () => plugin.stampMoment(SPRITES.stampDone),
 			projectNotes: () => (plugin.projects.enabled() ? plugin.projects.index.notes().map((note) => ({ path: note.path, name: note.name })) : []),
 			trackTitles: async (path) => (await plugin.projects.index.read(path))?.model.tracks.map((track) => track.title) ?? [],
+			lessons: (kind) => recentLessons(plugin.journal.index.entries(), kind),
 		};
 	}
 

@@ -1,6 +1,6 @@
 // The track record (plan §4, F1): what closed predictions and decisions say about the user's judgment.
 // Pure: no Obsidian import, so Vitest tests it.
-import { closedWithoutReview, OUTCOMES, QUALITIES, type JournalEntry, type Outcome, type PredictionResult, type Quality } from "./journal-line";
+import { closedWithoutReview, OUTCOMES, QUALITIES, type JournalEntry, type JournalKind, type Outcome, type PredictionResult, type Quality } from "./journal-line";
 
 /** The least number of resolved predictions for a Brier score and calibration bands to mean something. */
 export const MIN_SCORED = 5;
@@ -138,4 +138,22 @@ export function computeTrackRecord<T extends { entry: JournalEntry; children: st
 		reviewsDone: entries.filter((entry) => entry.status === "done" && !closedWithoutReview(entry)).length,
 		unreviewed: entries.filter(closedWithoutReview).length,
 	};
+}
+
+/** A lesson shown at decision time, read-only: its text and where it comes from. */
+export interface LessonHint {
+	text: string;
+	statement: string;
+	/** `YYYY-MM-DD` of the review. */
+	date: string;
+}
+
+/** How many lessons the New decision and New prediction forms show. */
+export const LESSON_HINTS = 2;
+
+/** The most recent lessons of the entries of `kind`, as the Track record lists them (most recent first). */
+export function recentLessons(items: readonly { entry: JournalEntry; children: string[] }[], kind: JournalKind, count = LESSON_HINTS): LessonHint[] {
+	return computeTrackRecord(items.filter((item) => item.entry.kind === kind))
+		.lessons.slice(0, count)
+		.map((lesson) => ({ text: lesson.text, statement: lesson.item.entry.statement, date: lesson.date }));
 }

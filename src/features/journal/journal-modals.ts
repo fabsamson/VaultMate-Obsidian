@@ -1,9 +1,10 @@
 // The three forms of the journal: new entry, track an existing line, review an entry.
 import { Modal, Platform, type App } from "obsidian";
 
-import { addInterval, formatDate, INTERVAL_LABELS, REVIEW_INTERVALS, startOfDay, type ReviewInterval } from "../../core/dates";
+import { addInterval, formatDate, INTERVAL_LABELS, keepTogether, REVIEW_INTERVALS, startOfDay, type ReviewInterval } from "../../core/dates";
 import { createChipRow, createDisclosure, createSectionHeader, createSegmentedControl } from "../../ui/components";
 import type { JournalItem } from "./journal-index";
+import type { LessonHint } from "./track-record";
 import {
 	OUTCOMES,
 	QUALITIES,
@@ -119,6 +120,8 @@ export class NewEntryModal extends JournalModal {
 		private readonly onSubmit: (result: NewEntryResult) => void,
 		/** Prefills the statement, for an entry made from an idea. */
 		private readonly initialStatement = "",
+		/** The latest lessons of the same kind, shown read-only under the statement. */
+		private readonly lessons: readonly LessonHint[] = [],
 	) {
 		super(app);
 	}
@@ -128,6 +131,15 @@ export class NewEntryModal extends JournalModal {
 		createSectionHeader(contentEl, `New ${kindName(kind)}`);
 		const statement = textField(contentEl, capitalize(kindName(kind)), { placeholder: kind === "decision" ? "What did you decide?" : "What do you expect to happen?" });
 		statement.value = this.initialStatement;
+		if (this.lessons.length > 0) {
+			const hint = contentEl.createDiv({ cls: "vaultmate-lessons-hint" });
+			hint.createSpan({ cls: "vaultmate-field-label", text: "Your last lessons" });
+			for (const lesson of this.lessons) {
+				const row = hint.createDiv({ cls: "vaultmate-lessons-hint-row" });
+				row.createSpan({ text: lesson.text });
+				row.createSpan({ cls: "vaultmate-muted", text: `${lesson.statement || "(no text)"} · ${keepTogether(lesson.date)}` });
+			}
+		}
 		// A prediction needs its probability, so it stays in view; a decision keeps it with the other details.
 		const decision = kind === "decision";
 		const confidence = decision ? null : textField(contentEl, confidenceLabel(kind), { placeholder: "70", numeric: true });
