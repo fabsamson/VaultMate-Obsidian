@@ -5,6 +5,7 @@ import { setIcon, type TFile } from "obsidian";
 import { createIconButton, createInfoPanel, createPanel } from "../../ui/components";
 import type { HubPage } from "../../ui/hub-view";
 import { SPRITES } from "../../ui/sprites";
+import { setQuickTooltip } from "../../ui/tooltip";
 import type { BuildProgress, ContextStats } from "./context-index";
 import { aboutParts, connectionsSummary, indexingLine, locationLine, noteTitle, REASON_ICONS, statsLine } from "./context-labels";
 import type { Connection } from "./engine";
@@ -141,13 +142,12 @@ function renderCards(parent: HTMLElement, host: ContextPageHost, file: TFile, co
 		if (!canInsert) {
 			// Not `disabled`, so that the tooltip and screen readers still reach the button.
 			insert.setAttribute("aria-disabled", "true");
-			insert.title = "Open the note to insert a link";
+			setQuickTooltip(insert, "Insert link: open the note first");
 		}
 		createIconButton(actions, SPRITES.actionCopy, "Copy link", () => host.copyLink(file, connection.path), { describedBy: open });
-		const dismiss = createIconButton(actions, SPRITES.actionDismiss, "Not useful", () => {
+		createIconButton(actions, SPRITES.actionDismiss, "Not useful: never propose this pair again", () => {
 			item.remove();
 			host.dismiss(file, connection.path);
 		}, { describedBy: open });
-		dismiss.title = "Not useful. Never propose this pair of notes again";
 	}
 }

@@ -2,6 +2,7 @@
 import { createIconButton, createPanel } from "../../ui/components";
 import { createSprite } from "../../ui/pixel";
 import { SPRITES } from "../../ui/sprites";
+import { setQuickTooltip } from "../../ui/tooltip";
 import type { RatedTitle } from "./collection-profile";
 import { becauseLine, type Suggestion } from "./suggestions";
 
@@ -32,9 +33,7 @@ export function renderSuggestionCards(parent: HTMLElement, suggestions: Suggesti
 			rejected = !rejected;
 			toggle.replaceChildren();
 			createSprite(toggle, rejected ? SPRITES.actionUndo : SPRITES.actionDismiss, 32);
-			const label = rejected ? "Undo" : "Not interested";
-			toggle.setAttribute("aria-label", label);
-			toggle.title = label;
+			setQuickTooltip(toggle, rejected ? "Undo" : "Not interested");
 			toggle.setAttribute("aria-pressed", String(rejected));
 			card.toggleClass("is-dimmed", rejected);
 			actions.setNotInterested(suggestion, rejected);
