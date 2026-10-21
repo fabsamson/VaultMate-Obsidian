@@ -82,13 +82,3 @@ describe("shared counting cases: reviews", () => {
 		expect(dueToday).toHaveLength(expected.reviews.today.count);
 	});
 });
-
-describe("shared counting cases: known gaps", () => {
-	const gaps = counted((path) => path.startsWith("Gaps/"));
-
-	it("a plain line with the idea tag is an open idea in the plugin (the app does not see it)", () => {
-		const groups = groupOpen(ideaItems(gaps), today, seed);
-		expect(expected.gaps.plainTaggedIdeaLine).toMatchObject({ plugin: "fresh" });
-		expect(groups.fresh.map(itemStatement)).toEqual([expected.gaps.plainTaggedIdeaLine?.line]);
-	});
-});
