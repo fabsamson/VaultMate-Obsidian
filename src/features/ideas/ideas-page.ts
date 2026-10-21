@@ -201,6 +201,7 @@ export function createIdeasPage(host: IdeasPageHost): HubPage {
 		enabled: () => host.enabled(),
 		summary: () => tendSummary(host.items(), startOfDay(), { tag: host.tag(), subtag: host.seedSubtag() }),
 		render: (body, ctx) => {
+			ctx.setGuide("ideas");
 			if (host.items().length === 0) {
 				renderEmpty(body);
 				return;

@@ -2895,3 +2895,105 @@ body:not(.is-mobile) .modal-container.vaultmate-modal-top > .modal {
 	padding: calc(var(--g) * 0.4) 0;
 	font-size: var(--g);
 }
+
+/* Guide mocks: Sparks */
+.vaultmate-guide-mock .vaultmate-guide-note-line.is-task {
+	display: flex;
+	align-items: center;
+	gap: calc(var(--g) * 0.5);
+	white-space: normal;
+	font-weight: 700;
+}
+
+.vaultmate-guide-mock .vaultmate-guide-note-line .vaultmate-badge {
+	flex: none;
+	margin-left: 0;
+}
+
+.vaultmate-guide-mock .vaultmate-section-chip {
+	min-height: 0;
+	padding: calc(var(--g) * 0.2) calc(var(--g) * 0.7);
+}
+
+.vaultmate-guide-mock .vaultmate-chip-row {
+	margin-bottom: 0;
+}
+
+.vaultmate-guide-mock .vaultmate-idea-card {
+	padding: calc(var(--g) * 0.6);
+}
+
+.vaultmate-guide-mock .vaultmate-portal-actions {
+	margin: 0;
+	gap: calc(var(--g) * 0.3);
+}
+
+.vaultmate-guide-mock .vaultmate-portal-panel-title {
+	margin: 0;
+}
+
+.vaultmate-guide-mock .vaultmate-related-actions {
+	margin-top: calc(var(--g) * 0.4);
+}
+
+.vaultmate-guide-mock .vaultmate-guide-field {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--g) * 0.2);
+}
+
+.vaultmate-guide-mock .vaultmate-guide-input {
+	padding: calc(var(--g) * 0.3) calc(var(--g) * 0.6);
+	border: 1px solid var(--vaultmate-border);
+	background-color: var(--vaultmate-surface-raised);
+	color: var(--vaultmate-text);
+}
+
+.vaultmate-guide-mock .vaultmate-idea-row {
+	padding: calc(var(--g) * 0.2) 0;
+}
+
+.vaultmate-guide-mock .vaultmate-inline-link {
+	color: var(--vaultmate-primary);
+	font-weight: 700;
+	text-decoration: underline;
+}
+
+/* Guide mocks: Threads */
+.vaultmate-guide-mock .vaultmate-guide-file {
+	padding: calc(var(--g) * 0.3) calc(var(--g) * 0.6);
+	border-bottom: 1px solid var(--vaultmate-rule);
+	color: var(--vaultmate-text);
+	overflow-wrap: anywhere;
+}
+
+.vaultmate-guide-mock .vaultmate-guide-file.is-open {
+	border: 1px solid var(--vaultmate-border);
+	background-color: var(--vaultmate-surface-raised);
+	font-weight: 700;
+}
+
+.vaultmate-guide-mock .vaultmate-related-card {
+	padding: calc(var(--g) * 0.6);
+}
+
+.vaultmate-guide-mock .vaultmate-related-title {
+	color: var(--vaultmate-text);
+	font-weight: 700;
+	text-decoration: underline;
+}
+
+.vaultmate-guide-mock .vaultmate-related-about,
+.vaultmate-guide-mock .vaultmate-related-reasons {
+	margin: calc(var(--g) * 0.3) 0 0;
+}
+
+.vaultmate-guide-mock .vaultmate-related-folder {
+	margin: 0;
+}
+
+.vaultmate-guide-mock .vaultmate-guide-note-line:not(.is-h1):not(.is-h2) {
+	min-width: 0;
+	overflow-wrap: anywhere;
+	white-space: normal;
+}

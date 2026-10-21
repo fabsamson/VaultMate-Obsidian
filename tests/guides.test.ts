@@ -8,8 +8,8 @@ import { GUIDE_LIMITS, plainText } from "../src/ui/guide/guide";
 import { GUIDES } from "../src/ui/guide/registry";
 
 describe("page guides", () => {
-	it("registers the pilot guides under stable ids", () => {
-		expect([...GUIDES.keys()].sort()).toEqual(["ai-actions", "home", "journal", "places", "project", "projects"]);
+	it("registers all eight chapters under stable ids", () => {
+		expect([...GUIDES.keys()].sort()).toEqual(["ai-actions", "connections", "home", "ideas", "journal", "places", "project", "projects"]);
 		for (const [id, guide] of GUIDES) expect(guide.id).toBe(id);
 	});
 

@@ -48,7 +48,8 @@ export function createContextPage(host: ContextPageHost): HubPage {
 			const file = host.file();
 			return connectionsSummary({ name: file?.basename ?? null, building: host.building(), count: file ? host.lastCount(file) : null });
 		},
-		render: async (body) => {
+		render: async (body, ctx) => {
+			ctx.setGuide("connections");
 			const file = host.file();
 			if (!file) {
 				createInfoPanel(body, { sprite: SPRITES.mascotSleep, title: "Open a note first", compact: true });
