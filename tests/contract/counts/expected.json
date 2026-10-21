@@ -10,43 +10,57 @@
     "prediction": "prediction",
     "project": "project"
   },
-  "ignoredFolders": [
-    "Gaps"
-  ],
+  "ignoredFolders": [],
   "ideas": {
     "fresh": {
-      "count": 8,
+      "count": 21,
       "statements": [
+        "A paragraph line that carries the tag",
         "Capitalized tag still counts",
         "Fresh thought written during an old brainstorm",
+        "Idea after a space and a full-width space",
+        "Idea before a full-width space",
+        "Idea in a CRLF note",
         "Idea inside a callout",
+        "Idea marked important",
+        "Idea marked in progress",
+        "Idea marked scheduled",
         "Idea without any date",
         "Learn the cello",
         "Pitch a ten-minute demo",
+        "Plain idea in a CRLF note",
+        "Plain idea in a callout",
+        "Plain idea in a numbered list",
+        "Plain idea with a sub-tag",
+        "Plain idea without any date",
         "Plan a surprise for a friend",
-        "Sketch a weekly menu"
+        "Sketch a weekly menu",
+        "[ ] Idea after a full-width space"
       ]
     },
     "waiting": {
-      "count": 5,
+      "count": 6,
       "statements": [
         "Cuisiner un grand pot-au-feu le dimanche",
         "Idea in a numbered list",
         "Idea inside a nested callout",
+        "Plain idea from last week",
         "Try a Pomodoro variant",
         "Write the notes of the year"
       ]
     },
     "wilting": {
-      "count": 2,
+      "count": 3,
       "statements": [
         "Idea from an old brainstorm",
+        "Plain idea from long ago",
         "Rebuild the old bookshelf"
       ]
     },
     "seeds": {
-      "count": 3,
+      "count": 4,
       "statements": [
+        "Plain seed with the seed sub-tag",
         "Seed from an old brainstorm",
         "Seed planted yesterday",
         "Un jardin partagé pour le quartier"
@@ -55,10 +69,14 @@
   },
   "reviews": {
     "overdue": {
-      "count": 4,
+      "count": 8,
       "statements": [
+        "Decision in a CRLF note",
         "Decision inside a callout",
+        "Decision marked important",
+        "Decision marked in progress",
         "Move the standup to Tuesday",
+        "Prediction marked scheduled",
         "Switch the backup to weekly",
         "The bakery reopens before November"
       ]
@@ -98,20 +116,15 @@
       ]
     }
   },
-  "gaps": {
-    "plainTaggedIdeaLine": {
-      "line": "A plain line that carries the tag",
-      "plugin": "fresh",
-      "app": "not counted"
-    }
-  },
   "groupsMeaning": {
-    "fresh/waiting/wilting": "Open ideas of 0-2, 3-14, more than 14 days, from the created date, else a date in the note name, else fallbackDate. A future date is fresh.",
+    "fresh/waiting/wilting": "Open ideas of 0-2, 3-14, more than 14 days, from the created date, else a date in the note name, else fallbackDate. A future date is fresh. A plain tagged line has no created date: it goes by the note name or fallbackDate.",
     "seeds": "Open ideas tagged idea/<seedSubtag>; never in fresh, waiting or wilting.",
     "overdue": "Open decision or prediction whose review date (📅) is before today. A review goes by 📅 only: with just a ⏳ it is undated.",
     "today": "Open review whose 📅 is exactly today (also in week). A ⏳ today does not make a review due today.",
     "week": "Open review due from today to six days ahead. Only the plugin shows it.",
     "upcoming": "Open review due seven days or more ahead. Only the plugin shows it.",
-    "undated": "Open review without a review date. Only the plugin shows it."
+    "undated": "Open review without a review date. Only the plugin shows it.",
+    "open": "An idea or review is open unless its checkbox is x, X or - (done, cancelled): [ ], [/], [!], [<] and any other character are open. A tag inside inline code does not count.",
+    "plain tagged line": "Any line that is not a heading and carries the idea tag (or a sub-tag) outside inline code is an open idea, task or not: a list item, a numbered item, a callout line, a paragraph, a line whose checkbox is not followed by an ASCII space or tab."
   }
 }
