@@ -2237,6 +2237,171 @@ body:not(.is-mobile) .modal-container.vaultmate-modal-top > .modal {
 	font-size: calc(var(--g) * 1.05);
 }
 
+/* Guide mocks: Prologue and Epilogue */
+.vaultmate-guide-md-line {
+	padding: calc(var(--g) * 0.3) calc(var(--g) * 0.6);
+	border-left: 3px solid var(--vaultmate-primary);
+	background-color: var(--vaultmate-surface-raised);
+	color: var(--vaultmate-text);
+	overflow-wrap: anywhere;
+}
+
+.vaultmate-guide-md-tag {
+	color: var(--vaultmate-primary);
+	font-weight: 700;
+}
+
+.vaultmate-guide-mock .vaultmate-badge {
+	margin-left: calc(var(--g) * 0.5);
+	font-size: 0.8em;
+	white-space: normal;
+}
+
+.vaultmate-guide-mock .vaultmate-review-row {
+	flex-wrap: nowrap;
+}
+
+.vaultmate-guide-mock .vaultmate-review-row > button.vaultmate-review-main {
+	flex: 1 1 0;
+	min-height: 0;
+	cursor: default;
+}
+
+.vaultmate-guide-mock .vaultmate-chip-row {
+	margin: 0;
+}
+
+.vaultmate-guide-mock .vaultmate-section-chip {
+	align-self: center;
+}
+
+.vaultmate-guide-mock .vaultmate-question {
+	margin: 0;
+}
+
+.vaultmate-guide-mock .vaultmate-actions {
+	margin: 0;
+}
+
+.vaultmate-guide-input {
+	padding: calc(var(--g) * 0.4) calc(var(--g) * 0.6);
+	border: 1px solid var(--vaultmate-border);
+	background-color: var(--vaultmate-surface);
+	color: var(--vaultmate-text);
+}
+
+.vaultmate-guide-mock .vaultmate-tiles {
+	gap: calc(var(--g) * 0.6);
+}
+
+.vaultmate-guide-mock .vaultmate-tile {
+	min-height: 0;
+	padding: calc(var(--g) * 0.5) calc(var(--g) * 0.8);
+	border-width: 1px;
+	cursor: default;
+}
+
+.vaultmate-guide-mock .vaultmate-tile .vaultmate-sprite {
+	width: calc(var(--g) * 2.4);
+	height: calc(var(--g) * 2.4);
+}
+
+.vaultmate-guide-command {
+	padding: calc(var(--g) * 0.5) calc(var(--g) * 0.8);
+	border: 1px solid var(--vaultmate-rule);
+	background-color: var(--vaultmate-surface-raised);
+	color: var(--vaultmate-text-muted);
+}
+
+.vaultmate-guide-notice {
+	padding: calc(var(--g) * 0.7) calc(var(--g) * 0.9);
+	border: 2px solid var(--vaultmate-border);
+	background-color: var(--vaultmate-surface-raised);
+	box-shadow: 2px 2px 0 var(--vaultmate-shadow);
+	color: var(--vaultmate-text);
+}
+
+.vaultmate-guide-help {
+	display: flex;
+	align-items: center;
+	gap: calc(var(--g) * 0.6);
+}
+
+.vaultmate-guide-chapters {
+	display: grid;
+	gap: calc(var(--g) * 0.2);
+	margin: 0;
+	padding-left: calc(var(--g) * 1.6);
+	color: var(--vaultmate-text);
+	font-size: calc(var(--g) * 0.85);
+}
+
+.vaultmate-guide-mock .vaultmate-stamp-row {
+	margin: 0;
+}
+
+.vaultmate-guide-mock .vaultmate-hanko .vaultmate-sprite {
+	width: calc(var(--g) * 2.4);
+	height: calc(var(--g) * 2.4);
+}
+
+.vaultmate-guide-mock .vaultmate-choice-option {
+	min-height: calc(var(--g) * 2.1);
+	min-width: 0;
+	padding: 0 calc(var(--g) * 0.3);
+	border-width: 1px;
+	gap: 0;
+	text-align: center;
+	font-size: calc(var(--g) * 0.7);
+}
+
+.vaultmate-guide-mock .vaultmate-choice-option.is-selected::before {
+	content: none;
+}
+
+.vaultmate-guide-mock .vaultmate-calibration-bar {
+	height: calc(var(--g) * 0.6);
+	border-width: 1px;
+}
+
+.vaultmate-guide-mock .vaultmate-calibration-mark {
+	top: 0;
+	bottom: 0;
+}
+
+.vaultmate-guide-mock .vaultmate-calibration-row {
+	gap: calc(var(--g) * 0.3);
+	padding: 0;
+	font-size: calc(var(--g) * 0.85);
+}
+
+.vaultmate-guide-mock .vaultmate-stamp-row {
+	display: flex;
+	gap: calc(var(--g) * 1.2);
+}
+
+.vaultmate-guide-mock .vaultmate-hanko {
+	flex-direction: row;
+	gap: calc(var(--g) * 0.5);
+}
+
+.vaultmate-guide-mock .vaultmate-hanko-label,
+.vaultmate-guide-mock .vaultmate-brier-label {
+	font-size: calc(var(--g) * 0.9);
+}
+
+.vaultmate-guide-mock .vaultmate-brier-value {
+	font-size: calc(var(--g) * 1.2);
+}
+
+.vaultmate-guide-mock .vaultmate-lessons-hint {
+	margin: 0;
+}
+
+.vaultmate-guide-mock .vaultmate-field {
+	margin: 0;
+}
+
 /* Bottom row: the Markdown to write and the tips. */
 .vaultmate-guide-bottom {
 	display: grid;

@@ -102,7 +102,7 @@ export default class VaultMatePlugin extends Plugin {
 		const host: GuideHost = {
 			guide: (chapter) => GUIDES.get(chapter),
 			markSeen: (chapter) => this.markGuideSeen(chapter),
-			openPage: (chapter) => void this.openHub(chapter.pageId ?? undefined, chapter.id === "project" ? this.projects.index.notes()[0]?.path : undefined, true),
+			openPage: (chapter) => void this.openHub(chapter.pageId, chapter.id === "project" ? this.projects.index.notes()[0]?.path : undefined, true),
 		};
 		new GuideModal(this.app, id, id, animationsOn(this.settings.ui.animations), host).open();
 	}
@@ -147,7 +147,7 @@ export default class VaultMatePlugin extends Plugin {
 	 * Opens the hub in the side panel, on the page `page` when given (and, on the Projects page, on the project `project`).
 	 * `quiet`: the page guide does not open by itself (the Weekly review uses it).
 	 */
-	public async openHub(page?: string, project?: string, quiet = false): Promise<void> {
+	public async openHub(page?: string | null, project?: string, quiet = false): Promise<void> {
 		const { workspace } = this.app;
 		let leaf: WorkspaceLeaf | null = workspace.getLeavesOfType(HUB_VIEW_TYPE)[0] ?? null;
 		if (!leaf) {

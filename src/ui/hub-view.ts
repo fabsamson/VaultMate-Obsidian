@@ -136,7 +136,7 @@ export class HubView extends ItemView {
 	}
 
 	/** Opens a page from code (a command); `project` is the project page the Projects page shows. */
-	public showPage(id: string, project?: string, quiet = false): void {
+	public showPage(id: string | null, project?: string, quiet = false): void {
 		if (project !== undefined) this.state.project = project;
 		this.go(id, quiet);
 	}
@@ -175,7 +175,9 @@ export class HubView extends ItemView {
 
 	private renderLanding(root: HTMLElement, pages: HubPage[], focusId: string | null): void {
 		if (this.bannerOn()) this.banner = new SceneBanner(root, { animate: this.animationsOn(), onSceneChange: () => this.render() });
-		root.createEl("h1", { cls: "vaultmate-hub-title", text: "VaultMate" });
+		const bar = root.createDiv({ cls: "vaultmate-topbar" });
+		bar.createEl("h1", { cls: "vaultmate-hub-title", text: "VaultMate" });
+		this.guideSetter(bar)("home");
 		if (pages.length === 0) {
 			this.renderEmpty(root);
 			return;
@@ -203,13 +205,10 @@ export class HubView extends ItemView {
 		void this.fill(page, root.createDiv({ cls: "vaultmate-hub-section" }), back, bar);
 	}
 
-	private async fill(page: HubPage, body: HTMLElement, back: HTMLElement, bar: HTMLElement): Promise<void> {
-		const setUp = (up: (() => void) | null): void => {
-			this.up = up;
-			back.setAttr("aria-label", up ? (page.upLabel ?? BACK_TO_HUB) : BACK_TO_HUB);
-		};
+	/** The `setGuide` of a bar: its "?" button opens guide `id`, and the first visit opens it by itself. */
+	private guideSetter(bar: HTMLElement): (id: string | null) => void {
 		let help: { id: string; button: HTMLElement } | null = null;
-		const setGuide = (id: string | null): void => {
+		return (id) => {
 			// A redraw that was overtaken by a newer one must not start a timer for its page.
 			if (!bar.isConnected) return;
 			this.clearGuideTimer();
@@ -224,6 +223,14 @@ export class HubView extends ItemView {
 				if (this.contentEl.isShown()) this.guides.visit(id, this.quiet);
 			}, GUIDE_DELAY_MS);
 		};
+	}
+
+	private async fill(page: HubPage, body: HTMLElement, back: HTMLElement, bar: HTMLElement): Promise<void> {
+		const setUp = (up: (() => void) | null): void => {
+			this.up = up;
+			back.setAttr("aria-label", up ? (page.upLabel ?? BACK_TO_HUB) : BACK_TO_HUB);
+		};
+		const setGuide = this.guideSetter(bar);
 		try {
 			await page.render(body, { state: this.state, save: () => this.app.workspace.requestSaveLayout(), setUp, setGuide });
 		} catch (error) {
