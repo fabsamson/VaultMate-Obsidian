@@ -1046,21 +1046,9 @@ button.vaultmate-badge:focus-visible {
 	margin: var(--size-4-4) 0 var(--size-4-2);
 }
 
-.vaultmate-portal-actions > .vaultmate-button {
-	width: auto;
-	height: auto;
-	max-width: 100%;
-}
-
-/* Selected: filled and ticked, so the state never relies on color alone. */
-.vaultmate-portal-actions > .vaultmate-button.is-selected {
-	border-color: var(--vaultmate-border);
-	background-color: var(--vaultmate-primary);
-	color: var(--vaultmate-on-primary);
-}
-
-.vaultmate-portal-actions > .vaultmate-button.is-selected::before {
-	content: "\2713\00a0";
+.vaultmate-portal-panel-title {
+	margin: 0 0 var(--size-4-2);
+	font-weight: 700;
 }
 
 .vaultmate-portal-panel {
@@ -1373,6 +1361,18 @@ button.vaultmate-badge:focus-visible {
 	background-color: var(--vaultmate-surface-raised);
 }
 
+/* The main action of a row, icon only: the filled look of .vaultmate-button.mod-cta in the square of an icon button.
+   The chosen action of the idea portal is pressed the same way: filled and boxed, so the state never relies on color alone. */
+.vaultmate button.vaultmate-icon-button.mod-primary,
+.vaultmate button.vaultmate-icon-button.mod-primary:hover,
+.vaultmate button.vaultmate-icon-button.is-selected,
+.vaultmate button.vaultmate-icon-button.is-selected:hover {
+	border: 2px solid var(--vaultmate-border);
+	background-color: var(--vaultmate-primary);
+	box-shadow: 2px 2px 0 var(--vaultmate-shadow);
+	color: var(--vaultmate-on-primary);
+}
+
 .vaultmate-icon-button[aria-disabled="true"] {
 	opacity: 0.5;
 	cursor: not-allowed;
@@ -1383,7 +1383,7 @@ button.vaultmate-badge:focus-visible {
 	outline-offset: -2px;
 }
 
-/* A track: title and task summary, the main action, the more menu; its open decisions and predictions below. */
+/* A track: title and task summary, then icons (main action, move, add task); its open decisions and predictions below. */
 .vaultmate-track-row {
 	padding: var(--size-4-1) 0;
 	border-bottom: 1px solid var(--vaultmate-rule);
@@ -1423,11 +1423,6 @@ button.vaultmate-badge:focus-visible {
 	flex: none;
 	align-items: center;
 	gap: var(--size-4-1);
-}
-
-.vaultmate-track-actions > .vaultmate-button {
-	width: auto;
-	height: auto;
 }
 
 .vaultmate-track-nonext {
@@ -1523,15 +1518,6 @@ button.vaultmate-badge:focus-visible {
 
 .vaultmate-disclosure[aria-expanded="true"] .vaultmate-sprite {
 	transform: none;
-}
-
-/* A hidden row (the actions behind More…) must not be shown by the flex layout, and it sits close under the first row. */
-.vaultmate-portal-actions[hidden] {
-	display: none;
-}
-
-.vaultmate-portal-actions + .vaultmate-portal-actions {
-	margin-top: 0;
 }
 
 /* The question of a two-step form ("Time to judge?"). */

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { nextChoiceIndex } from "../src/ui/components";
+import { nextChoiceIndex } from "../src/ui/choice-keys";
 
 describe("nextChoiceIndex", () => {
 	it("moves with the arrow keys and wraps around", () => {

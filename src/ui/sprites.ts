@@ -1,10 +1,13 @@
 import actionAddTask from "../../assets/sprites/action_add_task.png";
+import actionAddToNote from "../../assets/sprites/action_add_to_note.png";
 import actionCopy from "../../assets/sprites/action_copy.png";
 import actionDismiss from "../../assets/sprites/action_dismiss.png";
 import actionDrop from "../../assets/sprites/action_drop.png";
 import actionLink from "../../assets/sprites/action_link.png";
 import actionLocate from "../../assets/sprites/action_locate.png";
-import actionMore from "../../assets/sprites/action_more.png";
+import actionMove from "../../assets/sprites/action_move.png";
+import actionNewNote from "../../assets/sprites/action_new_note.png";
+import actionNewTrack from "../../assets/sprites/action_new_track.png";
 import actionOpenNote from "../../assets/sprites/action_open_note.png";
 import actionPickerCaret from "../../assets/sprites/action_picker_caret.png";
 import actionProcess from "../../assets/sprites/action_process.png";
@@ -12,6 +15,8 @@ import actionPromote from "../../assets/sprites/action_promote.png";
 import actionReview from "../../assets/sprites/action_review.png";
 import actionRun from "../../assets/sprites/action_run.png";
 import actionSearch from "../../assets/sprites/action_search.png";
+import actionSeed from "../../assets/sprites/action_seed.png";
+import actionSkip from "../../assets/sprites/action_skip.png";
 import actionTrack from "../../assets/sprites/action_track.png";
 import actionUndo from "../../assets/sprites/action_undo.png";
 import heroDay from "../../assets/sprites/hero_day.png";
@@ -71,12 +76,15 @@ import type { Sprite } from "./pixel";
 // Sprites are drawn and built in obsidian_widget/tools/sprites; `npm run sync-sprites` copies them here.
 export const SPRITES = {
 	actionAddTask: { src: actionAddTask, pixels: 16 },
+	actionAddToNote: { src: actionAddToNote, pixels: 16 },
 	actionCopy: { src: actionCopy, pixels: 16 },
 	actionDismiss: { src: actionDismiss, pixels: 16 },
 	actionDrop: { src: actionDrop, pixels: 16 },
 	actionLink: { src: actionLink, pixels: 16 },
 	actionLocate: { src: actionLocate, pixels: 16 },
-	actionMore: { src: actionMore, pixels: 16 },
+	actionMove: { src: actionMove, pixels: 16 },
+	actionNewNote: { src: actionNewNote, pixels: 16 },
+	actionNewTrack: { src: actionNewTrack, pixels: 16 },
 	actionOpenNote: { src: actionOpenNote, pixels: 16 },
 	actionPickerCaret: { src: actionPickerCaret, pixels: 16 },
 	actionProcess: { src: actionProcess, pixels: 16 },
@@ -84,6 +92,8 @@ export const SPRITES = {
 	actionReview: { src: actionReview, pixels: 16 },
 	actionRun: { src: actionRun, pixels: 16 },
 	actionSearch: { src: actionSearch, pixels: 16 },
+	actionSeed: { src: actionSeed, pixels: 16 },
+	actionSkip: { src: actionSkip, pixels: 16 },
 	actionTrack: { src: actionTrack, pixels: 16 },
 	actionUndo: { src: actionUndo, pixels: 16 },
 	mascotSleep: { src: mascotSleep, pixels: 48 },
