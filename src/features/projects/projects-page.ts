@@ -4,10 +4,11 @@
 import { Menu } from "obsidian";
 
 import { dueLabel, keepTogether, parseDate, startOfDay } from "../../core/dates";
-import { createDisclosure, createIconButton, createInfoPanel, createMark, createSpriteButton } from "../../ui/components";
+import { createDisclosure, createIconButton, createInfoPanel, createMark } from "../../ui/components";
 import type { HubPage, HubPageContext } from "../../ui/hub-view";
 import { createSmallSprite, type Sprite } from "../../ui/pixel";
 import { SPRITES } from "../../ui/sprites";
+import { setIconTooltip } from "../../ui/tooltip";
 import type { JournalItem } from "../journal/journal-index";
 import { isUntracked, kindName } from "../journal/journal-line";
 import { addScopeControls } from "../journal/scope-control";
@@ -91,12 +92,6 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		const counter = parent.createSpan({ cls: "vaultmate-seal-count", attr: { role: "img", "aria-label": `${count} ${STATUS_INFO[status].label.toLowerCase()}` } });
 		createSmallSprite(counter, SEALS[status], SMALL);
 		counter.createSpan({ text: String(count) });
-	};
-
-	const menuAt = (event: MouseEvent, build: (menu: Menu) => void): void => {
-		const menu = new Menu();
-		build(menu);
-		menu.showAtMouseEvent(event);
 	};
 
 	// ---- Dashboard ----------------------------------------------------------------------------------
@@ -191,20 +186,14 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		main.createSpan({ cls: "vaultmate-muted vaultmate-track-meta", text: taskSummary(track) });
 		const actions = row.createDiv({ cls: "vaultmate-track-actions" });
 		const primary = primaryAction(track.status);
-		createSpriteButton(actions, { sprite: SEALS[primary.target], text: primary.label, label: `${primary.label}: ${track.title}`, cta: true }).addEventListener("click", () => host.move(project.path, track, primary.target));
-		createIconButton(actions, SPRITES.actionMore, `More for ${track.title}`, (event) =>
-			menuAt(event, (menu) => {
-				menu.addItem((item) => item.setTitle("Move to…").onClick(() => menuAt(event, (moves) => {
-					for (const status of moveTargets(track.status)) moves.addItem((entry) => entry.setTitle(STATUS_INFO[status].label).onClick(() => host.move(project.path, track, status)));
-				})));
-				if (track.status !== "done" && track.status !== "dropped") menu.addItem((item) => item.setTitle("Add task").onClick(() => host.addTask(project.path, track)));
-			}),
-		);
-		if (needsNextTask(track)) {
-			const flag = card.createDiv({ cls: "vaultmate-track-nonext" });
-			flag.createSpan({ cls: "vaultmate-track-flag", text: "No next task" });
-			createIconButton(flag, SPRITES.actionAddTask, `Add a task to ${track.title}`, () => host.addTask(project.path, track));
-		}
+		createIconButton(actions, SEALS[primary.target], `${primary.label}: ${track.title}`, () => host.move(project.path, track, primary.target), { primary: true });
+		createIconButton(actions, SPRITES.actionMove, `Move ${track.title} to…`, (event) => {
+			const menu = new Menu();
+			for (const status of moveTargets(track.status)) menu.addItem((entry) => entry.setTitle(STATUS_INFO[status].label).onClick(() => host.move(project.path, track, status)));
+			menu.showAtMouseEvent(event);
+		});
+		if (track.status !== "done" && track.status !== "dropped") createIconButton(actions, SPRITES.actionAddTask, `Add a task to ${track.title}`, () => host.addTask(project.path, track));
+		if (needsNextTask(track)) card.createDiv({ cls: "vaultmate-track-nonext" }).createSpan({ cls: "vaultmate-track-flag", text: "No next task" });
 		for (const item of view.byTrack[index] ?? []) renderEntry(card, item, project.path, today);
 	};
 
@@ -255,7 +244,8 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 
 		for (const chip of chips) {
 			const label = chip.id === "ideas" ? `Ideas · ${chip.count}` : chip.id === "reviews" ? `Reviews · ${chip.count}` : chip.id === "closed" ? `Closed tracks · ${chip.count}` : `${STATUS_INFO[chip.id].label} · ${chip.count}`;
-			const element = chipRow.createEl("button", { cls: "vaultmate-button vaultmate-section-chip", attr: { type: "button", "aria-label": `Go to ${label}`, title: label } });
+			const element = chipRow.createEl("button", { cls: "vaultmate-button vaultmate-section-chip", attr: { type: "button" } });
+			setIconTooltip(element, `Go to ${label}`);
 			createMark(element, CHIP_SPRITES[chip.id]);
 			element.createSpan({ text: String(chip.count) });
 			element.addEventListener("click", () => {
