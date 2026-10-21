@@ -5,7 +5,9 @@ import { AbstractInputSuggest, normalizePath, Notice, type App, type TFile } fro
 
 import { startOfDay } from "../../core/dates";
 import { baseName } from "../context/note-meta";
-import { createSectionHeader } from "../../ui/components";
+import { createIconButton, createSectionHeader } from "../../ui/components";
+import { SPRITES } from "../../ui/sprites";
+import type { Sprite } from "../../ui/pixel";
 import type { JournalKind } from "../journal/journal-line";
 import { JournalModal, NewEntryModal, textField } from "../journal/journal-modals";
 import { addTrackFields } from "../projects/project-modals";
@@ -14,7 +16,19 @@ import { ideaAge, titleFromIdea, type IdeaItem } from "./idea-line";
 import { defaultIdeaHeading, newNotePath, orderedHeadings } from "./idea-note";
 import { addIdeaToNote, createNoteFromIdea, dropIdea, locateIdea, makeProjectSeed, newTrackFromIdea, trackIdeaAs, type IdeaWriteHost, type NewTrackChoice } from "./idea-write";
 import { itemStatement, plantedText } from "./ideas-model";
-import { ACTION_LABELS, addState, findProject, hasPanel, moreActions, newNoteState, noteLinkLabel, primaryActions, seedSentence, trackState, type PortalAction, type ProjectChoice } from "./portal-actions";
+import { ACTION_LABELS, addState, findProject, hasPanel, newNoteState, noteLinkLabel, portalActions, seedSentence, trackState, type PortalAction, type ProjectChoice } from "./portal-actions";
+
+/** The icon of each portal action; its name (`ACTION_LABELS`) is the button's label and tooltip. */
+const ACTION_SPRITES: Record<PortalAction, Sprite> = {
+	"new-note": SPRITES.actionNewNote,
+	track: SPRITES.actionNewTrack,
+	drop: SPRITES.actionDrop,
+	add: SPRITES.actionAddToNote,
+	decision: SPRITES.stateDecision,
+	prediction: SPRITES.statePrediction,
+	seed: SPRITES.actionSeed,
+	skip: SPRITES.actionSkip,
+};
 
 export interface IdeaPortalHost extends IdeaWriteHost {
 	/** Opens the note at a 0-based line. */
@@ -162,8 +176,6 @@ export class IdeaModal extends JournalModal {
 
 		// ---- The actions, then the panel of the chosen one ----
 		const row = contentEl.createDiv({ cls: "vaultmate-portal-actions", attr: { role: "group", "aria-label": "What to do with this idea" } });
-		const moreRow = contentEl.createDiv({ cls: "vaultmate-portal-actions", attr: { role: "group", "aria-label": "More ways to sort this idea" } });
-		moreRow.hidden = true;
 		const panel = contentEl.createDiv({ cls: "vaultmate-portal-panel" });
 		const buttons = new Map<PortalAction, HTMLButtonElement>();
 		const choose = (action: PortalAction): void => {
@@ -182,22 +194,17 @@ export class IdeaModal extends JournalModal {
 			this.suggest?.close();
 			this.suggest = null;
 			panel.empty();
-			if (hasPanel(action)) this.renderPanel(panel, action, item, statement);
+			if (hasPanel(action)) {
+				panel.createEl("p", { cls: "vaultmate-portal-panel-title", text: ACTION_LABELS[action] });
+				this.renderPanel(panel, action, item, statement);
+			}
 		};
 		const context = { tend: this.tend, projectsEnabled: host.projectsEnabled(), seedSubtag: host.settings.ideas.seedSubtag };
-		const addButton = (target: HTMLElement, action: PortalAction): void => {
-			const button = target.createEl("button", { cls: "vaultmate-button", text: ACTION_LABELS[action], attr: { type: "button", "aria-pressed": "false" } });
-			button.addEventListener("click", () => choose(action));
+		for (const action of portalActions(context)) {
+			const button = createIconButton(row, ACTION_SPRITES[action], ACTION_LABELS[action], () => choose(action));
+			button.setAttribute("aria-pressed", "false");
 			buttons.set(action, button);
-		};
-		for (const action of primaryActions(context)) addButton(row, action);
-		for (const action of moreActions(context)) addButton(moreRow, action);
-		// The row stays open once an action from it is chosen: the choice is shown selected inside it.
-		const more = row.createEl("button", { cls: "vaultmate-button", text: "More…", attr: { type: "button", "aria-expanded": "false" } });
-		more.addEventListener("click", () => {
-			moreRow.hidden = !moreRow.hidden;
-			more.setAttribute("aria-expanded", String(!moreRow.hidden));
-		});
+		}
 		// Opening the modal focuses its first control (the note link) after this runs: focus the first action next.
 		row.win.setTimeout(() => row.querySelector("button")?.focus(), 0);
 	}

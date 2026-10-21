@@ -1,29 +1,23 @@
 import { describe, expect, it } from "vitest";
 
 import { seedLine } from "../src/features/ideas/ideas-model";
-import { addState, findProject, hasPanel, newNoteState, moreActions, noteLinkLabel, primaryActions, seedSentence, trackState } from "../src/features/ideas/portal-actions";
+import { addState, findProject, hasPanel, newNoteState, noteLinkLabel, portalActions, seedSentence, trackState } from "../src/features/ideas/portal-actions";
 
 const ALL = { tend: true, projectsEnabled: true, seedSubtag: "projet" };
 
-const all = (context: typeof ALL) => [...primaryActions(context), ...moreActions(context)];
-
 describe("portal actions", () => {
-	it("puts New note, New track and Drop first, then Skip in Tend mode, in a fixed order", () => {
-		expect(primaryActions(ALL)).toEqual(["new-note", "track", "drop", "skip"]);
-		expect(primaryActions({ ...ALL, tend: false })).toEqual(["new-note", "track", "drop"]);
-	});
-	it("keeps Add to a note, Decision, Prediction and Project seed behind More", () => {
-		expect(moreActions(ALL)).toEqual(["add", "decision", "prediction", "seed"]);
+	it("is one row in a fixed order, with Skip last in Tend mode", () => {
+		expect(portalActions(ALL)).toEqual(["new-note", "track", "drop", "add", "decision", "prediction", "seed", "skip"]);
+		expect(portalActions({ ...ALL, tend: false })).toEqual(["new-note", "track", "drop", "add", "decision", "prediction", "seed"]);
 	});
 	it("hides Skip outside Tend mode, New track without Projects and Project seed without its setting", () => {
-		expect(all({ ...ALL, tend: false })).not.toContain("skip");
-		expect(all({ ...ALL, projectsEnabled: false })).not.toContain("track");
-		expect(all({ ...ALL, seedSubtag: "" })).not.toContain("seed");
-		expect(primaryActions({ tend: false, projectsEnabled: false, seedSubtag: "" })).toEqual(["new-note", "drop"]);
-		expect(moreActions({ tend: false, projectsEnabled: false, seedSubtag: "" })).toEqual(["add", "decision", "prediction"]);
+		expect(portalActions({ ...ALL, tend: false })).not.toContain("skip");
+		expect(portalActions({ ...ALL, projectsEnabled: false })).not.toContain("track");
+		expect(portalActions({ ...ALL, seedSubtag: "" })).not.toContain("seed");
+		expect(portalActions({ tend: false, projectsEnabled: false, seedSubtag: "" })).toEqual(["new-note", "drop", "add", "decision", "prediction"]);
 	});
 	it("shows a panel for five actions only, and the optional note for three", () => {
-		expect(all(ALL).filter(hasPanel).sort()).toEqual(["add", "drop", "new-note", "seed", "track"]);
+		expect(portalActions(ALL).filter(hasPanel).sort()).toEqual(["add", "drop", "new-note", "seed", "track"]);
 		expect(noteLinkLabel("add")).toBe("Add a note");
 		expect(noteLinkLabel("new-note")).toBe("Add a note");
 		expect(noteLinkLabel("drop")).toBe("Add a reason");
