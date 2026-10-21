@@ -3,6 +3,7 @@
 // plan was made from), ordered from the end of the note to its start so that they apply one after the
 // other, by the write gateway (`core/note-write`). Each gesture checks that
 // the line it targets still has the text the caller read and refuses otherwise.
+import { checkboxState, isRecurring, parseTaskLine, serializeTaskLine, setTaskDate, setTaskStatus } from "../../core/task-line";
 import { lastNonBlank, type InsertPlan } from "../ai-actions/insertion";
 import { childLines, indentUnit, type ChildLine } from "../ideas/idea-note";
 import { splitLine, width } from "../journal/journal-note";
@@ -232,4 +233,29 @@ export function newTrackInNote(lines: readonly string[], track: NewTrack, option
 export function undoDropIdea(lines: readonly string[], idea: Pick<ProjectIdea, "line" | "raw" | "children">, lineAfter: string | undefined): WritePlan {
 	if (lines[idea.line] !== lineAfter || idea.line > lines.length) return refuse("changed");
 	return { ok: true, edits: [{ at: idea.line, remove: 0, lines: [idea.raw, ...idea.children] }] };
+}
+
+// ---- Closing a task -----------------------------------------------------------------------------------
+
+/**
+ * The line of an open task once done (`[x]` and ` ✅ <today>`, before a trailing block id, as Tasks does)
+ * or cancelled (`[-]`); null when the line is not an open, non-recurring task.
+ */
+export function taskStateLine(raw: string, state: "done" | "cancelled", today: string): string | null {
+	const parsed = parseTaskLine(raw);
+	if (parsed.status === null || checkboxState(parsed.status) !== "open" || isRecurring(parsed.body)) return null;
+	const closed = setTaskStatus(parsed, state === "done" ? "x" : "-");
+	return serializeTaskLine(state === "done" ? { ...closed, body: setTaskDate(closed.body, "done", today) } : closed);
+}
+
+/** Marks the open task of `ref` done or cancelled, provided its line still reads as `ref.raw`. A recurring task is not found: only the Tasks plugin can write its next occurrence. */
+export function setTaskState(lines: readonly string[], ref: LineRef, state: "done" | "cancelled", today: string): WritePlan {
+	if (!checked(lines, ref)) return refuse("changed");
+	const line = taskStateLine(ref.raw, state, today);
+	return line === null ? refuse("not-found") : { ok: true, edits: [{ at: ref.line, remove: 1, lines: [line] }] };
+}
+
+/** Puts the task back as it was (`ref.raw`), provided its line still reads as `closed`, the line `setTaskState` wrote. */
+export function undoTaskState(lines: readonly string[], ref: LineRef, closed: string): WritePlan {
+	return lines[ref.line] === closed ? { ok: true, edits: [{ at: ref.line, remove: 1, lines: [ref.raw] }] } : refuse("changed");
 }

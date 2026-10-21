@@ -58,12 +58,11 @@ export function moveTargets(status: TrackStatus): TrackStatus[] {
 	return TRACK_STATUSES.filter((target) => target !== status);
 }
 
-/** "2 open tasks · next: X", "1 open task · next: X" or "No open tasks". */
-export function taskSummary(track: ProjectTrack): string {
-	const open = openTasks(track);
-	const next = open[0];
-	if (!next) return "No open tasks";
-	return `${open.length} open ${open.length === 1 ? "task" : "tasks"} · next: ${next.text}`;
+/** Tasks done out of the tasks done or open of a track; cancelled tasks do not count. Null when there are none: no bar. */
+export function taskProgress(track: ProjectTrack): { done: number; total: number } | null {
+	const done = track.tasks.filter((task) => task.state === "done").length;
+	const total = done + openTasks(track).length;
+	return total === 0 ? null : { done, total };
 }
 
 /** An In progress track with no open task is flagged "No next task" and offers Add task. */

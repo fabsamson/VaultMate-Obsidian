@@ -2,6 +2,7 @@ import actionAddTask from "../../assets/sprites/action_add_task.png";
 import actionAddToNote from "../../assets/sprites/action_add_to_note.png";
 import actionCopy from "../../assets/sprites/action_copy.png";
 import actionDismiss from "../../assets/sprites/action_dismiss.png";
+import actionDone from "../../assets/sprites/action_done.png";
 import actionDrop from "../../assets/sprites/action_drop.png";
 import actionLaunch from "../../assets/sprites/action_launch.png";
 import actionLink from "../../assets/sprites/action_link.png";
@@ -73,6 +74,7 @@ import statePrediction from "../../assets/sprites/state_prediction.png";
 import stateScopeNote from "../../assets/sprites/state_scope_note.png";
 import stateScopeTree from "../../assets/sprites/state_scope_tree.png";
 import stateScopeVault from "../../assets/sprites/state_scope_vault.png";
+import stateTask from "../../assets/sprites/state_task.png";
 
 import type { Sprite } from "./pixel";
 
@@ -82,6 +84,7 @@ export const SPRITES = {
 	actionAddToNote: { src: actionAddToNote, pixels: 16 },
 	actionCopy: { src: actionCopy, pixels: 16 },
 	actionDismiss: { src: actionDismiss, pixels: 16 },
+	actionDone: { src: actionDone, pixels: 16 },
 	actionDrop: { src: actionDrop, pixels: 16 },
 	actionLaunch: { src: actionLaunch, pixels: 16 },
 	actionLink: { src: actionLink, pixels: 16 },
@@ -127,6 +130,7 @@ export const SPRITES = {
 	stateScopeNote: { src: stateScopeNote, pixels: 16 },
 	stateScopeTree: { src: stateScopeTree, pixels: 16 },
 	stateScopeVault: { src: stateScopeVault, pixels: 16 },
+	stateTask: { src: stateTask, pixels: 16 },
 } satisfies Record<string, Sprite>;
 
 /**

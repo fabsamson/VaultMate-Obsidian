@@ -15,21 +15,23 @@ import { addScopeControls } from "../journal/scope-control";
 import { scopePaths } from "../journal/scope";
 import type { ProjectContent, ProjectNote } from "./project-index";
 import { TRACK_SEALS } from "./track-seals";
-import { STATUS_INFO, type ProjectIdea, type ProjectTrack, type TrackStatus } from "./project-note";
+import { openTasks, STATUS_INFO, type ProjectIdea, type ProjectTrack, type TrackStatus, type TrackTask } from "./project-note";
 import {
 	moveTargets,
 	needsNextTask,
 	nextTaskLine,
 	orderTiles,
 	primaryAction,
+	projectProgress,
 	projectProgressText,
 	reviewsDueText,
 	sectionChips,
 	splitEntries,
 	summarizeProject,
-	taskSummary,
+	taskProgress,
 	tileCounters,
 	tileSummary,
+	type ProjectProgress,
 	type ProjectSummary,
 	type SectionId,
 } from "./projects-model";
@@ -64,6 +66,8 @@ export interface ProjectsPageHost {
 	/** Moves the track; Start (to In progress) asks for a first task first. */
 	move(path: string, track: ProjectTrack, status: TrackStatus): void;
 	addTask(path: string, track: ProjectTrack): void;
+	/** Marks an open task done (with today's date) or cancelled, then offers Undo. */
+	setTaskState(path: string, task: TrackTask, state: "done" | "cancelled"): void;
 	/** Whether the Suggest next steps action can run: it exists and AI is configured. */
 	canSuggest(): boolean;
 	suggest(path: string, track: ProjectTrack): void;
@@ -80,6 +84,25 @@ const OPEN_STATUSES = ["progress", "backlog", "explore"] as const;
 
 function noteName(path: string): string {
 	return (path.split("/").pop() ?? path).replace(/\.md$/i, "");
+}
+
+/** A pixel bar with its text: the project's progress (tile and page header) or the tasks of a track. */
+interface Meter {
+	label: string;
+	now: number;
+	max: number;
+	text: string;
+}
+
+function projectMeter(progress: ProjectProgress): Meter {
+	const text = projectProgressText(progress);
+	return progress.kind === "percent" ? { label: "Progress", now: progress.percent, max: 100, text } : { label: "Tracks done", now: progress.done, max: progress.total, text };
+}
+
+function createMeter(parent: HTMLElement, meter: Meter, cls = ""): void {
+	const box = parent.createDiv({ cls: `vaultmate-progress ${cls}`.trim(), attr: { role: "progressbar", "aria-label": meter.label, "aria-valuemin": "0", "aria-valuemax": String(meter.max), "aria-valuenow": String(meter.now), "aria-valuetext": meter.text } });
+	box.createDiv({ cls: "vaultmate-progress-bar" }).createDiv({ cls: "vaultmate-progress-fill" }).setCssProps({ "--vaultmate-width": `${(100 * meter.now) / meter.max}%` });
+	box.createSpan({ text: meter.text });
 }
 
 /** Everything the project page needs about one project. */
@@ -113,11 +136,7 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		if (alert) line.createSpan({ cls: "vaultmate-track-flag", text: alert });
 		const { progress } = summary;
 		if (progress) {
-			const text = projectProgressText(progress);
-			const [now, max] = progress.kind === "percent" ? [progress.percent, 100] : [progress.done, progress.total];
-			const meter = tile.createDiv({ cls: "vaultmate-progress", attr: { role: "progressbar", "aria-label": progress.kind === "percent" ? "Progress" : "Tracks done", "aria-valuemin": "0", "aria-valuemax": String(max), "aria-valuenow": String(now), "aria-valuetext": text } });
-			meter.createDiv({ cls: "vaultmate-progress-bar" }).createDiv({ cls: "vaultmate-progress-fill" }).setCssProps({ "--vaultmate-width": `${(100 * now) / max}%` });
-			meter.createSpan({ text });
+			createMeter(tile, projectMeter(progress));
 		}
 		if (summary.next) tile.createSpan({ cls: "vaultmate-muted vaultmate-project-tile-next", text: `Next: ${keepTogether(nextTaskLine(summary.next))}` });
 		tile.addEventListener("click", () => open(summary.path));
@@ -180,6 +199,23 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		createIconButton(row, SPRITES.actionReview, "Review", () => host.openReview(item), { describedBy: statement });
 	};
 
+	/** One open task of a track: sprite, text over its due date, then Done, Drop and Open (a recurring task only has Open). */
+	const renderTask = (parent: HTMLElement, projectPath: string, task: TrackTask, today: Date): void => {
+		const row = parent.createDiv({ cls: "vaultmate-entry-line" });
+		createMark(row, SPRITES.stateTask);
+		const main = row.createEl("button", { cls: "vaultmate-entry-main", attr: { type: "button", "aria-label": `Open the note at this task: ${task.text}` } });
+		const text = main.createSpan({ cls: "vaultmate-entry-statement", text: task.text || "(no text)" });
+		const due = task.due === null ? null : parseDate(task.due);
+		if (due) main.createSpan({ cls: "vaultmate-muted vaultmate-entry-due", text: keepTogether(dueLabel(due, today)) });
+		main.addEventListener("click", () => host.open(projectPath, task.line));
+		const actions = row.createDiv({ cls: "vaultmate-icon-actions" });
+		if (!task.recurring) {
+			createIconButton(actions, SPRITES.actionDone, "Done", () => host.setTaskState(projectPath, task, "done"), { describedBy: text });
+			createIconButton(actions, SPRITES.actionDrop, "Drop", () => host.setTaskState(projectPath, task, "cancelled"), { describedBy: text });
+		}
+		createIconButton(actions, SPRITES.actionOpenNote, "Open in the note", () => host.open(projectPath, task.line), { describedBy: text });
+	};
+
 	const renderTrack = (parent: HTMLElement, view: ProjectView, index: number, today: Date): void => {
 		const { project } = view;
 		const track = project.model.tracks[index];
@@ -189,7 +225,8 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		const main = row.createDiv({ cls: "vaultmate-track-main" });
 		const titleButton = main.createEl("button", { cls: "vaultmate-idea-statement", text: track.title || "(untitled)", attr: { type: "button", "aria-label": `Open the note at this track: ${track.title}` } });
 		titleButton.addEventListener("click", () => host.open(project.path, track.line));
-		main.createSpan({ cls: "vaultmate-muted vaultmate-track-meta", text: taskSummary(track) });
+		const tasks = taskProgress(track);
+		if (tasks) createMeter(main, { label: "Tasks done", now: tasks.done, max: tasks.total, text: `${tasks.done}/${tasks.total} tasks` }, "vaultmate-progress-compact");
 		const actions = row.createDiv({ cls: "vaultmate-track-actions" });
 		const primary = primaryAction(track.status);
 		createIconButton(actions, SEALS[primary.target], primary.label, () => host.move(project.path, track, primary.target), { primary: true, describedBy: titleButton });
@@ -204,6 +241,7 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 			flag.createSpan({ cls: "vaultmate-track-flag", text: "No next task" });
 			if (host.canSuggest()) createIconButton(flag, SPRITES.actionSuggest, "Suggest next steps", () => host.suggest(project.path, track), { describedBy: titleButton });
 		}
+		for (const task of openTasks(track)) renderTask(card, project.path, task, today);
 		for (const item of view.byTrack[index] ?? []) renderEntry(card, item, project.path, today);
 	};
 
@@ -211,13 +249,14 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		const { project } = view;
 		const today = startOfDay();
 		const page = parent.createDiv({ cls: "vaultmate-project-page" });
+		const counts: Record<TrackStatus, number> = { explore: 0, backlog: 0, progress: 0, done: 0, dropped: 0 };
+		for (const track of project.model.tracks) counts[track.status]++;
 		const head = page.createDiv({ cls: "vaultmate-project-head" });
 		const name = head.createEl("button", { cls: "vaultmate-project-name", text: project.name, attr: { type: "button", "aria-label": `Open ${project.name}` } });
 		name.addEventListener("click", () => host.open(project.path, 0));
 		if (focus) name.focus();
-
-		const counts: Record<TrackStatus, number> = { explore: 0, backlog: 0, progress: 0, done: 0, dropped: 0 };
-		for (const track of project.model.tracks) counts[track.status]++;
+		const progress = projectProgress(host.progressProperty(project.path), counts);
+		if (progress) createMeter(head, projectMeter(progress), "vaultmate-project-head-progress");
 		const chips = sectionChips(counts, project.model.ideas.length, view.outside.length);
 		if (chips.length === 0) {
 			createInfoPanel(page, { sprite: SPRITES.mascotSleep, title: "No tracks yet", compact: true });
