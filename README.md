@@ -26,7 +26,7 @@ VaultMate is not in the Community plugins directory yet; it will be installable 
 ## Quick start
 
 1. Open the VaultMate panel from the ribbon icon or with the **Open panel** command.
-2. In any note, write a decision and end the line with `#decision ` (a space after the tag). Pick a review date in the form that opens. The line becomes a task-style line with a badge at its end.
+2. In any note, write a decision and end the line with `#decision ` (a space after the tag). Pick a review date in the list that appears. The line becomes a task-style line with a badge at its end.
 3. Capture an idea the same way: end a line with `#idea `.
 4. Open the **Ideas** page of the panel and press **Process** on the idea to turn it into a note, a decision, a project track, or to drop it.
 5. Make a note a project with the **Make this note a project** command, or create one with **New project…**. Its page lists tracks you can start, move and finish.
@@ -201,7 +201,7 @@ The links between the two are documented for the app's developers in [docs/andro
 
 ## Privacy
 
-The plugin collects no telemetry. Its network requests are the AI actions you run (sent to the AI provider you configured, with the content you previewed) and the place searches you start (sent to OpenStreetMap Nominatim, with your search text only). See [PRIVACY.md](PRIVACY.md).
+The plugin collects no telemetry. Its network requests are the AI actions you run (sent to the AI provider you configured, with the content you previewed) and the place searches you start (sent to OpenStreetMap Nominatim, with your search text only). VaultMate needs no account, shows no ads and has no paid features; the Buy Me a Coffee link below is an optional donation. See [PRIVACY.md](https://github.com/fabsamson/VaultMate-Obsidian/blob/main/PRIVACY.md).
 
 ## Support
 
