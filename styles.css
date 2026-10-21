@@ -2351,7 +2351,12 @@ body:not(.is-mobile) .modal-container.vaultmate-modal-top > .modal {
 	padding: 0 calc(var(--g) * 0.3);
 	border-width: 1px;
 	gap: 0;
+	text-align: center;
 	font-size: calc(var(--g) * 0.7);
+}
+
+.vaultmate-guide-mock .vaultmate-choice-option.is-selected::before {
+	content: none;
 }
 
 .vaultmate-guide-mock .vaultmate-calibration-bar {
