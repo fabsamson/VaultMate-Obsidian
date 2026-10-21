@@ -4,6 +4,7 @@ import actionCopy from "../../assets/sprites/action_copy.png";
 import actionDismiss from "../../assets/sprites/action_dismiss.png";
 import actionDone from "../../assets/sprites/action_done.png";
 import actionDrop from "../../assets/sprites/action_drop.png";
+import actionHelp from "../../assets/sprites/action_help.png";
 import actionLaunch from "../../assets/sprites/action_launch.png";
 import actionLink from "../../assets/sprites/action_link.png";
 import actionLocate from "../../assets/sprites/action_locate.png";
@@ -49,8 +50,22 @@ import layerNightLanterns3 from "../../assets/sprites/layer_night_lanterns_3.png
 import layerNightStars1 from "../../assets/sprites/layer_night_stars_1.png";
 import layerNightStars2 from "../../assets/sprites/layer_night_stars_2.png";
 import layerNightStars3 from "../../assets/sprites/layer_night_stars_3.png";
+import mascotBox from "../../assets/sprites/mascot_box.png";
+import mascotBook from "../../assets/sprites/mascot_book.png";
+import mascotCheer from "../../assets/sprites/mascot_cheer.png";
+import mascotCrystal from "../../assets/sprites/mascot_crystal.png";
+import mascotIdea from "../../assets/sprites/mascot_idea.png";
+import mascotLaptop from "../../assets/sprites/mascot_laptop.png";
+import mascotPaint from "../../assets/sprites/mascot_paint.png";
+import mascotPoint from "../../assets/sprites/mascot_point.png";
+import mascotRead from "../../assets/sprites/mascot_read.png";
 import mascotSleep from "../../assets/sprites/mascot_sleep.png";
+import mascotStamp from "../../assets/sprites/mascot_stamp.png";
 import mascotTea from "../../assets/sprites/mascot_tea.png";
+import mascotThink from "../../assets/sprites/mascot_think.png";
+import mascotWater from "../../assets/sprites/mascot_water.png";
+import mascotWrite from "../../assets/sprites/mascot_write.png";
+import mascotYarn from "../../assets/sprites/mascot_yarn.png";
 import moduleContext from "../../assets/sprites/module_context.png";
 import moduleDecision from "../../assets/sprites/module_decision.png";
 import moduleIdea from "../../assets/sprites/module_idea.png";
@@ -78,6 +93,10 @@ import stateScopeTree from "../../assets/sprites/state_scope_tree.png";
 import stateScopeVault from "../../assets/sprites/state_scope_vault.png";
 import stateTask from "../../assets/sprites/state_task.png";
 import stateUpcoming from "../../assets/sprites/state_upcoming.png";
+import stateStep1 from "../../assets/sprites/state_step_1.png";
+import stateStep2 from "../../assets/sprites/state_step_2.png";
+import stateStep3 from "../../assets/sprites/state_step_3.png";
+import stateStep4 from "../../assets/sprites/state_step_4.png";
 import stateWaiting from "../../assets/sprites/state_waiting.png";
 import stateWeek from "../../assets/sprites/state_week.png";
 import stateWilting from "../../assets/sprites/state_wilting.png";
@@ -92,6 +111,7 @@ export const SPRITES = {
 	actionDismiss: { src: actionDismiss, pixels: 16 },
 	actionDone: { src: actionDone, pixels: 16 },
 	actionDrop: { src: actionDrop, pixels: 16 },
+	actionHelp: { src: actionHelp, pixels: 16 },
 	actionLaunch: { src: actionLaunch, pixels: 16 },
 	actionLink: { src: actionLink, pixels: 16 },
 	actionLocate: { src: actionLocate, pixels: 16 },
@@ -111,8 +131,22 @@ export const SPRITES = {
 	actionSuggest: { src: actionSuggest, pixels: 16 },
 	actionTrack: { src: actionTrack, pixels: 16 },
 	actionUndo: { src: actionUndo, pixels: 16 },
+	mascotBox: { src: mascotBox, pixels: 48 },
+	mascotBook: { src: mascotBook, pixels: 48 },
+	mascotCheer: { src: mascotCheer, pixels: 48 },
+	mascotCrystal: { src: mascotCrystal, pixels: 48 },
+	mascotIdea: { src: mascotIdea, pixels: 48 },
+	mascotLaptop: { src: mascotLaptop, pixels: 48 },
+	mascotPaint: { src: mascotPaint, pixels: 48 },
+	mascotPoint: { src: mascotPoint, pixels: 48 },
+	mascotRead: { src: mascotRead, pixels: 48 },
 	mascotSleep: { src: mascotSleep, pixels: 48 },
+	mascotStamp: { src: mascotStamp, pixels: 48 },
 	mascotTea: { src: mascotTea, pixels: 48 },
+	mascotThink: { src: mascotThink, pixels: 48 },
+	mascotWater: { src: mascotWater, pixels: 48 },
+	mascotWrite: { src: mascotWrite, pixels: 48 },
+	mascotYarn: { src: mascotYarn, pixels: 48 },
 	moduleContext: { src: moduleContext, pixels: 24 },
 	moduleDecision: { src: moduleDecision, pixels: 24 },
 	moduleIdea: { src: moduleIdea, pixels: 24 },
@@ -138,6 +172,10 @@ export const SPRITES = {
 	stateScopeNote: { src: stateScopeNote, pixels: 16 },
 	stateScopeTree: { src: stateScopeTree, pixels: 16 },
 	stateScopeVault: { src: stateScopeVault, pixels: 16 },
+	stateStep1: { src: stateStep1, pixels: 16 },
+	stateStep2: { src: stateStep2, pixels: 16 },
+	stateStep3: { src: stateStep3, pixels: 16 },
+	stateStep4: { src: stateStep4, pixels: 16 },
 	stateTask: { src: stateTask, pixels: 16 },
 	stateUpcoming: { src: stateUpcoming, pixels: 16 },
 	stateWaiting: { src: stateWaiting, pixels: 16 },

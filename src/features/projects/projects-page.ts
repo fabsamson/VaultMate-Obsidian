@@ -104,10 +104,32 @@ function projectMeter(progress: ProjectProgress): Meter {
 	return progress.kind === "percent" ? { label: "Progress", now: progress.percent, max: 100, text } : { label: "Tracks done", now: progress.done, max: progress.total, text };
 }
 
-function createMeter(parent: HTMLElement, meter: Meter, cls = ""): void {
+export function createMeter(parent: HTMLElement, meter: Meter, cls = ""): void {
 	const box = parent.createDiv({ cls: `vaultmate-progress ${cls}`.trim(), attr: { role: "progressbar", "aria-label": meter.label, "aria-valuemin": "0", "aria-valuemax": String(meter.max), "aria-valuenow": String(meter.now), "aria-valuetext": meter.text } });
 	box.createDiv({ cls: "vaultmate-progress-bar" }).createDiv({ cls: "vaultmate-progress-fill" }).setCssProps({ "--vaultmate-width": `${(100 * meter.now) / meter.max}%` });
 	box.createSpan({ text: meter.text });
+}
+
+function createSealCounter(parent: HTMLElement, status: TrackStatus, count: number): void {
+	const counter = parent.createSpan({ cls: "vaultmate-seal-count", attr: { role: "img", "aria-label": `${count} ${STATUS_INFO[status].label.toLowerCase()}` } });
+	createSmallSprite(counter, SEALS[status], SMALL);
+	counter.createSpan({ text: String(count) });
+}
+
+/** The tile of a project on the dashboard (its page guide draws it too); the caller adds the click. */
+export function createProjectTile(parent: HTMLElement, summary: ProjectSummary): HTMLButtonElement {
+	const tile = parent.createEl("button", { cls: "vaultmate-project-tile", attr: { type: "button", "data-path": summary.path } });
+	tile.createSpan({ cls: "vaultmate-project-tile-name", text: summary.name });
+	const { statuses, ideas } = tileCounters(summary);
+	const line = tile.createSpan({ cls: "vaultmate-project-tile-line" });
+	for (const { status, count } of statuses) createSealCounter(line, status, count);
+	if (ideas) line.createSpan({ cls: "vaultmate-muted", text: ideas });
+	if (statuses.length === 0 && !ideas) line.createSpan({ cls: "vaultmate-muted", text: "No tracks yet" });
+	const alert = reviewsDueText(summary.reviewsDue);
+	if (alert) line.createSpan({ cls: "vaultmate-track-flag", text: alert });
+	if (summary.progress) createMeter(tile, projectMeter(summary.progress));
+	if (summary.next) tile.createSpan({ cls: "vaultmate-muted vaultmate-project-tile-next", text: `Next: ${keepTogether(nextTaskLine(summary.next))}` });
+	return tile;
 }
 
 /** Everything the project page needs about one project. */
@@ -130,43 +152,19 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 	const search: PageSearchState = { query: "" };
 	const matches = (text: string): boolean => matchesQuery(text, search.query);
 
-	const sealCounter = (parent: HTMLElement, status: TrackStatus, count: number): void => {
-		const counter = parent.createSpan({ cls: "vaultmate-seal-count", attr: { role: "img", "aria-label": `${count} ${STATUS_INFO[status].label.toLowerCase()}` } });
-		createSmallSprite(counter, SEALS[status], SMALL);
-		counter.createSpan({ text: String(count) });
-	};
-
 	// ---- Dashboard ----------------------------------------------------------------------------------
-
-	const renderTile = (parent: HTMLElement, summary: ProjectSummary, open: (path: string) => void): void => {
-		const tile = parent.createEl("button", { cls: "vaultmate-project-tile", attr: { type: "button", "data-path": summary.path } });
-		tile.createSpan({ cls: "vaultmate-project-tile-name", text: summary.name });
-		const { statuses, ideas } = tileCounters(summary);
-		const line = tile.createSpan({ cls: "vaultmate-project-tile-line" });
-		for (const { status, count } of statuses) sealCounter(line, status, count);
-		if (ideas) line.createSpan({ cls: "vaultmate-muted", text: ideas });
-		if (statuses.length === 0 && !ideas) line.createSpan({ cls: "vaultmate-muted", text: "No tracks yet" });
-		const alert = reviewsDueText(summary.reviewsDue);
-		if (alert) line.createSpan({ cls: "vaultmate-track-flag", text: alert });
-		const { progress } = summary;
-		if (progress) {
-			createMeter(tile, projectMeter(progress));
-		}
-		if (summary.next) tile.createSpan({ cls: "vaultmate-muted vaultmate-project-tile-next", text: `Next: ${keepTogether(nextTaskLine(summary.next))}` });
-		tile.addEventListener("click", () => open(summary.path));
-	};
 
 	const renderDashboard = (parent: HTMLElement, summaries: ProjectSummary[], open: (path: string) => void): void => {
 		const { shown, other } = orderTiles(summaries);
 		if (shown.length > 0) {
 			const grid = parent.createDiv({ cls: "vaultmate-project-tiles" });
-			for (const summary of shown) renderTile(grid, summary, open);
+			for (const summary of shown) createProjectTile(grid, summary).addEventListener("click", () => open(summary.path));
 		}
 		if (other.length === 0) return;
 		const group = parent.createDiv({ cls: "vaultmate-hub-section" });
 		const disclosure = createDisclosure(group, { label: `Other projects · ${other.length}`, open: showOther, onToggle: (isOpen) => (showOther = isOpen) });
 		const grid = disclosure.body.createDiv({ cls: "vaultmate-project-tiles" });
-		for (const summary of other) renderTile(grid, summary, open);
+		for (const summary of other) createProjectTile(grid, summary).addEventListener("click", () => open(summary.path));
 	};
 
 	// ---- Project page -------------------------------------------------------------------------------
@@ -354,6 +352,7 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 
 	const render = async (body: HTMLElement, ctx: HubPageContext): Promise<void> => {
 		const notes = host.notes();
+		ctx.setGuide("projects");
 		if (notes.length === 0) {
 			const empty = createInfoPanel(body, { sprite: SPRITES.mascotSleep, title: "No projects yet", text: `A project is a note with ${host.projectTag()} in its tags property. Run Make this note a project on a note, or start a new one.` });
 			createSpriteButton(empty, { sprite: SPRITES.actionNewProject, text: "New project", cta: true }).addEventListener("click", () => host.newProject());
@@ -393,6 +392,7 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 			controls.toggle(scoped !== null || !shown);
 			// The hub's back arrow climbs one level: from a project page to this dashboard.
 			ctx.setUp(shown && scoped === null ? () => openProject(null) : null);
+			ctx.setGuide(shown ? "project" : "projects");
 			if (shown) {
 				renderProjectPage(content, shown, focus);
 				return;

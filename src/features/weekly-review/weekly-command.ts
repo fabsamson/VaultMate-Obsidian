@@ -59,7 +59,7 @@ async function weeklyReview(plugin: VaultMatePlugin): Promise<void> {
 			fix = await toFix();
 			return { projects: fix.length, tracks: fix.reduce((sum, project) => sum + project.tracks, 0) };
 		},
-		showFirstProject: () => plugin.openHub(PROJECTS_PAGE_ID, fix[0]?.path),
+		showFirstProject: () => plugin.openHub(PROJECTS_PAGE_ID, fix[0]?.path, true),
 	};
 	new Notice(weeklySummary(await runWeeklyReview(host)), 8000);
 }

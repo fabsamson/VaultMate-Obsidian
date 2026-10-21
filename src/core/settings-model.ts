@@ -98,6 +98,14 @@ export interface UiSettings {
 	banner: boolean;
 }
 
+/** The page guides ("?" on a page of the hub). */
+export interface GuideSettings {
+	/** Ids of the guides already opened, by themselves or with "?". Stable ids: an update never reopens one. */
+	seen: string[];
+	/** Open a page's guide by itself the first time the page is shown. */
+	autoOpen: boolean;
+}
+
 /** What the plugin did once for this vault (shared between devices). */
 export interface FirstRunState {
 	/** The idea and project tags were checked against the vault (see `core/tag-check`). */
@@ -117,6 +125,7 @@ export interface VaultMateSettings {
 	contextState: ContextState;
 	firstRun: FirstRunState;
 	ui: UiSettings;
+	guides: GuideSettings;
 }
 
 export const DEFAULT_SETTINGS: VaultMateSettings = {
@@ -131,6 +140,7 @@ export const DEFAULT_SETTINGS: VaultMateSettings = {
 	contextState: { notUseful: [] },
 	firstRun: { tagCheckDone: false },
 	ui: { animations: true, banner: true },
+	guides: { seen: [], autoOpen: true },
 };
 
 const TAG_RE = /^[\p{L}\p{N}\p{M}_/-]+$/u;
@@ -294,7 +304,12 @@ export function normalizeSettings(value: unknown): VaultMateSettings {
 		Array.isArray(raw) ? [...new Set(raw.filter((item): item is string => typeof item === "string").map(clean).filter((item) => item !== ""))] : undefined;
 	const ctxState = isRecord(value) && isRecord(value.contextState) ? value.contextState : {};
 	const ui = isRecord(value) && isRecord(value.ui) ? value.ui : {};
+	const guides = isRecord(value) && isRecord(value.guides) ? value.guides : {};
 	return {
+		guides: {
+			seen: Array.isArray(guides.seen) ? [...new Set(guides.seen.filter((id): id is string => typeof id === "string" && id !== ""))] : [],
+			autoOpen: typeof guides.autoOpen === "boolean" ? guides.autoOpen : DEFAULT_SETTINGS.guides.autoOpen,
+		},
 		ui: {
 			animations: typeof ui.animations === "boolean" ? ui.animations : DEFAULT_SETTINGS.ui.animations,
 			banner: typeof ui.banner === "boolean" ? ui.banner : DEFAULT_SETTINGS.ui.banner,

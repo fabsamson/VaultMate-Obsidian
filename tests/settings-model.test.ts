@@ -52,8 +52,14 @@ describe("normalizeSettings", () => {
 			contextState: { notUseful: [["A.md", "B.md"]] },
 			firstRun: { tagCheckDone: true },
 			ui: { animations: false, banner: false },
+			guides: { seen: ["projects", "project"], autoOpen: false },
 		};
 		expect(normalizeSettings(saved)).toEqual(saved);
+	});
+
+	it("cleans the list of seen guides", () => {
+		expect(normalizeSettings({ guides: { seen: ["projects", "projects", 3, "", "home"] } }).guides).toEqual({ seen: ["projects", "home"], autoOpen: true });
+		expect(normalizeSettings({ guides: { seen: "projects", autoOpen: "no" } }).guides).toEqual({ seen: [], autoOpen: true });
 	});
 
 	it("replaces invalid values by their default", () => {
