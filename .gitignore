@@ -6,7 +6,9 @@ coverage/
 .DS_Store
 
 # Local planning and agent instructions: kept current locally, never committed
-docs/
+docs/*
+!docs/android-app.md
+!docs/media/
 agents.md
 AGENTS.md
 PRODUCT.md
