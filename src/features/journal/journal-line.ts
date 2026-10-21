@@ -134,9 +134,9 @@ export function indexedEntry(line: string, tags: JournalTags): { entry: JournalE
 	return { entry: { ...buildEntry(cls.kind, " ", parseTaskLine(line).body), created: null, due: null, done: null }, plain: true };
 }
 
-/** An open entry with no review date, or a plain tagged line: it is offered to be tracked. */
+/** An open entry with no readable review date (a plain tagged line, a task without 📅): it is offered to be tracked. */
 export function isUntracked(entry: JournalEntry): boolean {
-	return entry.status === "open" && entry.due === null;
+	return entry.status === "open" && (entry.due === null || parseDate(entry.due) === null);
 }
 
 /**
@@ -290,7 +290,7 @@ export function groupByDue<T extends { entry: JournalEntry }>(items: readonly T[
 	const days = new Map<T, number>();
 	for (const item of items) {
 		if (item.entry.status !== "open") continue;
-		const due = item.entry.due === null ? null : parseDate(item.entry.due);
+		const due = isUntracked(item.entry) ? null : parseDate(item.entry.due ?? "");
 		if (!due) {
 			groups.undated.push(item);
 			continue;
@@ -303,11 +303,10 @@ export function groupByDue<T extends { entry: JournalEntry }>(items: readonly T[
 	return groups;
 }
 
-/** What the page's "Tidy up" section holds: plain or undated open entries, and entries ticked without a review. */
-export function tidyUp<T extends { entry: JournalEntry }>(items: readonly T[], today: Date): { untracked: T[]; closed: T[]; total: number } {
-	const untracked = groupByDue(items, today).undated;
+/** What the page's "Tidy up" section holds: entries ticked without a review (untracked lines are in Reviews). */
+export function tidyUp<T extends { entry: JournalEntry }>(items: readonly T[]): { closed: T[]; total: number } {
 	const closed = items.filter((item) => closedWithoutReview(item.entry));
-	return { untracked, closed, total: untracked.length + closed.length };
+	return { closed, total: closed.length };
 }
 
 /** Number of open entries due today or earlier. */

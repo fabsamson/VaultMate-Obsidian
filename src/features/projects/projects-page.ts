@@ -9,7 +9,7 @@ import type { HubPage, HubPageContext } from "../../ui/hub-view";
 import { createSmallSprite, createSprite, type Sprite } from "../../ui/pixel";
 import { SPRITES } from "../../ui/sprites";
 import type { JournalItem } from "../journal/journal-index";
-import { kindName } from "../journal/journal-line";
+import { isUntracked, kindName } from "../journal/journal-line";
 import { addScopeControls } from "../journal/scope-control";
 import { scopePaths } from "../journal/scope";
 import type { ProjectContent, ProjectNote } from "./project-index";
@@ -51,6 +51,8 @@ export interface ProjectsPageHost {
 	entries(): JournalItem[];
 	/** Opens the "Time to judge?" review of an entry. */
 	openReview(item: JournalItem): void;
+	/** Opens the Track form of an untracked line, as the kind of its tag. */
+	track(item: JournalItem): void;
 	/** Opens the note at a 0-based line. */
 	open(path: string, line: number): void;
 	/** Opens the Promote form for an idea of the project. */
@@ -167,7 +169,7 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		return section;
 	};
 
-	/** One open decision or prediction: sprite, statement, review date, and Review. */
+	/** One open decision or prediction: sprite, statement, review date and Review; an untracked line says so and offers Track. */
 	const renderEntry = (parent: HTMLElement, item: JournalItem, projectPath: string, today: Date): void => {
 		const { entry } = item;
 		const row = parent.createDiv({ cls: "vaultmate-entry-line" });
@@ -176,8 +178,13 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		main.createSpan({ cls: "vaultmate-entry-statement", text: entry.statement || "(no text)" });
 		const due = entry.due === null ? null : parseDate(entry.due);
 		const where = item.path === projectPath ? "" : `${noteName(item.path)} · `;
-		main.createSpan({ cls: "vaultmate-muted vaultmate-entry-due", text: `${where}${due ? keepTogether(dueLabel(due, today)) : "no review date"}` });
+		main.createSpan({ cls: "vaultmate-muted vaultmate-entry-due", text: `${where}${due ? keepTogether(dueLabel(due, today)) : "not tracked yet"}` });
 		main.addEventListener("click", () => host.open(item.path, item.line));
+		if (isUntracked(entry)) {
+			const label = `Track as ${kindName(entry.kind)}`;
+			button(row, label, `${label}: ${entry.statement}`).addEventListener("click", () => host.track(item));
+			return;
+		}
 		button(row, "Review", `Review ${kindName(entry.kind)}: ${entry.statement}`).addEventListener("click", () => host.openReview(item));
 	};
 
@@ -210,12 +217,11 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		for (const item of view.byTrack[index] ?? []) renderEntry(card, item, project.path, today);
 	};
 
-	const renderProjectPage = (parent: HTMLElement, view: ProjectView, back: (() => void) | null, focus: boolean): void => {
+	const renderProjectPage = (parent: HTMLElement, view: ProjectView, focus: boolean): void => {
 		const { project } = view;
 		const today = startOfDay();
 		const page = parent.createDiv({ cls: "vaultmate-project-page" });
 		const head = page.createDiv({ cls: "vaultmate-project-head" });
-		if (back) head.createEl("button", { cls: "vaultmate-link vaultmate-back-projects", text: "Projects", attr: { type: "button", "aria-label": "Back to all projects" } }).addEventListener("click", back);
 		const name = head.createEl("button", { cls: "vaultmate-project-name", text: project.name, attr: { type: "button", "aria-label": `Open ${project.name}` } });
 		name.addEventListener("click", () => host.open(project.path, 0));
 		if (focus) name.focus();
@@ -298,9 +304,10 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		let token = 0;
 
 		const openProject = (path: string | null): void => {
+			const left = ctx.state.project;
 			ctx.state.project = path;
 			ctx.save();
-			void draw(true, path ?? undefined);
+			void draw(true, path ?? left ?? undefined);
 		};
 
 		const draw = async (focus: boolean, focusTile?: string): Promise<void> => {
@@ -319,8 +326,10 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 				ctx.save();
 			}
 			controls.toggle(scoped !== null || !shown);
+			// The hub's back arrow climbs one level: from a project page to this dashboard.
+			ctx.setUp(shown && scoped === null ? () => openProject(null) : null);
 			if (shown) {
-				renderProjectPage(content, shown, scoped === null ? () => openProject(null) : null, focus);
+				renderProjectPage(content, shown, focus);
 				return;
 			}
 			const inScope = notes.filter((note) => allowed === null || allowed.has(note.path));

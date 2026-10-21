@@ -6,7 +6,7 @@ import type { HubPage } from "../../ui/hub-view";
 import { SPRITES } from "../../ui/sprites";
 import type { JournalItem } from "./journal-index";
 import { createClosedBlock, type ClosedHost } from "./closed-section";
-import { createReviewsBlock, renderUntracked, type ReviewsHost } from "./reviews-section";
+import { createReviewsBlock, type ReviewsHost } from "./reviews-section";
 import { addScopeControls } from "./scope-control";
 import { createTrackRecordBlock, type TrackRecordHost } from "./track-record-section";
 
@@ -69,7 +69,7 @@ export function createJournalPage(host: JournalPageHost): HubPage {
 				const items = host.entries().filter((item) => item.entry.kind === ctx.state.kind && (allowed === null || allowed.has(item.path)));
 				createSectionHeader(content, "Reviews");
 				renderReviews(content.createDiv({ cls: "vaultmate-hub-section" }), items);
-				const tidy = tidyUp(items, startOfDay());
+				const tidy = tidyUp(items);
 				let showClosed: (() => void) | null = null;
 				if (tidy.total > 0) {
 					const section = content.createDiv({ cls: "vaultmate-hub-section" });
@@ -81,7 +81,6 @@ export function createJournalPage(host: JournalPageHost): HubPage {
 							ctx.save();
 						},
 					});
-					renderUntracked(host, disclosure.body, tidy.untracked);
 					const closed = renderClosed(disclosure.body, items);
 					if (closed) {
 						showClosed = () => {

@@ -70,6 +70,7 @@ export class ProjectsFeature {
 				},
 				entries: () => (plugin.journal.enabled() ? plugin.journal.index.entries() : []),
 				openReview: (item) => plugin.journal.openReview(item),
+				track: (item) => plugin.journal.track(item),
 				open: (path, line) => this.open(path, line),
 				promote: (project, idea) => this.promoteDialog(project.path, project.model.tracks.map((track) => track.title), idea),
 				drop: (path, idea) => void this.dropIdea(path, idea),

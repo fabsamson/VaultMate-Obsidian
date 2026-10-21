@@ -10,6 +10,8 @@ import { SPRITES } from "./sprites";
 
 export const HUB_VIEW_TYPE = "vaultmate-hub";
 
+const BACK_TO_HUB = "Back to VaultMate";
+
 /** What the hub remembers with the workspace layout (not in data.json). */
 export interface HubState {
 	/** Id of the open page, or null for the landing page. */
@@ -29,6 +31,11 @@ export interface HubPageContext {
 	state: HubState;
 	/** Asks Obsidian to store the state with the workspace layout. */
 	save(): void;
+	/**
+	 * Tells the hub that the page has a level above its current one: the back arrow then runs `up` and
+	 * says `HubPage.upLabel`. Call it on every redraw of the page; null when the arrow leaves the page.
+	 */
+	setUp(up: (() => void) | null): void;
 }
 
 /** A page of the hub that a feature contributes (register it with `plugin.registerHubPage`). */
@@ -44,6 +51,8 @@ export interface HubPage {
 	enabled: () => boolean;
 	/** One line under the tile label; read on every redraw. */
 	summary: () => string;
+	/** Back arrow label while the page has a level above (see `HubPageContext.setUp`), e.g. "Back to all projects". */
+	upLabel?: string;
 	/** Fills the empty `body` of the page; it may be async. */
 	render: (body: HTMLElement, ctx: HubPageContext) => void | Promise<void>;
 }
@@ -52,6 +61,8 @@ export interface HubPage {
 export class HubView extends ItemView {
 	private state: HubState = { page: null, kind: "decision", scope: "vault", tidy: false, project: null };
 	private banner: SceneBanner | null = null;
+	/** What the back arrow does instead of going to the landing page; set by the open page. */
+	private up: (() => void) | null = null;
 
 	/** `animationsOn` and `bannerOn` are read at each redraw: the Animations setting with the system's reduced-motion preference, and the Scene banner setting. */
 	public constructor(leaf: WorkspaceLeaf, private readonly getPages: () => HubPage[], private readonly animationsOn: () => boolean, private readonly bannerOn: () => boolean) {
@@ -154,17 +165,22 @@ export class HubView extends ItemView {
 
 	private renderPage(root: HTMLElement, page: HubPage, focusTitle: boolean): void {
 		const bar = root.createDiv({ cls: "vaultmate-topbar" });
-		const back = bar.createEl("button", { cls: "vaultmate-back", attr: { type: "button", "aria-label": "Back to VaultMate" } });
+		const back = bar.createEl("button", { cls: "vaultmate-back", attr: { type: "button", "aria-label": BACK_TO_HUB } });
 		setIcon(back, "arrow-left");
-		back.addEventListener("click", () => this.go(null));
+		this.up = null;
+		back.addEventListener("click", () => (this.up ? this.up() : this.go(null)));
 		const title = bar.createEl("h1", { cls: "vaultmate-hub-title", text: page.title, attr: { tabindex: "-1" } });
 		if (focusTitle) title.focus();
-		void this.fill(page, root.createDiv({ cls: "vaultmate-hub-section" }));
+		void this.fill(page, root.createDiv({ cls: "vaultmate-hub-section" }), back);
 	}
 
-	private async fill(page: HubPage, body: HTMLElement): Promise<void> {
+	private async fill(page: HubPage, body: HTMLElement, back: HTMLElement): Promise<void> {
+		const setUp = (up: (() => void) | null): void => {
+			this.up = up;
+			back.setAttr("aria-label", up ? (page.upLabel ?? BACK_TO_HUB) : BACK_TO_HUB);
+		};
 		try {
-			await page.render(body, { state: this.state, save: () => this.app.workspace.requestSaveLayout() });
+			await page.render(body, { state: this.state, save: () => this.app.workspace.requestSaveLayout(), setUp });
 		} catch (error) {
 			console.error(`VaultMate: the "${page.id}" page failed`, error);
 			body.empty();

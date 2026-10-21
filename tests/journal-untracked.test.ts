@@ -25,6 +25,14 @@ describe("indexedEntry", () => {
 		expect(indexedEntry("## A heading #decision", TAGS)).toBeNull();
 	});
 
+	it("is the same rule as the undated group: open, no readable review date", () => {
+		const entry = (line: string) => indexedEntry(line, TAGS)!.entry;
+		expect(isUntracked(entry("- [ ] Odd date #decision 📅 2026-13-45"))).toBe(true);
+		expect(isUntracked(entry("- [x] Closed #decision ✅ 2026-10-10"))).toBe(false);
+		const items = ["- [ ] Odd date #decision 📅 2026-13-45", "- [ ] Dated #decision 📅 2026-10-20"].map((line) => ({ entry: entry(line) }));
+		expect(groupByDue(items, new Date(2026, 9, 16)).undated.map((item) => item.entry.statement)).toEqual(["Odd date"]);
+	});
+
 	it("puts plain lines with the undated entries to track", () => {
 		const items = ["- A plain one #decision", "- [ ] An undated task #decision", "- [ ] Tracked #decision 📅 2026-10-20"].map((line) => ({ entry: indexedEntry(line, TAGS)!.entry }));
 		const groups = groupByDue(items, new Date(2026, 9, 16));
@@ -60,20 +68,19 @@ describe("canTrackAs", () => {
 describe("tidyUp", () => {
 	const item = (line: string) => ({ entry: indexedEntry(line, TAGS)!.entry });
 
-	it("counts untracked entries and entries closed without a review", () => {
+	it("counts only the entries closed without a review (untracked lines are in Reviews)", () => {
 		const items = [
 			item("- A plain one #decision"),
 			item("- [ ] Tracked #decision 📅 2026-10-20"),
 			item("- [x] Ticked #decision ✅ 2026-10-10"),
 			item("- [x] Reviewed #decision [outcome: better] [quality: good] ✅ 2026-10-10"),
 		];
-		const tidy = tidyUp(items, new Date(2026, 9, 18));
-		expect(tidy.untracked.map((entry) => entry.entry.statement)).toEqual(["A plain one"]);
+		const tidy = tidyUp(items);
 		expect(tidy.closed.map((entry) => entry.entry.statement)).toEqual(["Ticked"]);
-		expect(tidy.total).toBe(2);
+		expect(tidy.total).toBe(1);
 	});
 
 	it("is empty when there is nothing to tidy", () => {
-		expect(tidyUp([item("- [ ] Tracked #decision 📅 2026-10-20")], new Date(2026, 9, 18)).total).toBe(0);
+		expect(tidyUp([item("- [ ] Tracked #decision 📅 2026-10-20"), item("- A plain one #decision")]).total).toBe(0);
 	});
 });

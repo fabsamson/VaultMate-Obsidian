@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { readProject, trackCounts } from "../src/features/projects/project-note";
-import { parseJournalLine } from "../src/features/journal/journal-line";
+import { indexedEntry, parseJournalLine } from "../src/features/journal/journal-line";
 import {
 	lineIn,
 	moveTargets,
@@ -159,7 +159,7 @@ describe("splitEntries", () => {
 	// 0 Tracks, 1 Gate, 2 entry, 3 task, 4 blank, 5 Shed, 6 entry, 7 Notes
 	const lines = ["# Tracks", "## 🔨 Gate", "- [ ] a #decision 📅 2026-10-25", "- [ ] t", "", "## 📥 Shed", "- [ ] b #prediction 📅 2026-10-20", "# Notes", "- [ ] c #decision 📅 2026-10-22"];
 	const project = { path: "Lyon/Lyon.md", model: readProject(lines) };
-	const item = (path: string, line: number, text: string, extra: object = {}) => ({ path, line, entry: parseJournalLine(text, TAGS)!, ...extra });
+	const item = (path: string, line: number, text: string) => ({ path, line, entry: indexedEntry(text, TAGS)!.entry });
 	const inGate = item("Lyon/Lyon.md", 2, lines[2]);
 	const inShed = item("Lyon/Lyon.md", 6, lines[6]);
 	const outside = item("Lyon/Lyon.md", 8, lines[8]);
@@ -178,11 +178,20 @@ describe("splitEntries", () => {
 		expect(splitEntries(project, [item("Other.md", 8, lines[8])], tree).outside).toEqual([]);
 	});
 
-	it("leaves out closed, plain and undated entries", () => {
+	it("leaves out closed entries", () => {
 		const closed = item("Lyon/Lyon.md", 8, "- [x] c #decision 📅 2026-10-22 ✅ 2026-10-23");
-		const undated = item("Lyon/Lyon.md", 8, "- [ ] c #decision");
-		const plain = item("Lyon/Lyon.md", 8, lines[8], { plain: true });
-		expect(splitEntries(project, [closed, undated, plain], null)).toEqual({ byTrack: [[], []], outside: [] });
+		expect(splitEntries(project, [closed], null)).toEqual({ byTrack: [[], []], outside: [] });
+	});
+
+	it("keeps plain and undated lines, in their track or outside, before the dated entries in note order", () => {
+		const plainOutside = item("Lyon/Lyon.md", 9, "- c2 #decision");
+		const undatedOutside = item("Lyon/Lyon.md", 8, "- [ ] c #decision");
+		const plainInGate = item("Lyon/Lyon.md", 3, "- g #prediction");
+		const undatedSub = item("Lyon/Flat.md", 4, "- [ ] f #decision");
+		const tree = new Set(["Lyon/Lyon.md", "Lyon/Flat.md"]);
+		const split = splitEntries(project, [outside, plainOutside, inGate, undatedOutside, plainInGate, sub, undatedSub], tree);
+		expect(split.byTrack).toEqual([[plainInGate, inGate], []]);
+		expect(split.outside).toEqual([undatedSub, undatedOutside, plainOutside, sub, outside]);
 	});
 
 	it("ends a track block before the next heading", () => {

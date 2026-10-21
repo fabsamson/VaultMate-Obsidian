@@ -2,7 +2,7 @@
 // chips, entries and buttons. Pure: no Obsidian import, so Vitest tests it.
 import { formatDate, parseDate } from "../../core/dates";
 import type { VaultMateSettings } from "../../core/settings-model";
-import { countDue, type JournalEntry } from "../journal/journal-line";
+import { countDue, isUntracked, type JournalEntry } from "../journal/journal-line";
 import { TRACK_STATUSES, openTasks, trackCounts, type ProjectIdea, type ProjectTags, type ProjectTrack, type TrackStatus } from "./project-note";
 
 /** The tags the settings give to ideas, decisions, predictions and project seeds: what `readProject` needs. */
@@ -90,7 +90,6 @@ export interface EntryLike {
 	path: string;
 	line: number;
 	entry: JournalEntry;
-	plain?: boolean;
 }
 
 export interface NextTask {
@@ -130,11 +129,12 @@ export function nextTaskLine(next: NextTask): string {
 }
 
 /**
- * Splits the open, dated, tracked entries of the journal. An entry written in a track's block
+ * Splits the open entries of the journal, tracked or not. An entry written in a track's block
  * `[track.line, track.end)` of the project note belongs to that track (`byTrack`, in the order of
  * `model.tracks`); the others belong to the project (`outside`) when they are in the project note or, for a
- * folder note, in `treePaths` (its sub-notes). Plain tagged lines and undated entries are the journal's
- * Tidy up, not shown here. Sorted by review date, so due reviews come first.
+ * folder note, in `treePaths` (its sub-notes). Closed entries are left out. In a track and in `outside`,
+ * untracked lines (no readable review date) come first in note order, then the dated entries by review
+ * date, so due reviews come first.
  */
 export function splitEntries<T extends EntryLike>(
 	project: { path: string; model: { tracks: readonly ProjectTrack[] } },
@@ -144,8 +144,9 @@ export function splitEntries<T extends EntryLike>(
 	const byTrack: T[][] = project.model.tracks.map(() => []);
 	const outside: T[] = [];
 	const covered = treePaths ?? new Set([project.path]);
-	const shown = items.filter((item) => covered.has(item.path) && !item.plain && item.entry.status === "open" && item.entry.due !== null && parseDate(item.entry.due) !== null);
-	shown.sort((a, b) => (a.entry.due ?? "").localeCompare(b.entry.due ?? ""));
+	const shown = items.filter((item) => covered.has(item.path) && item.entry.status === "open");
+	const order = (item: T): number => (isUntracked(item.entry) ? 0 : 1);
+	shown.sort((a, b) => order(a) - order(b) || (isUntracked(a.entry) ? a.path.localeCompare(b.path) || a.line - b.line : (a.entry.due ?? "").localeCompare(b.entry.due ?? "")));
 	for (const item of shown) {
 		const index = item.path === project.path ? project.model.tracks.findIndex((track) => lineIn(item.line, track.line, track.end)) : -1;
 		(byTrack[index] ?? outside).push(item);

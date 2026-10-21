@@ -72,7 +72,7 @@ export class JournalFeature {
 				openReview: (item) => this.openReview(item),
 				addOutcome: (item) => this.openLateReview(item),
 				notReviewable: (item) => void this.markNotReviewable(item),
-				track: (item) => this.trackLine(item.path, item.line, item.raw, item.entry.kind),
+				track: (item) => this.track(item),
 			}),
 		);
 		plugin.registerEditorSuggest(new CaptureSuggest(plugin.app, this));
@@ -196,6 +196,11 @@ export class JournalFeature {
 
 	private openTrack(editor: Editor, path: string, lineNo: number, kind: JournalKind): void {
 		this.trackLine(path, lineNo, editor.getLine(lineNo), kind);
+	}
+
+	/** The track form for an untracked line, as the kind of its tag. */
+	public track(item: JournalItem): void {
+		this.trackLine(item.path, item.line, item.raw, item.entry.kind);
 	}
 
 	/** The track form for the line `raw` (as read at `lineNo` of `path`); the write checks the line is unchanged. */
