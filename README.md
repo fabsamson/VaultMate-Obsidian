@@ -1,16 +1,38 @@
 # VaultMate for Obsidian
 
-VaultMate is a personal companion plugin for Obsidian, and the in-Obsidian half of the VaultMate Android app. It shares the app's pixel-art, Japanese-inspired look.
+VaultMate keeps a journal of your decisions and predictions, with review dates, reviews and a track record of how well you judged. It also collects ideas you sort later, moves project tracks from idea to done, and offers optional AI actions that run only when you ask, a place search and suggestions of new connections between notes. Everything is plain Markdown lines in your own notes, it works on desktop and mobile, and your notes stay on your device. It works fully on its own.
 
-> **Status:** early development (0.12.0). The decision and prediction journal, ideas, project tracks, the AI actions (*Challenge this note* and *Recommend me*), the place search and new connections are available.
+Current version: 0.12.0.
 
-## Animations
+![Writing a decision, its badge in the note and its review](https://raw.githubusercontent.com/fabsamson/VaultMate-Obsidian/main/docs/media/decision.gif)
 
-The panel opens on a scene for the time of day: morning (05:00 to 10:59), daytime (11:00 to 16:59), evening (17:00 to 20:59) or night (21:00 to 04:59), the same four scenes as the app. With animations on, the sun pulses, the lanterns flicker, the stars twinkle and the clouds drift, at pixel pace (7 images per second; the clouds move one pixel every 250 ms). Everything pauses while the panel is hidden or the window is in the background. A stamp also lands, with its ink, in the middle of the window when you close a review, sort an idea in the idea portal (any outcome, including dropping it) or move a track to Done.
+Write a decision, see its badge, review it when the date comes.
 
-The **Animations** setting (under Appearance, on by default) turns all of that off, leaving the still scene and the existing notices. Animations are also off whenever your system asks for reduced motion (`prefers-reduced-motion`), whatever the setting says.
+![Tending fresh ideas one by one](https://raw.githubusercontent.com/fabsamson/VaultMate-Obsidian/main/docs/media/tend-ideas.gif)
 
-For a neutral panel at work, turn off **Scene banner** (also under Appearance, on by default): the panel then starts with its title and shows no scene at all, whatever the Animations setting. Turn off **Animations** as well to drop the stamp moments. The two settings are independent: with the banner on and animations off you get the still scene.
+Tend fresh ideas: sort each one into a note, a track, a decision or the bin.
+
+![The track record of decisions and predictions](https://raw.githubusercontent.com/fabsamson/VaultMate-Obsidian/main/docs/media/track-record.gif)
+
+The track record: hits, misses, calibration and the lessons of your reviews.
+
+## Install
+
+VaultMate is not in the Community plugins directory yet; it will be installable from there once it is accepted. Until then:
+
+- **With BRAT:** install the BRAT plugin, run *BRAT: Add a beta plugin for testing*, and enter the repository `fabsamson/VaultMate-Obsidian`.
+- **Manually:** download `main.js`, `manifest.json` and `styles.css` from the latest [GitHub release](https://github.com/fabsamson/VaultMate-Obsidian/releases), put them in `<your vault>/.obsidian/plugins/vaultmate/`, then reload Obsidian and enable VaultMate under Community plugins.
+
+## Quick start
+
+1. Open the VaultMate panel from the ribbon icon or with the **Open panel** command.
+2. In any note, write a decision and end the line with `#decision ` (a space after the tag). Pick a review date in the list that appears. The line becomes a task-style line with a badge at its end.
+3. Capture an idea the same way: end a line with `#idea `.
+4. Open the **Ideas** page of the panel and press **Process** on the idea to turn it into a note, a decision, a project track, or to drop it.
+5. Make a note a project with the **Make this note a project** command, or create one with **New project…**. Its page lists tracks you can start, move and finish.
+6. When a review date comes, click the decision's badge (or use **Review this line**) to record what happened.
+
+The sections below describe each feature in detail.
 
 ## Decision journal
 
@@ -159,69 +181,27 @@ tags do not include #prediction
 
 The three tags are settings (Ideas and Decision journal); if you changed them, use your own names. Add `tags do not include #question` if you also use that tag. To see only the reviews that are due, do the opposite: `tags include #decision` with `due before tomorrow`.
 
-## Working with the VaultMate Android app
 
-The plugin and the app share data only through Markdown notes and properties in your vault. Review reminders are [Tasks](https://publish.obsidian.md/tasks/)-style lines with a due date, so the app's task widgets show them on the right day.
+## Appearance
 
-### Current position
+The panel opens on a scene for the time of day: morning (05:00 to 10:59), daytime (11:00 to 16:59), evening (17:00 to 20:59) or night (21:00 to 04:59), the same four scenes as the app. With animations on, the sun pulses, the lanterns flicker, the stars twinkle and the clouds drift, at pixel pace (7 images per second; the clouds move one pixel every 250 ms). Everything pauses while the panel is hidden or the window is in the background. A stamp also lands, with its ink, in the middle of the window when you close a review, sort an idea in the idea portal (any outcome, including dropping it) or move a track to Done.
 
-Obsidian cannot read the device's location, so on Android the optional VaultMate app can supply it. Turn on **Use the VaultMate Android app for the current position** in the settings (off by default; it needs the VaultMate app). The command **Add current location** (and the button on the Places page) then asks the app for the position and writes it with the same checks as the place search. **Test the Android app link** checks that values survive the trip between Obsidian and the app.
+The **Animations** setting (under Appearance, on by default) turns all of that off, leaving the still scene and the existing notices. Animations are also off whenever your system asks for reduced motion (`prefers-reduced-motion`), whatever the setting says.
 
-### Link contract
+For a neutral panel at work, turn off **Scene banner** (also under Appearance, on by default): the panel then starts with its title and shows no scene at all, whatever the Animations setting. Turn off **Animations** as well to drop the stamp moments. The two settings are independent: with the banner on and animations off you get the still scene.
 
-For the app's developers. All values are percent-encoded UTF-8 in the query string, one parameter per value (never a `lat,lng` pair); both sides decode them.
 
-1. **Request** (Obsidian to app): `vaultmate://location?nonce=<nonce>`. The nonce is 32 lowercase hex characters (128 random bits), valid for 2 minutes and for one answer.
-2. **Answer** (app to Obsidian): `obsidian://vaultmate-location?nonce=<nonce>&lat=<lat>&lng=<lng>&accuracy=<metres>&label=<text>`, with the same nonce.
-   - `lat`, `lng`: plain decimals with a dot, up to 10 decimals, no comma, no `+`, no exponent, no unit: `45.76404`, `-3.5`. Range -90 to 90 and -180 to 180.
-   - `accuracy`: optional, metres, non-negative decimal.
-   - `label`: optional text (a neighbourhood or a city), at most 120 characters.
-   - On failure, send `error=<short message>` instead of the position (for example a refused permission). The nonce is used up either way.
-3. **Echo test:** `vaultmate://echo?nonce=<nonce>&lat=45.76404&lng=4.83566&label=Caf%C3%A9%20%26%20Co%20%2F%20Lyon` must be answered with `obsidian://vaultmate-echo?nonce=<nonce>&lat=<lat>&lng=<lng>&label=<label>` carrying the decoded values unchanged (`Café & Co / Lyon`, re-encoded). Obsidian compares them exactly and reports which parameter changed.
-4. A nonce is accepted once, only on the device that created it, and less than 2 minutes after its creation. Anything else is refused and nothing is written.
+## Android app (optional)
 
-### Idea link
+The plugin needs nothing from the VaultMate Android app, and the integration is off by default. If you use the app, the two share data only through Markdown notes and properties in your vault: review reminders are [Tasks](https://publish.obsidian.md/tasks/)-style lines with a due date, so the app's task widgets show them on the right day.
 
-For the app's developers. The Ideas list of the VaultMate Android app opens an idea in Obsidian with:
+Obsidian cannot read the device's location, so on Android the app can supply it. Turn on **Use the VaultMate Android app for the current position** in the settings (off by default; it needs the VaultMate app). The command **Add current location** (and the button on the Places page) then asks the app for the position and writes it with the same checks as the place search. **Test the Android app link** checks that values survive the trip between Obsidian and the app.
 
-`obsidian://vaultmate-idea?vault=<vault name>&file=<path>&line=<index>`
-
-- `vault`: handled by Obsidian itself.
-- `file`: the note's path relative to the vault, percent-encoded, with or without `.md` (the same path as for `obsidian://open`).
-- `line`: the 0-based index of the idea's line, as the app read it.
-
-When the Ideas feature is on, the plugin opens the note (in the pane already showing it, else the current one), puts the cursor on that line and opens the idea portal for it. If the note changed since the app read it, it uses the nearest open idea within 3 lines; if there is none, the note stays open at the line with a message. A processed idea is not reopened. A missing note, a missing `file` or a `line` that is not a non-negative integer is refused with a message. The link only opens: it never writes, and every change still needs a click in the portal.
-
-### Review link
-
-For the app's developers. The VaultMate Android app shows a **Review** button, instead of a checkbox, on every open decision or prediction. It opens the entry in Obsidian with:
-
-`obsidian://vaultmate-review?vault=<vault name>&file=<path>&line=<index>`
-
-- `vault`: handled by Obsidian itself.
-- `file`: the note's path relative to the vault, percent-encoded, with or without `.md` (the same path as for `obsidian://open`).
-- `line`: the 0-based index of the entry's line, as the app read it.
-
-When the decision journal is on, the plugin opens the note (in the pane already showing it, else the current one), puts the cursor on that line and opens the review form. If the note changed since the app read it, it uses the nearest decision or prediction within 3 lines that still needs a review; if there is none, the note stays open at the line with a message. An entry ticked without a review opens **Add the outcome** instead; an entry already reviewed or cancelled only gets a message. A missing note, a missing `file` or a `line` that is not a non-negative integer is refused with a message. The link only opens: it never writes, and every change still needs a click in the form.
-
-### Back link and daily note
-
-For the app's developers. The idea link and the review link accept an optional `back=app`. On mobile, once the window the link opened is closed, the plugin opens the app with:
-
-`vaultmate://back?kind=<idea|review|daily>&result=<done|cancel|error>`
-
-- `kind=idea` or `kind=review`: `result=done` when the portal or the form wrote something, `result=cancel` when it was closed without a change (a skipped idea, Escape). No link is sent when the link only ended with a message (note not found, entry already processed), or when you choose to open the note from the portal.
-- Without `back=app`, or on desktop, nothing changes.
-
-A third link asks Obsidian to create today's daily note:
-
-`obsidian://vaultmate-daily?vault=<vault name>&back=app`
-
-The plugin runs the Daily notes core plugin's own command (open or create today's note, with your template), waits up to 10 seconds for the note to exist, then, with `back=app` on mobile, opens `vaultmate://back?kind=daily&result=done`. If the Daily notes core plugin is turned off or the note does not appear, a message says so and the result is `error`. The link never writes anything itself.
+The links between the two are documented for the app's developers in [docs/android-app.md](https://github.com/fabsamson/VaultMate-Obsidian/blob/main/docs/android-app.md).
 
 ## Privacy
 
-The plugin collects no telemetry. Its network requests are the AI actions you run (sent to the AI provider you configured, with the content you previewed) and the place searches you start (sent to OpenStreetMap Nominatim, with your search text only). See [PRIVACY.md](PRIVACY.md).
+The plugin collects no telemetry. Its network requests are the AI actions you run (sent to the AI provider you configured, with the content you previewed) and the place searches you start (sent to OpenStreetMap Nominatim, with your search text only). VaultMate needs no account, shows no ads and has no paid features; the Buy Me a Coffee link below is an optional donation. See [PRIVACY.md](https://github.com/fabsamson/VaultMate-Obsidian/blob/main/PRIVACY.md).
 
 ## Support
 

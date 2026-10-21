@@ -1,7 +1,7 @@
 {
   "name": "vaultmate",
   "version": "0.12.0",
-  "description": "A personal Obsidian companion that works with the VaultMate Android app.",
+  "description": "Decision and prediction journal, ideas and project tracks for Obsidian.",
   "main": "main.js",
   "type": "module",
   "scripts": {
