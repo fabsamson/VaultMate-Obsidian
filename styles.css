@@ -2635,7 +2635,8 @@ body:not(.is-mobile) .modal-container.vaultmate-modal-top > .modal {
 }
 
 .vaultmate-guide-mock .vaultmate-search-row .vaultmate-input {
-	flex: 1;
+	flex: 1 1 0;
+	width: 0;
 	min-width: 0;
 	height: calc(var(--g) * 2.6);
 	font-size: var(--g);
@@ -2680,12 +2681,12 @@ body:not(.is-mobile) .modal-container.vaultmate-modal-top > .modal {
 }
 
 .vaultmate-guide-pin::before {
-	width: calc(var(--g) * 0.9);
-	height: calc(var(--g) * 0.9);
+	flex: none;
+	width: calc(var(--g) * 0.8);
+	height: calc(var(--g) * 0.8);
 	border: 2px solid var(--vaultmate-text);
 	background-color: var(--vaultmate-seal);
 	content: "";
-	transform: rotate(45deg);
 }
 
 .vaultmate-guide-pin-label {
@@ -2694,6 +2695,7 @@ body:not(.is-mobile) .modal-container.vaultmate-modal-top > .modal {
 	color: var(--vaultmate-text);
 	font-size: calc(var(--g) * 0.85);
 	font-weight: 700;
+	line-height: 1.5;
 }
 
 /* Guide mocks: A second reader */

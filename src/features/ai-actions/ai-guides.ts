@@ -69,7 +69,7 @@ export const AI_ACTIONS_GUIDE: Guide = {
 			},
 		},
 		{
-			when: "Seconds later",
+			when: "Next minute",
 			cat: SPRITES.mascotRead,
 			text: "About five short questions come back, such as “Why does the keeper stay after the storm?”. Keep the good ones and press **Insert selected**.",
 			mock: (el) => {

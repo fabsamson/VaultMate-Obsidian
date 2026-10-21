@@ -8,8 +8,8 @@ const README = "https://github.com/fabsamson/VaultMate-Obsidian#location";
 
 const LIGHTHOUSE = "Créac'h lighthouse";
 const PLACES = [
-	{ name: LIGHTHOUSE, detail: "lighthouse · Ouessant, Finistère" },
-	{ name: "Créac'h", detail: "hamlet · Ouessant, Finistère" },
+	{ name: LIGHTHOUSE, detail: "lighthouse · Ouessant" },
+	{ name: "Créac'h", detail: "hamlet · Ouessant" },
 ];
 
 /** A property row, as Obsidian draws it. */
@@ -39,7 +39,7 @@ export const PLACES_GUIDE: Guide = {
 			mock: (el) => {
 				const row = el.createDiv({ cls: "vaultmate-search-row" });
 				const input = row.createEl("input", { cls: "vaultmate-input", attr: { type: "text", readonly: "", tabindex: "-1" } });
-				input.value = "Créac'h lighthouse";
+				input.value = "Créac'h";
 				row.createEl("button", { cls: "vaultmate-button mod-cta", text: "Search", attr: { type: "button", tabindex: "-1" } });
 				const list = createPanel(el, "vaultmate-places");
 				PLACES.forEach((place, index) => {
@@ -78,9 +78,9 @@ export const PLACES_GUIDE: Guide = {
 			mock: (el) => {
 				const map = el.createDiv({ cls: "vaultmate-guide-map" });
 				map.createDiv({ cls: "vaultmate-guide-land" });
-				pin(map, "Chapter 3", 30, 22);
-				pin(map, "Chapter 4", 62, 58);
-				pin(map, "Research notes", 14, 66);
+				pin(map, "Chapter 3", 38, 14);
+				pin(map, "Chapter 4", 40, 42);
+				pin(map, "Research notes", 4, 72);
 			},
 		},
 	],
