@@ -133,6 +133,21 @@ The **New connections** page of the panel (or the **Show new connections** comma
 
 AI features run only when you ask for them, with the provider, model and prompts you choose.
 
+## Using VaultMate with the Tasks plugin
+
+Ideas, decisions and predictions are task-style lines, so a plain Tasks query lists them next to your real work. To keep your task queries clean, exclude the tags in the query:
+
+````markdown
+```tasks
+not done
+tags do not include #idea
+tags do not include #decision
+tags do not include #prediction
+```
+````
+
+The three tags are settings (Ideas and Decision journal); if you changed them, use your own names. Add `tags do not include #question` if you also use that tag. To see only the reviews that are due, do the opposite: `tags include #decision` with `due before tomorrow`.
+
 ## Working with the VaultMate Android app
 
 The plugin and the app share data only through Markdown notes and properties in your vault. Review reminders are [Tasks](https://publish.obsidian.md/tasks/)-style lines with a due date, so the app's task widgets show them on the right day.
