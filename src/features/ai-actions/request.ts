@@ -2,11 +2,19 @@
 import type { ActionDefinition, SourceName } from "./definition";
 import type { CollectionNote } from "./collection";
 import { collectionProfile } from "./collection-profile";
+import { itemsContract } from "./items";
 import { questionsContract } from "./questions";
 import { suggestionsContract } from "./suggestions";
 import { noteSource, propertiesSource, selectionSource, type SourceText } from "./sources";
+import { noteLines, trackSource } from "./track-source";
 
-const LABELS: Record<SourceName, string> = { note: "Note", selection: "Selection", properties: "Properties", "collection-profile": "Collection profile" };
+const LABELS: Record<SourceName, string> = { note: "Note", selection: "Selection", properties: "Properties", "collection-profile": "Collection profile", track: "Track" };
+
+const CONTRACTS: Record<ActionDefinition["output"], (count: number, entryTitle: string) => string> = {
+	questions: (count) => questionsContract(count),
+	suggestions: suggestionsContract,
+	items: (count) => itemsContract(count),
+};
 
 export interface RequestMessages {
 	system: string;
@@ -25,7 +33,7 @@ export function applyParams(prompt: string, labels: Record<string, string>): str
 export function buildMessages(action: ActionDefinition, sources: SourceText[], labels: Record<string, string> = {}, entryTitle = ""): RequestMessages {
 	const basedOn = entryTitle ? `the title \u201c${entryTitle}\u201d` : "the titles they rated high and low";
 	return {
-		system: `${applyParams(action.prompt, { ...labels, based_on: basedOn })}\n\n${action.output === "suggestions" ? suggestionsContract(action.count, entryTitle) : questionsContract(action.count)}`,
+		system: `${applyParams(action.prompt, { ...labels, based_on: basedOn })}\n\n${CONTRACTS[action.output](action.count, entryTitle)}`,
 		user: sources.map((source) => `### ${LABELS[source.name]}\n${source.text}`).join("\n\n"),
 	};
 }
@@ -47,6 +55,11 @@ export function entryParam(action: ActionDefinition): string | undefined {
 	return action.params.find((param) => param.choices === "collection-entries")?.name;
 }
 
+/** The name of the parameter that chooses the track, if the action has one. */
+export function trackParam(action: ActionDefinition): string | undefined {
+	return action.params.find((param) => param.choices === "project-tracks")?.name;
+}
+
 /** The texts the action's sources send, in the order the action lists them. */
 export function collectSources(action: ActionDefinition, input: SourceInput, values: Record<string, string> = {}): SourceText[] {
 	return action.sources.map((name) => {
@@ -57,6 +70,10 @@ export function collectSources(action: ActionDefinition, input: SourceInput, val
 				return selectionSource(input.selection);
 			case "properties":
 				return propertiesSource(input.frontmatter);
+			case "track": {
+				const param = trackParam(action);
+				return trackSource(input.title, noteLines(input.raw), param ? (values[param] ?? "") : "");
+			}
 			case "collection-profile": {
 				const type = values.type ?? "";
 				const entry = entryParam(action);

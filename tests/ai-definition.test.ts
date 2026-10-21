@@ -81,10 +81,18 @@ describe("parseAction", () => {
 		expect(message({ ...valid, sources: ["clipboard"] })).toContain('Unknown source "clipboard"');
 	});
 
-	it("rejects unavailable and unknown outputs", () => {
-		expect(message({ ...valid, output: "items" })).toBe("Output items is not available yet.");
+	it("rejects unknown outputs", () => {
 		expect(message({ ...valid, output: "poem" })).toContain('Unknown output "poem"');
 		expect(message({ ...valid, output: undefined })).toContain("output");
+	});
+
+	it("reads the track source, the project-tracks parameter and the items output", () => {
+		const tracks = { track: { label: "Track", choices: "project-tracks" } };
+		const action = ok({ ...valid, sources: ["track"], output: "items", params: tracks });
+		expect(action).toMatchObject({ sources: ["track"], output: "items", params: [{ name: "track", label: "Track", choices: "project-tracks" }] });
+		expect(message({ ...valid, sources: ["track"], output: "items" })).toBe("Source track needs a parameter with choices: project-tracks.");
+		expect(message({ ...valid, sources: ["note"], output: "items", params: tracks })).toBe("Output items needs the track source.");
+		expect(message({ ...valid, sources: ["track"], output: "items", params: tracks, insert: { at: "cursor" } })).toContain("cannot be inserted");
 	});
 
 	it("reads launch parameters and keeps {{name}} in the prompt for the run window", () => {
@@ -98,7 +106,7 @@ describe("parseAction", () => {
 	});
 
 	it("rejects bad parameters with a clear message", () => {
-		expect(message({ ...valid, params: { type: { label: "Type", choices: "tags" } } })).toBe('Unknown choices "tags" for parameter type. Use collection-types, collection-entries.');
+		expect(message({ ...valid, params: { type: { label: "Type", choices: "tags" } } })).toBe('Unknown choices "tags" for parameter type. Use collection-types, collection-entries, project-tracks.');
 		expect(message({ ...valid, params: { type: { label: "Type" } } })).toContain("Unknown choices");
 		expect(message({ ...valid, params: { type: "collection-types" } })).toBe("Parameter type needs a label and choices.");
 		expect(message({ ...valid, params: ["type"] })).toContain("params must list parameters");

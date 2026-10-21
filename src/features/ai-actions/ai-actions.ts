@@ -9,6 +9,7 @@ import { ActionCatalogue } from "./catalogue";
 import { CatalogueModal } from "./catalogue-modal";
 import { collectionNoteOf, inFolder, type CollectionNote } from "./collection";
 import type { ActionDefinition } from "./definition";
+import { trackParam } from "./request";
 import { RunModal, type RunContext } from "./run-modal";
 
 export class AiActionsFeature {
@@ -52,6 +53,22 @@ export class AiActionsFeature {
 		});
 	}
 
+	/** The action that suggests next steps for a track (source track, output items), when AI is on and configured. */
+	public nextStepsAction(): ActionDefinition | null {
+		if (!this.enabled() || configurationProblem(this.plugin.app, this.plugin.settings.ai)) return null;
+		for (const entry of this.catalogue.entries()) {
+			if (entry.ok && entry.action.output === "items" && entry.action.sources.includes("track")) return entry.action;
+		}
+		return null;
+	}
+
+	/** Opens the run window of the Next steps action on the track whose heading is at `line` (0-based) of the project note. */
+	public suggestNextSteps(path: string, line: number): void {
+		const action = this.nextStepsAction();
+		const param = action ? trackParam(action) : undefined;
+		if (action && param) void this.run(action, { path, preset: { [param]: String(line) } });
+	}
+
 	/** Call after a setting changed: the folder or the on/off switch may have changed. */
 	public onSettingsChanged(): void {
 		void this.catalogue.reload();
@@ -92,14 +109,15 @@ export class AiActionsFeature {
 		};
 	}
 
-	public async run(action: ActionDefinition): Promise<void> {
+	/** `options.path`: the note to run on instead of the context note; `options.preset`: launch parameter values the user need not choose. */
+	public async run(action: ActionDefinition, options: { path?: string; preset?: Record<string, string> } = {}): Promise<void> {
 		// An action that reads only the collection does not need a note, and does not read one.
 		const needsNote = action.sources.some((source) => source !== "collection-profile");
-		const file = needsNote ? this.plugin.contextFile() : null;
+		const file = needsNote ? (options.path ? this.plugin.app.vault.getFileByPath(options.path) : this.plugin.contextFile()) : null;
 		if (needsNote && !file) {
 			new Notice("Open a note first.");
 			return;
 		}
-		new RunModal(this.plugin.app, this.plugin, action, await this.readContext(file, action)).open();
+		new RunModal(this.plugin.app, this.plugin, action, await this.readContext(file, action), options.preset).open();
 	}
 }

@@ -1,7 +1,7 @@
 // What each source sends: extraction and size caps. Pure, so the preview and the request cannot differ.
 import { splitFrontmatter, type SourceName } from "./definition";
 
-export const SOURCE_CAPS: Record<SourceName, number> = { note: 24_000, selection: 8_000, properties: 2_000, "collection-profile": 12_000 };
+export const SOURCE_CAPS: Record<SourceName, number> = { note: 24_000, selection: 8_000, properties: 2_000, "collection-profile": 12_000, track: 8_000 };
 
 export interface SourceText {
 	name: SourceName;
@@ -13,7 +13,7 @@ export interface SourceText {
 	problem?: string;
 }
 
-function cap(name: SourceName, text: string): SourceText {
+export function cap(name: SourceName, text: string): SourceText {
 	const limit = SOURCE_CAPS[name];
 	const truncated = text.length > limit;
 	const kept = truncated ? text.slice(0, limit) : text;
@@ -21,7 +21,7 @@ function cap(name: SourceName, text: string): SourceText {
 }
 
 /** Removes fenced code blocks (``` or ~~~), including an unclosed one. */
-function stripCodeFences(text: string): string {
+export function stripCodeFences(text: string): string {
 	const kept: string[] = [];
 	let open: { char: string; length: number } | null = null;
 	for (const line of text.split(/\r?\n/)) {
@@ -38,7 +38,7 @@ function stripCodeFences(text: string): string {
 }
 
 /** Wikilinks, embeds and Markdown links are replaced by their visible text. */
-function linksToText(text: string): string {
+export function linksToText(text: string): string {
 	return text
 		.replace(/!?\[\[([^\]\n]*)\]\]/g, (_all, inner: string) => {
 			const [target = "", alias] = inner.split("|");

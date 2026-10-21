@@ -25,7 +25,7 @@ export default class VaultMatePlugin extends Plugin {
 	public readonly ideas = new IdeasFeature(this);
 	/** The project-note index is public like the idea index: `app.plugins.plugins.vaultmate.projects.index`. */
 	public readonly projects = new ProjectsFeature(this);
-	private readonly aiActions = new AiActionsFeature(this);
+	public readonly aiActions = new AiActionsFeature(this);
 	private readonly location = new LocationFeature(this);
 	/** New connections. Public: `app.plugins.plugins.vaultmate.context.connections(file)` for measuring and for the hub. */
 	public readonly context = new ContextFeature(this);

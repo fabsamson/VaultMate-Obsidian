@@ -64,6 +64,9 @@ export interface ProjectsPageHost {
 	/** Moves the track; Start (to In progress) asks for a first task first. */
 	move(path: string, track: ProjectTrack, status: TrackStatus): void;
 	addTask(path: string, track: ProjectTrack): void;
+	/** Whether the Suggest next steps action can run: it exists and AI is configured. */
+	canSuggest(): boolean;
+	suggest(path: string, track: ProjectTrack): void;
 }
 
 const SEALS = TRACK_SEALS;
@@ -196,7 +199,11 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 			menu.showAtMouseEvent(event);
 		}, { describedBy: titleButton });
 		if (track.status !== "done" && track.status !== "dropped") createIconButton(actions, SPRITES.actionAddTask, "Add task", () => host.addTask(project.path, track), { describedBy: titleButton });
-		if (needsNextTask(track)) card.createDiv({ cls: "vaultmate-track-nonext" }).createSpan({ cls: "vaultmate-track-flag", text: "No next task" });
+		if (needsNextTask(track)) {
+			const flag = card.createDiv({ cls: "vaultmate-track-nonext" });
+			flag.createSpan({ cls: "vaultmate-track-flag", text: "No next task" });
+			if (host.canSuggest()) createIconButton(flag, SPRITES.actionSuggest, "Suggest next steps", () => host.suggest(project.path, track), { describedBy: titleButton });
+		}
 		for (const item of view.byTrack[index] ?? []) renderEntry(card, item, project.path, today);
 	};
 

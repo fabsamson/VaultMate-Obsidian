@@ -19,6 +19,7 @@ import actionRun from "../../assets/sprites/action_run.png";
 import actionSearch from "../../assets/sprites/action_search.png";
 import actionSeed from "../../assets/sprites/action_seed.png";
 import actionSkip from "../../assets/sprites/action_skip.png";
+import actionSuggest from "../../assets/sprites/action_suggest.png";
 import actionTrack from "../../assets/sprites/action_track.png";
 import actionUndo from "../../assets/sprites/action_undo.png";
 import heroDay from "../../assets/sprites/hero_day.png";
@@ -98,6 +99,7 @@ export const SPRITES = {
 	actionSearch: { src: actionSearch, pixels: 16 },
 	actionSeed: { src: actionSeed, pixels: 16 },
 	actionSkip: { src: actionSkip, pixels: 16 },
+	actionSuggest: { src: actionSuggest, pixels: 16 },
 	actionTrack: { src: actionTrack, pixels: 16 },
 	actionUndo: { src: actionUndo, pixels: 16 },
 	mascotSleep: { src: mascotSleep, pixels: 48 },

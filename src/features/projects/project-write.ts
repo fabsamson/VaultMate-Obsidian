@@ -82,6 +82,15 @@ export function addTrackTask(lines: readonly string[], ref: LineRef, task: NewTa
 	return edit ? { ok: true, edits: [edit] } : refuse("empty-text");
 }
 
+/** Adds several tasks in one edit, in order, after the last non-blank line of the track's block. */
+export function addTrackTasks(lines: readonly string[], ref: LineRef, tasks: readonly NewTask[]): WritePlan {
+	if (!checked(lines, ref)) return refuse("changed");
+	const track = findTrack(readProject(lines), ref);
+	if (!track) return refuse("not-found");
+	const added = tasks.flatMap((task) => trackTaskLine(task.text, task.today, task.due) ?? []);
+	return added.length > 0 ? { ok: true, edits: [{ at: appendPoint(lines, track.line + 1, track.end), remove: 0, lines: added }] } : refuse("empty-text");
+}
+
 // ---- Status -------------------------------------------------------------------------------------------
 
 /**

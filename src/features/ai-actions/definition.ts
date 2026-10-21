@@ -2,15 +2,14 @@
 // and whose body is the prompt. Public format of the plugin; changing it breaks users' files. Pure.
 
 /** Sources an action can use today. */
-export const SOURCES = ["note", "selection", "properties", "collection-profile"] as const;
+export const SOURCES = ["note", "selection", "properties", "collection-profile", "track"] as const;
 export type SourceName = (typeof SOURCES)[number];
 
 /** Known to the plan but not built yet: the action is listed as unavailable instead of failing. */
 const LATER_SOURCES = ["linked-notes", "recent-notes", "tag", "decisions"];
-const LATER_OUTPUTS = ["items"];
 
 /** Where the choices of a launch parameter come from. */
-export const CHOICE_SOURCES = ["collection-types", "collection-entries"] as const;
+export const CHOICE_SOURCES = ["collection-types", "collection-entries", "project-tracks"] as const;
 export type ChoiceSource = (typeof CHOICE_SOURCES)[number];
 
 /** A value the run window asks for before the preview. `{{name}}` in the prompt becomes the chosen label. */
@@ -30,7 +29,7 @@ export interface ActionDefinition {
 	icon: string;
 	command: boolean;
 	sources: SourceName[];
-	output: "questions" | "suggestions";
+	output: "questions" | "suggestions" | "items";
 	count: number;
 	params: ParamDefinition[];
 	/** null = show the result only. */
@@ -124,9 +123,8 @@ export function parseAction(path: string, frontmatter: unknown, body: string): A
 	}
 
 	const output = typeof frontmatter.output === "string" ? frontmatter.output.trim() : "";
-	if (LATER_OUTPUTS.includes(output)) return fail(`Output ${output} is not available yet.`);
-	if (output !== "questions" && output !== "suggestions") {
-		return fail(output ? `Unknown output "${output}". Use questions or suggestions.` : "The action needs output: questions or suggestions.");
+	if (output !== "questions" && output !== "suggestions" && output !== "items") {
+		return fail(output ? `Unknown output "${output}". Use questions, suggestions or items.` : "The action needs output: questions, suggestions or items.");
 	}
 
 	const count = frontmatter.count === undefined ? DEFAULT_COUNT : frontmatter.count;
@@ -141,6 +139,12 @@ export function parseAction(path: string, frontmatter: unknown, body: string): A
 	if (sources.includes("collection-profile") && !params.some((param) => param.name === "type")) {
 		return fail("Source collection-profile needs the type parameter: add params with type, label and choices: collection-types.");
 	}
+
+	if (sources.includes("track") && !params.some((param) => param.choices === "project-tracks")) {
+		return fail("Source track needs a parameter with choices: project-tracks.");
+	}
+	if (output === "items" && !sources.includes("track")) return fail("Output items needs the track source.");
+	if (output === "items" && insert) return fail("Output items cannot be inserted into a note. Remove insert.");
 
 	if (output === "suggestions" && !sources.includes("collection-profile")) return fail("Output suggestions needs the collection-profile source.");
 	if (output === "suggestions" && insert) return fail("Output suggestions cannot be inserted into a note. Remove insert.");
