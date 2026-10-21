@@ -1,7 +1,9 @@
 // The hub's "Ideas" page: what to tend (open ideas by age) and what became of the others.
 import { keepTogether, startOfDay } from "../../core/dates";
+import { matchesQuery } from "../../core/search";
 import { createChipRow, createIconButton, createInfoPanel, createPanel, createSectionHeader, createSpriteButton } from "../../ui/components";
 import type { HubPage } from "../../ui/hub-view";
+import { addPageSearch, createNoMatch, type PageSearchState } from "../../ui/page-search";
 import { SPRITES } from "../../ui/sprites";
 import { baseName } from "../context/note-meta";
 import { addScopeControls } from "../journal/scope-control";
@@ -65,6 +67,8 @@ const GROUPS: ReadonlyArray<{ group: AgeGroup; title: string }> = [
 export function createIdeasPage(host: IdeasPageHost): HubPage {
 	let filter: ProcessedFilter = "all";
 	let shown = PROCESSED_PAGE;
+	/** The search, kept while the panel lives. */
+	const search: PageSearchState = { query: "" };
 
 	const renderEmpty = (parent: HTMLElement): void => {
 		createInfoPanel(parent, { sprite: SPRITES.mascotSleep, title: "No ideas yet", text: `Type Idea: or end a line with #${host.tag()} in any note.` });
@@ -82,9 +86,14 @@ export function createIdeasPage(host: IdeasPageHost): HubPage {
 	};
 
 	const renderToTend = (parent: HTMLElement, items: IdeaItem[], today: Date): void => {
-		createSectionHeader(parent, "To tend");
 		const groups = groupOpen(items, today, { tag: host.tag(), subtag: host.seedSubtag() });
-		if (groups.fresh.length + groups.waiting.length + groups.wilting.length === 0) {
+		const none = groups.fresh.length + groups.waiting.length + groups.wilting.length === 0;
+		if (none && search.query.trim() !== "") {
+			parent.remove();
+			return;
+		}
+		createSectionHeader(parent, "To tend");
+		if (none) {
 			createInfoPanel(parent, { sprite: SPRITES.mascotTea, title: "Nothing to tend", compact: true });
 			return;
 		}
@@ -134,6 +143,10 @@ export function createIdeasPage(host: IdeasPageHost): HubPage {
 	};
 
 	const renderProcessed = (parent: HTMLElement, items: IdeaItem[]): void => {
+		if (search.query.trim() !== "" && processedRows(items, "all").length === 0) {
+			parent.remove();
+			return;
+		}
 		createSectionHeader(parent, "Processed");
 		const results = parent.createDiv();
 		const renderResults = (): void => {
@@ -184,17 +197,29 @@ export function createIdeasPage(host: IdeasPageHost): HubPage {
 				allowed = next;
 				renderContent();
 			});
+			addPageSearch(body, search, "Search ideas", () => {
+				shown = PROCESSED_PAGE;
+				renderContent();
+			});
 			const content = body.createDiv();
 			const renderContent = (): void => {
 				content.empty();
-				const items = inScope(host.items(), allowed);
-				if (items.length === 0) {
+				const scoped = inScope(host.items(), allowed);
+				if (scoped.length === 0) {
 					renderEmpty(content);
 					return;
 				}
-				content.createEl("p", { cls: "vaultmate-muted", text: keepTogether(monthSummary(items, startOfDay())) });
-				const seeds = seedLine(seedCount(items, { tag: host.tag(), subtag: host.seedSubtag() }));
-				if (seeds !== null) content.createEl("p", { cls: "vaultmate-muted", text: seeds });
+				const searching = search.query.trim() !== "";
+				const items = searching ? scoped.filter((item) => matchesQuery(`${itemStatement(item)} ${baseName(item.path)}`, search.query)) : scoped;
+				if (items.length === 0) {
+					createNoMatch(content, search.query);
+					return;
+				}
+				if (!searching) {
+					content.createEl("p", { cls: "vaultmate-muted", text: keepTogether(monthSummary(items, startOfDay())) });
+					const seeds = seedLine(seedCount(items, { tag: host.tag(), subtag: host.seedSubtag() }));
+					if (seeds !== null) content.createEl("p", { cls: "vaultmate-muted", text: seeds });
+				}
 				renderToTend(content.createDiv({ cls: "vaultmate-hub-section" }), items, startOfDay());
 				const waiting = seedItems(items, { tag: host.tag(), subtag: host.seedSubtag() });
 				if (waiting.length > 0) renderSeeds(content.createDiv({ cls: "vaultmate-hub-section" }), waiting);
