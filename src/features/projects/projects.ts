@@ -21,6 +21,8 @@ import { createProjectsPage, PROJECTS_PAGE_ID } from "./projects-page";
 import { hasProjectTag, withProjectTag } from "./project-tag";
 import { lineIn, moveTargets, projectTags } from "./projects-model";
 
+const OPEN_TRACK_STATUSES: readonly TrackStatus[] = ["explore", "backlog", "progress"];
+
 export class ProjectsFeature {
 	public readonly index: ProjectIndex;
 
@@ -77,6 +79,8 @@ export class ProjectsFeature {
 				drop: (path, idea) => void this.dropIdea(path, idea),
 				move: (path, track, status) => this.move(path, track, status),
 				addTask: (path, track) => this.addTask(path, track),
+				canSuggest: () => this.plugin.aiActions.nextStepsAction() !== null,
+				suggest: (path, track) => this.plugin.aiActions.suggestNextSteps(path, track.line),
 			}),
 		);
 	}
@@ -270,6 +274,18 @@ export class ProjectsFeature {
 				const idea = found?.model.ideas.filter((candidate) => lineIn(found.line, candidate.line, candidate.end)).pop();
 				if (!found || !idea) return false;
 				if (!checking) this.promoteDialog(found.path, found.model.tracks.map((track) => track.title), idea);
+				return true;
+			},
+		});
+		plugin.addCommand({
+			id: "suggest-next-steps",
+			name: "Suggest next steps for this track",
+			icon: "list-checks",
+			editorCheckCallback: (checking, editor, ctx) => {
+				const found = this.context(editor, ctx);
+				const track = found?.model.tracks.find((candidate) => lineIn(found.line, candidate.line, candidate.end));
+				if (!found || !track || !OPEN_TRACK_STATUSES.includes(track.status) || !plugin.aiActions.nextStepsAction()) return false;
+				if (!checking) plugin.aiActions.suggestNextSteps(found.path, track.line);
 				return true;
 			},
 		});

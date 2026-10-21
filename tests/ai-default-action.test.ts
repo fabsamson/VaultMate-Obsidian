@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { CHALLENGE_ACTION } from "../src/features/ai-actions/challenge-action";
+import { NEXT_STEPS_ACTION } from "../src/features/ai-actions/next-steps-action";
 import { RECOMMEND_ACTION } from "../src/features/ai-actions/recommend-action";
 import { parseAction, splitFrontmatter } from "../src/features/ai-actions/definition";
 
@@ -92,5 +93,49 @@ describe("Recommend me", () => {
 		expect(entry.action.prompt).toContain("Suggest 5 {{type}} the user has not seen, close to {{based_on}}.");
 		expect(entry.action.prompt).not.toContain("{{count}}");
 		expect(entry.action.prompt).toContain("Already in the vault");
+	});
+});
+
+describe("Next steps", () => {
+	const { yaml, body } = splitFrontmatter(NEXT_STEPS_ACTION);
+
+	it("has the frontmatter of the plan", () => {
+		expect(yaml).toBe(
+			[
+				"vaultmate-action: 1",
+				"name: Next steps",
+				"description: A few small next actions for one track of a project.",
+				"icon: list-checks",
+				"command: false",
+				"sources:",
+				"  - track",
+				"params:",
+				"  track:",
+				"    label: Track",
+				"    choices: project-tracks",
+				"output: items",
+				"count: 3",
+			].join("\n"),
+		);
+	});
+
+	it("parses as a valid action that asks for a track and returns items", () => {
+		const frontmatter = {
+			"vaultmate-action": 1,
+			name: "Next steps",
+			description: "A few small next actions for one track of a project.",
+			icon: "list-checks",
+			command: false,
+			sources: ["track"],
+			params: { track: { label: "Track", choices: "project-tracks" } },
+			output: "items",
+			count: 3,
+		};
+		const entry = parseAction("VaultMate/AI actions/Next steps.md", frontmatter, body);
+		expect(entry.ok).toBe(true);
+		if (!entry.ok) return;
+		expect(entry.action).toMatchObject({ output: "items", count: 3, sources: ["track"], insert: null });
+		expect(entry.action.prompt).toContain("Suggest 3 concrete next actions");
+		expect(entry.action.prompt).toContain("{{track}}");
 	});
 });

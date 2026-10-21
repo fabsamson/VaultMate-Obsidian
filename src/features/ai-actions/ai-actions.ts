@@ -9,6 +9,7 @@ import { ActionCatalogue } from "./catalogue";
 import { CatalogueModal } from "./catalogue-modal";
 import { collectionNoteOf, inFolder, type CollectionNote } from "./collection";
 import type { ActionDefinition } from "./definition";
+import { trackParam } from "./request";
 import { RunModal, type RunContext } from "./run-modal";
 
 export class AiActionsFeature {
@@ -50,6 +51,22 @@ export class AiActionsFeature {
 			this.catalogue.registerEvents();
 			void this.catalogue.reload();
 		});
+	}
+
+	/** The action that suggests next steps for a track (source track, output items), when AI is on and configured. */
+	public nextStepsAction(): ActionDefinition | null {
+		if (!this.enabled() || configurationProblem(this.plugin.app, this.plugin.settings.ai)) return null;
+		for (const entry of this.catalogue.entries()) {
+			if (entry.ok && entry.action.output === "items" && entry.action.sources.includes("track")) return entry.action;
+		}
+		return null;
+	}
+
+	/** Opens the run window of the Next steps action on the track whose heading is at `line` (0-based) of the project note. */
+	public suggestNextSteps(path: string, line: number): void {
+		const action = this.nextStepsAction();
+		const param = action ? trackParam(action) : undefined;
+		if (action && param) void this.run(action, { path, preset: { [param]: String(line) } });
 	}
 
 	/** Call after a setting changed: the folder or the on/off switch may have changed. */
