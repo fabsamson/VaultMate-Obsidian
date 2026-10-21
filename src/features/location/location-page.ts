@@ -35,7 +35,8 @@ export function createLocationPage(host: LocationPageHost): HubPage {
 			const label = host.current()?.label;
 			return label || `No location for ${name}`;
 		},
-		render: (body) => {
+		render: (body, ctx) => {
+			ctx.setGuide("places");
 			const name = host.contextName();
 			if (!name) {
 				createInfoPanel(body, { sprite: SPRITES.mascotSleep, title: "Open a note first", compact: true });
