@@ -141,10 +141,10 @@ export interface PromoteResult {
 
 /** Promote an idea to a track: status, short name, and a first task when it starts In progress. */
 export class PromoteModal extends JournalModal {
-	/** `text` is the idea's text; `titles` are the titles of the project's tracks, to warn about a repeat. */
+	/** `text` is the idea's text, or null for a New track with no idea; `titles` are the titles of the project's tracks, to warn about a repeat. */
 	public constructor(
 		app: App,
-		private readonly text: string,
+		private readonly text: string | null,
 		private readonly titles: readonly string[],
 		private readonly onSubmit: (result: PromoteResult) => void,
 	) {
@@ -153,11 +153,12 @@ export class PromoteModal extends JournalModal {
 
 	public onOpen(): void {
 		const { contentEl } = this;
-		createSectionHeader(contentEl, "Promote to a track");
-		contentEl.createEl("p", { cls: "vaultmate-statement", text: this.text || "(no text yet)" });
-		const fields = addTrackFields(contentEl, { prefill: prefillName(this.text), onChange: () => update(), onEnter: () => submit() });
+		const promote = this.text !== null;
+		createSectionHeader(contentEl, promote ? "Promote to a track" : "New track");
+		if (this.text !== null) contentEl.createEl("p", { cls: "vaultmate-statement", text: this.text || "(no text yet)" });
+		const fields = addTrackFields(contentEl, { prefill: prefillName(this.text ?? ""), onChange: () => update(), onEnter: () => submit() });
 		const actions = contentEl.createDiv({ cls: "vaultmate-actions" });
-		const send = this.button(actions, "Promote", true, () => submit());
+		const send = this.button(actions, promote ? "Promote" : "Add track", true, () => submit());
 		this.button(actions, "Cancel", false, () => this.close());
 		const update = (): void => {
 			const state = trackFormState(fields.typedName(), fields.status(), this.titles);

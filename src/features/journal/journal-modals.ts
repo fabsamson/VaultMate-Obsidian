@@ -3,6 +3,7 @@ import { Modal, Platform, type App } from "obsidian";
 
 import { addInterval, formatDate, INTERVAL_LABELS, keepTogether, REVIEW_INTERVALS, startOfDay, type ReviewInterval } from "../../core/dates";
 import { createChipRow, createDisclosure, createSectionHeader, createSegmentedControl } from "../../ui/components";
+import { focusFromInput } from "../../ui/focus";
 import type { JournalItem } from "./journal-index";
 import type { LessonHint } from "./track-record";
 import {
@@ -383,5 +384,7 @@ export class ReviewModal extends JournalModal {
 		}
 		update();
 		go(late ? "yes" : "ask");
+		// Obsidian then focuses the first button (Not yet, which writes a new date): the default is Yes, the next step.
+		if (!late && !Platform.isPhone) contentEl.win.setTimeout(() => focusFromInput(yesButton), 0);
 	}
 }

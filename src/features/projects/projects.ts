@@ -16,7 +16,7 @@ import { ProjectIndex, type ProjectContent } from "./project-index";
 import { NewProjectModal, PromoteModal, StatusModal, TaskModal } from "./project-modals";
 import { newProjectPath } from "./project-new";
 import { readProject, type ProjectIdea, type ProjectTrack, type TrackStatus, type TrackTask } from "./project-note";
-import { addTrackTask, dropIdea, promoteIdea, refusalMessage, setTaskState, setTrackStatus, taskStateLine, undoDropIdea, undoTaskState, type NewTask } from "./project-write";
+import { addTrackTask, dropIdea, newTrackInNote, promoteIdea, refusalMessage, setTaskState, setTrackStatus, taskStateLine, undoDropIdea, undoTaskState, type NewTask } from "./project-write";
 import { createProjectsPage, PROJECTS_PAGE_ID } from "./projects-page";
 import { hasProjectTag, withProjectTag } from "./project-tag";
 import { lineIn, moveTargets, projectTags } from "./projects-model";
@@ -76,6 +76,7 @@ export class ProjectsFeature {
 				open: (path, line) => this.open(path, line),
 				newProject: () => this.newProject(),
 				promote: (project, idea) => this.promoteDialog(project.path, project.model.tracks.map((track) => track.title), idea),
+				newTrack: (project) => this.newTrackDialog(project.path, project.model.tracks.map((track) => track.title)),
 				drop: (path, idea) => void this.dropIdea(path, idea),
 				move: (path, track, status) => this.move(path, track, status),
 				addTask: (path, track) => this.addTask(path, track),
@@ -131,6 +132,14 @@ export class ProjectsFeature {
 	/** The Promote form: status, short name and a first task; `titles` are the project's track titles. */
 	public promoteDialog(path: string, titles: readonly string[], idea: ProjectIdea): void {
 		new PromoteModal(this.plugin.app, idea.text, titles, ({ status, shortName, firstTask }) => void this.promoteIdea(path, idea, status, { shortName, ...(firstTask ? { firstTask } : {}) })).open();
+	}
+
+	/** The New track form of a project page: the Promote form with no idea. The track goes at the end of the Tracks section, created when missing. */
+	public newTrackDialog(path: string, titles: readonly string[]): void {
+		new PromoteModal(this.plugin.app, null, titles, ({ status, shortName, firstTask }) => {
+			const track = { name: shortName, status, text: "", children: [], ...(firstTask ? { firstTask: this.newTask(firstTask.text, firstTask.due) } : {}) };
+			void this.written(path, (lines) => newTrackInNote(lines, track, { tracksTitle: this.tracksTitle() }));
+		}).open();
 	}
 
 	/**

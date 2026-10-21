@@ -10,6 +10,7 @@ import { LocationFeature } from "./features/location/location";
 import { ProjectsFeature } from "./features/projects/projects";
 import { registerWeeklyReview } from "./features/weekly-review/weekly-command";
 import { VaultMateSettingTab } from "./settings";
+import { watchInput } from "./ui/focus";
 import { runTagCheck } from "./ui/tag-check-modal";
 import { HUB_VIEW_TYPE, HubView, type HubPage } from "./ui/hub-view";
 import type { Sprite } from "./ui/pixel";
@@ -34,6 +35,7 @@ export default class VaultMatePlugin extends Plugin {
 	public async onload(): Promise<void> {
 		this.settings = normalizeSettings(await this.loadData());
 		this.addSettingTab(new VaultMateSettingTab(this));
+		watchInput(this);
 		addIcon(CAT_ICON_ID, CAT_ICON_SVG);
 		this.registerView(HUB_VIEW_TYPE, (leaf) => new HubView(leaf, () => this.sortedHubPages(), () => animationsOn(this.settings.ui.animations), () => this.settings.ui.banner));
 		this.addRibbonIcon(CAT_ICON_ID, "Open VaultMate", () => void this.openHub());

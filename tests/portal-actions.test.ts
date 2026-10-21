@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { seedLine } from "../src/features/ideas/ideas-model";
-import { addState, findProject, hasPanel, newNoteState, noteLinkLabel, portalActions, seedSentence, trackState } from "../src/features/ideas/portal-actions";
+import { addState, findProject, hasPanel, newNoteState, noteLinkLabel, portalActions, seedSentence, tendSummary, trackState } from "../src/features/ideas/portal-actions";
 
 const ALL = { tend: true, projectsEnabled: true, seedSubtag: "projet" };
 
@@ -71,5 +71,18 @@ describe("seedLine", () => {
 		expect(seedLine(0)).toBeNull();
 		expect(seedLine(1)).toBe("1 project seed waiting");
 		expect(seedLine(3)).toBe("3 project seeds waiting");
+	});
+});
+
+describe("tend summary", () => {
+	it("keeps the plain sentence when every idea was sorted", () => {
+		expect(tendSummary(4, 4)).toBe("All fresh ideas tended.");
+	});
+	it("counts the sorted and skipped ideas", () => {
+		expect(tendSummary(2, 6)).toBe("2 ideas sorted, 4 skipped: they stay fresh.");
+		expect(tendSummary(1, 2)).toBe("1 idea sorted, 1 skipped: they stay fresh.");
+	});
+	it("says so when none was sorted", () => {
+		expect(tendSummary(0, 4)).toBe("No idea sorted: 4 skipped, they stay fresh.");
 	});
 });

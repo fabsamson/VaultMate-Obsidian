@@ -99,3 +99,11 @@ export function trackState(project: ProjectChoice | null, typedName: string, sta
 export function seedSentence(tag: string, subtag: string): string {
 	return `Moves it to the launch pad as #${tag.replace(/^#/, "")}/${subtag}.`;
 }
+
+/** The notice at the end of Tend: everything sorted, or how many were sorted and how many stay fresh. */
+export function tendSummary(sorted: number, total: number): string {
+	const skipped = total - sorted;
+	if (skipped <= 0) return "All fresh ideas tended.";
+	if (sorted === 0) return `No idea sorted: ${skipped} skipped, they stay fresh.`;
+	return `${sorted} ${sorted === 1 ? "idea" : "ideas"} sorted, ${skipped} skipped: they stay fresh.`;
+}

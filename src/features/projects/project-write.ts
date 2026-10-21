@@ -156,7 +156,7 @@ const MARKDOWN_START_RE = /^(?:[#>+*-]|\d+[.)])/;
  */
 export function trackFromIdea(level: number, status: TrackStatus, idea: Pick<ProjectIdea, "text" | "children">, name: string = idea.text, task: string | null = null): string[] {
 	const text = idea.text.trim();
-	const first = name.trim() === text ? [] : [MARKDOWN_START_RE.test(text) ? `\\${text}` : text];
+	const first = text === "" || name.trim() === text ? [] : [MARKDOWN_START_RE.test(text) ? `\\${text}` : text];
 	return [`${"#".repeat(level)} ${STATUS_INFO[status].marker} ${name}`, ...first, ...(idea.children.length > 0 ? dedentChildren(idea.children) : []), ...(task === null ? [] : [task])];
 }
 
