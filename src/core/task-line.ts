@@ -322,3 +322,8 @@ export function removeTaskDate(body: string, kind: TaskDateKind): string {
 	const rest = before + after;
 	return rest ? main + rest + tail : main.trimEnd() + tail;
 }
+
+/** Whether the body has a Tasks recurrence rule (🔁). */
+export function isRecurring(body: string): boolean {
+	return splitBody(body).block.includes("\u{1F501}");
+}

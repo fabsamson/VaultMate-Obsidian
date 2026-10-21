@@ -1,7 +1,7 @@
-import { applyEdits } from "../src/core/note-edit";
+import { applyEdits, planText } from "../src/core/note-edit";
 import { describe, expect, it } from "vitest";
 
-import { addTrackTask, addTrackTasks, dedentChildren, dropIdea, promoteIdea, refusalMessage, setTrackStatus, trackTaskLine, undoDropIdea, type WritePlan } from "../src/features/projects/project-write";
+import { addTrackTask, addTrackTasks, dedentChildren, dropIdea, promoteIdea, refusalMessage, setTaskState, setTrackStatus, taskStateLine, trackTaskLine, undoDropIdea, undoTaskState, type WritePlan } from "../src/features/projects/project-write";
 import { readProject } from "../src/features/projects/project-note";
 
 const NOTE = [
@@ -257,5 +257,66 @@ describe("undoDropIdea", () => {
 		const dropped = apply(NOTE, dropIdea(NOTE, target));
 		const edited = dropped.map((line) => (line === "- second idea" ? "- other" : line));
 		expect(undoDropIdea(edited, target, NOTE[target.end])).toEqual({ ok: false, reason: "changed" });
+	});
+});
+
+describe("setTaskState", () => {
+	const TODAY = "2026-10-21";
+	const task = (lines: string[], text: string) => {
+		const found = readProject(lines).tracks.flatMap((t) => t.tasks).find((candidate) => candidate.text === text);
+		if (!found) throw new Error(text);
+		return found;
+	};
+
+	it("marks a task done and adds the done date", () => {
+		const next = apply(NOTE, setTaskState(NOTE, task(NOTE, "existing"), "done", TODAY));
+		expect(next[13]).toBe("- [x] existing ➕ 2026-10-01 ✅ 2026-10-21");
+		expect(next.filter((_, index) => index !== 13)).toEqual(NOTE.filter((_, index) => index !== 13));
+	});
+
+	it("cancels a task without a date", () => {
+		expect(apply(NOTE, setTaskState(NOTE, task(NOTE, "existing"), "cancelled", TODAY))[13]).toBe("- [-] existing ➕ 2026-10-01");
+	});
+
+	it("puts the done date before a trailing block id and keeps a due date", () => {
+		const lines = ["# 🧭 Pistes", "## 🔨 A", "- [ ] write 📅 2026-11-01 ^abc"];
+		expect(apply(lines, setTaskState(lines, task(lines, "write"), "done", TODAY))[2]).toBe("- [x] write 📅 2026-11-01 ✅ 2026-10-21 ^abc");
+	});
+
+	it("keeps an existing done date", () => {
+		expect(taskStateLine("- [ ] a ✅ 2026-10-01", "done", TODAY)).toBe("- [x] a ✅ 2026-10-21");
+	});
+
+	it("keeps the indentation of a nested task", () => {
+		expect(taskStateLine("    - [ ] nested", "cancelled", TODAY)).toBe("    - [-] nested");
+	});
+
+	it("refuses when the line changed", () => {
+		const ref = task(NOTE, "existing");
+		const edited = NOTE.map((line, index) => (index === 13 ? "- [ ] edited" : line));
+		expect(setTaskState(edited, ref, "done", TODAY)).toEqual({ ok: false, reason: "changed" });
+	});
+
+	it("writes nothing for a recurring task, a closed task or a line that is not a task", () => {
+		const recurring = { line: 0, raw: "- [ ] water 🔁 every week 📅 2026-10-22" };
+		expect(setTaskState([recurring.raw], recurring, "done", TODAY)).toEqual({ ok: false, reason: "not-found" });
+		const closed = { line: 0, raw: "- [x] old" };
+		expect(setTaskState([closed.raw], closed, "cancelled", TODAY)).toEqual({ ok: false, reason: "not-found" });
+		expect(setTaskState(["plain"], { line: 0, raw: "plain" }, "done", TODAY)).toEqual({ ok: false, reason: "not-found" });
+	});
+
+	it("works on a CRLF note", () => {
+		const text = NOTE.join("\r\n");
+		const made = planText(text, (lines) => setTaskState(lines, task(NOTE, "existing"), "done", TODAY));
+		expect(made).toEqual({ ok: true, text: NOTE.map((line, index) => (index === 13 ? "- [x] existing ➕ 2026-10-01 ✅ 2026-10-21" : line)).join("\r\n") });
+	});
+
+	it("undoes to the exact previous line, and refuses when the line changed since", () => {
+		const ref = task(NOTE, "existing");
+		const closed = taskStateLine(ref.raw, "done", TODAY) ?? "";
+		const done = apply(NOTE, setTaskState(NOTE, ref, "done", TODAY));
+		expect(apply(done, undoTaskState(done, ref, closed))).toEqual(NOTE);
+		const edited = done.map((line, index) => (index === 13 ? `${line} more` : line));
+		expect(undoTaskState(edited, ref, closed)).toEqual({ ok: false, reason: "changed" });
 	});
 });

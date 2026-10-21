@@ -1,7 +1,7 @@
 // Reading a project note: its sections, the ideas of the Ideas section and the tracks of the Tracks
 // section. Pure: no Obsidian import, so Vitest tests it. The data contract is plan §2 "Projets : idées et
 // pistes". Lines are given without their line break.
-import { checkboxState, getDescription, getTaskDate, hasTag, parseTaskLine } from "../../core/task-line";
+import { checkboxState, getDescription, getTaskDate, hasTag, isRecurring, parseTaskLine } from "../../core/task-line";
 import { findHeadings, lastNonBlank, type Heading } from "../ai-actions/insertion";
 import { classifyIdeaLine, isProjectSeed } from "../ideas/idea-line";
 import { getChildren } from "../journal/journal-note";
@@ -251,6 +251,8 @@ export interface TrackTask {
 	text: string;
 	/** `YYYY-MM-DD` after 📅, or null. */
 	due: string | null;
+	/** The body has a 🔁 rule: only the Tasks plugin can create the next occurrence. */
+	recurring: boolean;
 }
 
 export interface ProjectTrack {
@@ -298,7 +300,7 @@ function readTasks(lines: readonly string[], from: number, to: number, fence: re
 		const raw = lines[i] ?? "";
 		const parsed = parseTaskLine(raw);
 		if (fence[i] || parsed.marker === "" || parsed.status === null || aside.some((tag) => hasTag(parsed.body, tag))) continue;
-		tasks.push({ line: i, raw, state: checkboxState(parsed.status), text: getDescription(parsed.body), due: getTaskDate(parsed.body, "due") });
+		tasks.push({ line: i, raw, state: checkboxState(parsed.status), text: getDescription(parsed.body), due: getTaskDate(parsed.body, "due"), recurring: isRecurring(parsed.body) });
 	}
 	return tasks;
 }
