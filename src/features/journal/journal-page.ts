@@ -5,11 +5,14 @@ import { matchesQuery } from "../../core/search";
 import { createDisclosure, createSectionHeader, createSegmentedControl, type Choice } from "../../ui/components";
 import type { HubPage } from "../../ui/hub-view";
 import { addPageSearch, createNoMatch, type PageSearchState } from "../../ui/page-search";
+import type { Sprite } from "../../ui/pixel";
+import { createSectionNav } from "../../ui/section-nav";
 import { SPRITES } from "../../ui/sprites";
 import type { JournalItem } from "./journal-index";
 import { baseName } from "../context/note-meta";
 import { createClosedBlock, type ClosedHost } from "./closed-section";
 import { createReviewsBlock, type ReviewsHost } from "./reviews-section";
+import { journalSections, type JournalSectionId } from "./journal-sections";
 import { addScopeControls } from "./scope-control";
 import { createTrackRecordBlock, type TrackRecordHost } from "./track-record-section";
 
@@ -26,6 +29,16 @@ const KINDS = [
 	{ value: "decision", label: "Decisions", sprite: SPRITES.stateDecision },
 	{ value: "prediction", label: "Predictions", sprite: SPRITES.statePrediction },
 ] as const satisfies ReadonlyArray<Choice<JournalKind>>;
+
+/** The chip of each section: its mark and its name. */
+const SECTION_LOOKS: Record<JournalSectionId, { sprite: Sprite; label: string }> = {
+	untracked: { sprite: SPRITES.actionTrack, label: "Not tracked yet" },
+	overdue: { sprite: SPRITES.stateOverdue, label: "Overdue" },
+	week: { sprite: SPRITES.stateWeek, label: "This week" },
+	upcoming: { sprite: SPRITES.stateUpcoming, label: "Upcoming" },
+	tidy: { sprite: SPRITES.actionDone, label: "Tidy up" },
+	record: { sprite: SPRITES.stampReview, label: "Track record" },
+};
 
 export function createJournalPage(host: JournalPageHost): HubPage {
 	const renderReviews = createReviewsBlock(host);
@@ -82,6 +95,23 @@ export function createJournalPage(host: JournalPageHost): HubPage {
 					.filter((item) => item.entry.kind === ctx.state.kind && (allowed === null || allowed.has(item.path)))
 					.filter((item) => !searching || matchesQuery(`${item.entry.statement} ${item.entry.answer ?? ""} ${baseName(item.path)}`, search.query));
 				const tidy = tidyUp(items);
+				let tidyDisclosure: { setOpen(open: boolean): void } | null = null;
+				const openTidy = (): void => {
+					tidyDisclosure?.setOpen(true);
+					ctx.state.tidy = true;
+					ctx.save();
+				};
+				// The row sits above the first section; the targets are found when a chip is clicked.
+				createSectionNav(
+					content,
+					journalSections(items, startOfDay(), searching).map((section) => ({
+						...SECTION_LOOKS[section.id],
+						id: section.id,
+						count: section.count,
+						target: () => content.querySelector<HTMLElement>(`[data-section="${section.id}"]`),
+						open: section.id === "tidy" ? openTidy : undefined,
+					})),
+				);
 				if (searching) {
 					const groups = groupByDue(items, startOfDay());
 					const reviews = groups.undated.length + groups.overdue.length + groups.week.length + groups.upcoming.length;
@@ -97,7 +127,7 @@ export function createJournalPage(host: JournalPageHost): HubPage {
 				}
 				let showClosed: (() => void) | null = null;
 				if (tidy.total > 0) {
-					const section = content.createDiv({ cls: "vaultmate-hub-section" });
+					const section = content.createDiv({ cls: "vaultmate-hub-section", attr: { "data-section": "tidy" } });
 					const disclosure = createDisclosure(section, {
 						label: `Tidy up · ${tidy.total} ${tidy.total === 1 ? "item" : "items"}`,
 						open: ctx.state.tidy,
@@ -106,18 +136,17 @@ export function createJournalPage(host: JournalPageHost): HubPage {
 							ctx.save();
 						},
 					});
+					tidyDisclosure = disclosure;
 					const closed = renderClosed(disclosure.body, items);
 					if (closed) {
 						showClosed = () => {
-							disclosure.setOpen(true);
-							ctx.state.tidy = true;
-							ctx.save();
+							openTidy();
 							closed.scrollIntoView({ block: "start" });
 						};
 					}
 				}
 				if (searching) return; // statistics, not rows: hidden while searching
-				createSectionHeader(content, "Track record");
+				createSectionHeader(content, "Track record").dataset.section = "record";
 				renderTrackRecord(content.createDiv({ cls: "vaultmate-hub-section" }), items, ctx.state.kind, showClosed);
 			};
 			renderContent();

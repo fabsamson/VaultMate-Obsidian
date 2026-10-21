@@ -4,6 +4,8 @@ import { matchesQuery } from "../../core/search";
 import { createChipRow, createIconButton, createInfoPanel, createPanel, createSectionHeader, createSpriteButton } from "../../ui/components";
 import type { HubPage } from "../../ui/hub-view";
 import { addPageSearch, createNoMatch, type PageSearchState } from "../../ui/page-search";
+import type { Sprite } from "../../ui/pixel";
+import { createSectionNav } from "../../ui/section-nav";
 import { SPRITES } from "../../ui/sprites";
 import { baseName } from "../context/note-meta";
 import { addScopeControls } from "../journal/scope-control";
@@ -12,6 +14,7 @@ import {
 	ageText,
 	doneDate,
 	groupOpen,
+	ideasSections,
 	inScope,
 	itemResult,
 	itemStatement,
@@ -23,6 +26,7 @@ import {
 	seedItems,
 	seedLine,
 	tendSummary,
+	type IdeasSectionId,
 	type ProcessedFilter,
 } from "./ideas-model";
 
@@ -64,6 +68,15 @@ const GROUPS: ReadonlyArray<{ group: AgeGroup; title: string }> = [
 	{ group: "wilting", title: "Wilting" },
 ];
 
+/** The chip of each section: its mark and its name. */
+const SECTION_LOOKS: Record<IdeasSectionId, { sprite: Sprite; label: string }> = {
+	fresh: { sprite: SPRITES.stateFresh, label: "Fresh" },
+	waiting: { sprite: SPRITES.stateWaiting, label: "Waiting" },
+	wilting: { sprite: SPRITES.stateWilting, label: "Wilting" },
+	seeds: { sprite: SPRITES.actionSeed, label: "Project seeds" },
+	processed: { sprite: SPRITES.stampDone, label: "Processed" },
+};
+
 export function createIdeasPage(host: IdeasPageHost): HubPage {
 	let filter: ProcessedFilter = "all";
 	let shown = PROCESSED_PAGE;
@@ -104,7 +117,7 @@ export function createIdeasPage(host: IdeasPageHost): HubPage {
 		for (const { group, title } of GROUPS) {
 			const entries = groups[group];
 			if (entries.length === 0) continue;
-			const section = parent.createDiv({ cls: "vaultmate-review-group" });
+			const section = parent.createDiv({ cls: "vaultmate-review-group", attr: { "data-section": group } });
 			section.createDiv({ cls: "vaultmate-review-group-title", text: `${title} · ${entries.length}`, attr: { role: "heading", "aria-level": "3" } });
 			const list = section.createEl("ul", { cls: "vaultmate-related-list" });
 			for (const item of entries) renderCard(list, item, today);
@@ -128,7 +141,7 @@ export function createIdeasPage(host: IdeasPageHost): HubPage {
 
 	/** The project seeds, one line each: the text clamped to two lines, then Launch, Drop and Open in the note. */
 	const renderSeeds = (parent: HTMLElement, seeds: IdeaItem[]): void => {
-		const group = parent.createDiv({ cls: "vaultmate-review-group" });
+		const group = parent.createDiv({ cls: "vaultmate-review-group", attr: { "data-section": "seeds" } });
 		group.createDiv({ cls: "vaultmate-review-group-title", text: `Project seeds · ${seeds.length}`, attr: { role: "heading", "aria-level": "3" } });
 		const list = group.createEl("ul", { cls: "vaultmate-idea-lines" });
 		for (const item of seeds) {
@@ -147,7 +160,7 @@ export function createIdeasPage(host: IdeasPageHost): HubPage {
 			parent.remove();
 			return;
 		}
-		createSectionHeader(parent, "Processed");
+		createSectionHeader(parent, "Processed").dataset.section = "processed";
 		const results = parent.createDiv();
 		const renderResults = (): void => {
 			results.empty();
@@ -215,6 +228,15 @@ export function createIdeasPage(host: IdeasPageHost): HubPage {
 					createNoMatch(content, search.query);
 					return;
 				}
+				createSectionNav(
+					content,
+					ideasSections(items, startOfDay(), { tag: host.tag(), subtag: host.seedSubtag() }).map((section) => ({
+						...SECTION_LOOKS[section.id],
+						id: section.id,
+						count: section.count,
+						target: () => content.querySelector<HTMLElement>(`[data-section="${section.id}"]`),
+					})),
+				);
 				if (!searching) {
 					content.createEl("p", { cls: "vaultmate-muted", text: keepTogether(monthSummary(items, startOfDay())) });
 					const seeds = seedLine(seedCount(items, { tag: host.tag(), subtag: host.seedSubtag() }));
