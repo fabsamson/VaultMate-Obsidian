@@ -65,7 +65,7 @@ export interface ProjectsPageHost {
 
 const SEALS = TRACK_SEALS;
 
-/** Seals and sprites of headings, chips and counters are 16 px. */
+/** The seals of the tile counters are 16 px; headings, chips and entries use `createMark`. */
 const SMALL = 16;
 /** The mark of each section chip: a track status chip shows its seal. */
 const CHIP_SPRITES: Record<SectionId, Sprite> = { ideas: SPRITES.stateIdea, reviews: SPRITES.actionReview, closed: SEALS.done, progress: SEALS.progress, backlog: SEALS.backlog, explore: SEALS.explore };
@@ -141,7 +141,7 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 	const sectionTitle = (parent: HTMLElement, id: string, sprite: Sprite, text: string): HTMLElement => {
 		const section = parent.createDiv({ cls: "vaultmate-project-section", attr: { "data-section": id } });
 		const title = section.createDiv({ cls: "vaultmate-project-section-title", attr: { role: "heading", "aria-level": "3" } });
-		createMark(title, sprite, SMALL);
+		createMark(title, sprite);
 		title.createSpan({ text });
 		return section;
 	};
@@ -166,7 +166,7 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 	const renderEntry = (parent: HTMLElement, item: JournalItem, projectPath: string, today: Date): void => {
 		const { entry } = item;
 		const row = parent.createDiv({ cls: "vaultmate-entry-line" });
-		createMark(row, entry.kind === "decision" ? SPRITES.stateDecision : SPRITES.statePrediction, SMALL);
+		createMark(row, entry.kind === "decision" ? SPRITES.stateDecision : SPRITES.statePrediction);
 		const main = row.createEl("button", { cls: "vaultmate-entry-main", attr: { type: "button", "aria-label": `Open the note at this ${kindName(entry.kind)}: ${entry.statement}` } });
 		main.createSpan({ cls: "vaultmate-entry-statement", text: entry.statement || "(no text)" });
 		const due = entry.due === null ? null : parseDate(entry.due);
@@ -256,7 +256,7 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		for (const chip of chips) {
 			const label = chip.id === "ideas" ? `Ideas · ${chip.count}` : chip.id === "reviews" ? `Reviews · ${chip.count}` : chip.id === "closed" ? `Closed tracks · ${chip.count}` : `${STATUS_INFO[chip.id].label} · ${chip.count}`;
 			const element = chipRow.createEl("button", { cls: "vaultmate-button vaultmate-section-chip", attr: { type: "button", "aria-label": `Go to ${label}`, title: label } });
-			createMark(element, CHIP_SPRITES[chip.id], SMALL);
+			createMark(element, CHIP_SPRITES[chip.id]);
 			element.createSpan({ text: String(chip.count) });
 			element.addEventListener("click", () => {
 				if (chip.id === "closed") {

@@ -1,11 +1,14 @@
 // Reusable DOM pieces in VaultMate's look (styles.css). Parents must sit inside a `.vaultmate` element
 // (the hub, or a modal whose `modalEl` has the class) so the palette tokens apply.
-import { createSmallSprite, createSprite, type Sprite } from "./pixel";
+import { createNearestSprite, createSmallSprite, createSprite, type Sprite } from "./pixel";
 import { SPRITES } from "./sprites";
 
-/** A mark of `cssPixels`: a 16 px source is drawn crisp, a larger one (a 48 px seal) is shrunk smoothed. */
-export function createMark(parent: HTMLElement, sprite: Sprite, cssPixels: number): HTMLImageElement {
-	return sprite.pixels <= cssPixels ? createSprite(parent, sprite, cssPixels) : createSmallSprite(parent, sprite, cssPixels);
+/** CSS size of a mark next to text; a 16 px sprite lands between 13 and 22 px, whatever the density. */
+const MARK = 18;
+
+/** A mark next to text: a 16 px source is drawn crisp at the size nearest to 18 px, a larger one (a 48 px seal) is shrunk smoothed to 18 px. */
+export function createMark(parent: HTMLElement, sprite: Sprite): HTMLImageElement {
+	return sprite.pixels <= MARK ? createNearestSprite(parent, sprite, MARK) : createSmallSprite(parent, sprite, MARK);
 }
 
 /**
@@ -28,11 +31,11 @@ export interface SpriteButtonOptions {
 	cta?: boolean;
 }
 
-/** A button with a 16 px sprite before its word, for a page's main actions. */
+/** A button with a mark (`createMark`) before its word, for a page's main actions. */
 export function createSpriteButton(parent: HTMLElement, options: SpriteButtonOptions): HTMLButtonElement {
 	const button = parent.createEl("button", { cls: options.cta ? "vaultmate-button vaultmate-sprite-button mod-cta" : "vaultmate-button vaultmate-sprite-button", attr: { type: "button" } });
 	if (options.label) button.setAttribute("aria-label", options.label);
-	createMark(button, options.sprite, 16);
+	createMark(button, options.sprite);
 	button.createSpan({ text: options.text });
 	return button;
 }
@@ -92,7 +95,7 @@ export function createHankoStamp(parent: HTMLElement, options: HankoStampOptions
 export interface Choice<T extends string> {
 	value: T;
 	label: string;
-	/** A 16 px mark before the label (a status seal); the label still carries the meaning. */
+	/** A mark before the label (`createMark`: a status seal, a scope); the label still carries the meaning. */
 	sprite?: Sprite;
 	/** Why the choice cannot be picked now (its tooltip); it stays visible but the keyboard skips it. */
 	disabled?: string;
@@ -148,7 +151,7 @@ function createChoiceGroup<T extends string>(parent: HTMLElement, groupCls: stri
 		const button = el.createEl("button", { cls: "vaultmate-choice-option", attr: { type: "button", role: "radio" } });
 		if (choice.disabled) button.setAttr("aria-disabled", "true");
 		if (choice.disabled) button.setAttr("title", choice.disabled);
-		if (choice.sprite) createMark(button, choice.sprite, 16);
+		if (choice.sprite) createMark(button, choice.sprite);
 		button.createSpan({ text: choice.label });
 		return button;
 	});
