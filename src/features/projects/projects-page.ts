@@ -353,6 +353,7 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		sprite: SPRITES.moduleProjects,
 		enabled: () => host.enabled(),
 		summary: () => tileSummary(host.notes()),
+		upLabel: "Back to all projects",
 		render,
 	};
 }
