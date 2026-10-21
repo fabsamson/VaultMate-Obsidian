@@ -5,6 +5,7 @@ import { Menu } from "obsidian";
 
 import { dueLabel, keepTogether, parseDate, startOfDay } from "../../core/dates";
 import { createDisclosure, createIconButton, createInfoPanel, createMark, createSpriteButton } from "../../ui/components";
+import { focusFromInput } from "../../ui/focus";
 import type { HubPage, HubPageContext } from "../../ui/hub-view";
 import { createSmallSprite, type Sprite } from "../../ui/pixel";
 import { SPRITES } from "../../ui/sprites";
@@ -60,6 +61,8 @@ export interface ProjectsPageHost {
 	open(path: string, line: number): void;
 	/** Opens the New project form. */
 	newProject(): void;
+	/** Opens the New track form for the project. */
+	newTrack(project: ProjectContent): void;
 	/** Opens the Promote form for an idea of the project. */
 	promote(project: ProjectContent, idea: ProjectIdea): void;
 	drop(path: string, idea: ProjectIdea): void;
@@ -254,12 +257,18 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		const head = page.createDiv({ cls: "vaultmate-project-head" });
 		const name = head.createEl("button", { cls: "vaultmate-project-name", text: project.name, attr: { type: "button", "aria-label": `Open ${project.name}` } });
 		name.addEventListener("click", () => host.open(project.path, 0));
-		if (focus) name.focus();
+		if (focus) focusFromInput(name);
 		const progress = projectProgress(host.progressProperty(project.path), counts);
 		if (progress) createMeter(head, projectMeter(progress), "vaultmate-project-head-progress");
+		const newTrack = (parentEl: HTMLElement, cls = ""): void => {
+			const button = createSpriteButton(parentEl, { sprite: SPRITES.actionNewTrack, text: "New track" });
+			if (cls) button.addClass(cls);
+			button.addEventListener("click", () => host.newTrack(project));
+		};
+		newTrack(head, "vaultmate-project-head-new");
 		const chips = sectionChips(counts, project.model.ideas.length, view.outside.length);
 		if (chips.length === 0) {
-			createInfoPanel(page, { sprite: SPRITES.mascotSleep, title: "No tracks yet", compact: true });
+			newTrack(createInfoPanel(page, { sprite: SPRITES.mascotSleep, title: "No tracks yet", compact: true }));
 			return;
 		}
 		const chipRow = page.createDiv({ cls: "vaultmate-chip-row", attr: { role: "group", "aria-label": "Sections" } });

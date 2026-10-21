@@ -1797,6 +1797,16 @@ body:not(.is-mobile) .modal-container.vaultmate-modal-top > .modal {
 	max-width: none;
 }
 
+/* New track: at the end of the header line; on its own line on a phone. */
+.vaultmate-project-head-new {
+	margin-left: auto;
+}
+
+.is-mobile .vaultmate-project-head-new {
+	flex-basis: 100%;
+	margin-left: 0;
+}
+
 /* The tasks of a track: a thinner bar with its text beside it. */
 .vaultmate-progress-compact {
 	flex-direction: row;

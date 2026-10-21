@@ -66,6 +66,12 @@ describe("newTrackInNote (an idea of another note)", () => {
 		expect(next).toContain("\\- not a bullet");
 	});
 
+	it("writes a track with no idea text as its heading and first task alone", () => {
+		const plain = ["# Tracks"];
+		const next = apply(plain, newTrackInNote(plain, track({ name: "Pack list", text: "", children: [], status: "progress", firstTask: { text: "Draft it", today: "2026-10-15" } })));
+		expect(next).toEqual(["# Tracks", "", "## 🔨 Pack list", "- [ ] Draft it ➕ 2026-10-15"]);
+	});
+
 	it("refuses an empty name", () => {
 		expect(newTrackInNote(PROJECT, track({ name: "  " }))).toEqual({ ok: false, reason: "empty-name" });
 	});
