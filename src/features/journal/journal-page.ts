@@ -1,10 +1,13 @@
 // The hub's "Decisions and predictions" page: reviews and track record of one kind, in one scope.
 import { groupByDue, tidyUp, type JournalKind } from "./journal-line";
 import { startOfDay } from "../../core/dates";
+import { matchesQuery } from "../../core/search";
 import { createDisclosure, createSectionHeader, createSegmentedControl, type Choice } from "../../ui/components";
 import type { HubPage } from "../../ui/hub-view";
+import { addPageSearch, createNoMatch, type PageSearchState } from "../../ui/page-search";
 import { SPRITES } from "../../ui/sprites";
 import type { JournalItem } from "./journal-index";
+import { baseName } from "../context/note-meta";
 import { createClosedBlock, type ClosedHost } from "./closed-section";
 import { createReviewsBlock, type ReviewsHost } from "./reviews-section";
 import { addScopeControls } from "./scope-control";
@@ -28,6 +31,8 @@ export function createJournalPage(host: JournalPageHost): HubPage {
 	const renderReviews = createReviewsBlock(host);
 	const renderClosed = createClosedBlock(host);
 	const renderTrackRecord = createTrackRecordBlock(host);
+	/** The search, kept while the panel lives; the kind and the scope keep it. */
+	const search: PageSearchState = { query: "" };
 
 	return {
 		id: "journal",
@@ -48,6 +53,7 @@ export function createJournalPage(host: JournalPageHost): HubPage {
 			const notePath = host.activeNote();
 			const markdownPaths = host.markdownPaths();
 			const controls = body.createDiv({ cls: "vaultmate-switcher" });
+			let field: { setPlaceholder(text: string): void } | null = null;
 			createSegmentedControl(controls, {
 				label: "Kind",
 				choices: KINDS,
@@ -55,6 +61,7 @@ export function createJournalPage(host: JournalPageHost): HubPage {
 				onChange: (kind) => {
 					ctx.state.kind = kind;
 					ctx.save();
+					field?.setPlaceholder(placeholder());
 					renderContent();
 				},
 			});
@@ -63,13 +70,31 @@ export function createJournalPage(host: JournalPageHost): HubPage {
 				renderContent();
 			});
 
+			const placeholder = (): string => (ctx.state.kind === "decision" ? "Search decisions" : "Search predictions");
+			field = addPageSearch(body, search, placeholder(), () => renderContent());
+
 			const content = body.createDiv();
 			const renderContent = (): void => {
 				content.empty();
-				const items = host.entries().filter((item) => item.entry.kind === ctx.state.kind && (allowed === null || allowed.has(item.path)));
-				createSectionHeader(content, "Reviews");
-				renderReviews(content.createDiv({ cls: "vaultmate-hub-section" }), items);
+				const searching = search.query.trim() !== "";
+				const items = host
+					.entries()
+					.filter((item) => item.entry.kind === ctx.state.kind && (allowed === null || allowed.has(item.path)))
+					.filter((item) => !searching || matchesQuery(`${item.entry.statement} ${item.entry.answer ?? ""} ${baseName(item.path)}`, search.query));
 				const tidy = tidyUp(items);
+				if (searching) {
+					const groups = groupByDue(items, startOfDay());
+					const reviews = groups.undated.length + groups.overdue.length + groups.week.length + groups.upcoming.length;
+					if (reviews + tidy.total === 0) {
+						createNoMatch(content, search.query);
+						return;
+					}
+					if (reviews > 0) createSectionHeader(content, "Reviews");
+					if (reviews > 0) renderReviews(content.createDiv({ cls: "vaultmate-hub-section" }), items);
+				} else {
+					createSectionHeader(content, "Reviews");
+					renderReviews(content.createDiv({ cls: "vaultmate-hub-section" }), items);
+				}
 				let showClosed: (() => void) | null = null;
 				if (tidy.total > 0) {
 					const section = content.createDiv({ cls: "vaultmate-hub-section" });
@@ -91,6 +116,7 @@ export function createJournalPage(host: JournalPageHost): HubPage {
 						};
 					}
 				}
+				if (searching) return; // statistics, not rows: hidden while searching
 				createSectionHeader(content, "Track record");
 				renderTrackRecord(content.createDiv({ cls: "vaultmate-hub-section" }), items, ctx.state.kind, showClosed);
 			};

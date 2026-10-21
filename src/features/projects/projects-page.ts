@@ -4,9 +4,11 @@
 import { Menu } from "obsidian";
 
 import { dueLabel, keepTogether, parseDate, startOfDay } from "../../core/dates";
+import { matchesQuery } from "../../core/search";
 import { createDisclosure, createIconButton, createInfoPanel, createMark, createSpriteButton } from "../../ui/components";
 import { focusFromInput } from "../../ui/focus";
 import type { HubPage, HubPageContext } from "../../ui/hub-view";
+import { addPageSearch, createNoMatch, type PageSearchState } from "../../ui/page-search";
 import { createSmallSprite, type Sprite } from "../../ui/pixel";
 import { SPRITES } from "../../ui/sprites";
 import { setIconTooltip } from "../../ui/tooltip";
@@ -115,9 +117,18 @@ interface ProjectView {
 	outside: JournalItem[];
 }
 
+/** What a search leaves of one track: all of it when the title matches, else the matching tasks and entries. */
+interface TrackPart {
+	tasks: TrackTask[];
+	entries: JournalItem[];
+}
+
 export function createProjectsPage(host: ProjectsPageHost): HubPage {
 	let showOther = false;
 	let showClosed = false;
+	/** The search, kept while the panel lives; it holds on the dashboard and on a project page. */
+	const search: PageSearchState = { query: "" };
+	const matches = (text: string): boolean => matchesQuery(text, search.query);
 
 	const sealCounter = (parent: HTMLElement, status: TrackStatus, count: number): void => {
 		const counter = parent.createSpan({ cls: "vaultmate-seal-count", attr: { role: "img", "aria-label": `${count} ${STATUS_INFO[status].label.toLowerCase()}` } });
@@ -168,8 +179,7 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		return section;
 	};
 
-	const renderIdeas = (parent: HTMLElement, project: ProjectContent): HTMLElement => {
-		const { ideas } = project.model;
+	const renderIdeas = (parent: HTMLElement, project: ProjectContent, ideas: readonly ProjectIdea[]): HTMLElement => {
 		const section = sectionTitle(parent, "ideas", SPRITES.stateIdea, `Ideas · ${ideas.length}`);
 		const list = section.createEl("ul", { cls: "vaultmate-idea-lines" });
 		for (const idea of ideas) {
@@ -219,7 +229,7 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		createIconButton(actions, SPRITES.actionOpenNote, "Open in the note", () => host.open(projectPath, task.line), { describedBy: text });
 	};
 
-	const renderTrack = (parent: HTMLElement, view: ProjectView, index: number, today: Date): void => {
+	const renderTrack = (parent: HTMLElement, view: ProjectView, index: number, today: Date, part: TrackPart): void => {
 		const { project } = view;
 		const track = project.model.tracks[index];
 		if (!track) return;
@@ -244,8 +254,8 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 			flag.createSpan({ cls: "vaultmate-track-flag", text: "No next task" });
 			if (host.canSuggest()) createIconButton(flag, SPRITES.actionSuggest, "Suggest next steps", () => host.suggest(project.path, track), { describedBy: titleButton });
 		}
-		for (const task of openTasks(track)) renderTask(card, project.path, task, today);
-		for (const item of view.byTrack[index] ?? []) renderEntry(card, item, project.path, today);
+		for (const task of part.tasks) renderTask(card, project.path, task, today);
+		for (const item of part.entries) renderEntry(card, item, project.path, today);
 	};
 
 	const renderProjectPage = (parent: HTMLElement, view: ProjectView, focus: boolean): void => {
@@ -273,34 +283,57 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		}
 		const chipRow = page.createDiv({ cls: "vaultmate-chip-row", attr: { role: "group", "aria-label": "Sections" } });
 		const sections = new Map<SectionId, HTMLElement>();
+		// What the search keeps: every track when it is blank, else a track whose title matches (whole) or whose tasks or entries match (those only).
+		const searching = search.query.trim() !== "";
+		const parts = new Map<number, TrackPart>();
+		project.model.tracks.forEach((track, index) => {
+			const entries = view.byTrack[index] ?? [];
+			if (!searching || matches(track.title)) {
+				parts.set(index, { tasks: openTasks(track), entries });
+				return;
+			}
+			const part = { tasks: openTasks(track).filter((task) => matches(task.text)), entries: entries.filter((item) => matches(item.entry.statement)) };
+			if (part.tasks.length + part.entries.length > 0) parts.set(index, part);
+		});
+		const ideas = project.model.ideas.filter((idea) => !searching || matches(idea.text));
+		const outside = view.outside.filter((item) => !searching || matches(item.entry.statement));
+		const kept: Record<TrackStatus, number> = { explore: 0, backlog: 0, progress: 0, done: 0, dropped: 0 };
+		for (const index of parts.keys()) kept[project.model.tracks[index]?.status ?? "explore"]++;
+		const shownChips = sectionChips(kept, ideas.length, outside.length);
+		if (searching && shownChips.length === 0) {
+			chipRow.remove();
+			createNoMatch(page, search.query);
+			return;
+		}
 		let closed: { setOpen(open: boolean): void } | null = null;
 
-		if (project.model.ideas.length > 0) sections.set("ideas", renderIdeas(page, project));
+		if (ideas.length > 0) sections.set("ideas", renderIdeas(page, project, ideas));
 		for (const status of OPEN_STATUSES) {
-			const indexes = project.model.tracks.flatMap((track, index) => (track.status === status ? [index] : []));
+			const indexes = project.model.tracks.flatMap((track, index) => (track.status === status && parts.has(index) ? [index] : []));
 			if (indexes.length === 0) continue;
 			const section = sectionTitle(page, status, SEALS[status], `${STATUS_INFO[status].label} · ${indexes.length}`);
-			for (const index of indexes) renderTrack(section, view, index, today);
+			for (const index of indexes) renderTrack(section, view, index, today, parts.get(index) ?? { tasks: [], entries: [] });
 			sections.set(status, section);
 		}
-		if (view.outside.length > 0) {
-			const section = sectionTitle(page, "reviews", SPRITES.actionReview, `Reviews · ${view.outside.length}`);
-			for (const item of view.outside) renderEntry(section, item, project.path, today);
+		if (outside.length > 0) {
+			const section = sectionTitle(page, "reviews", SPRITES.actionReview, `Reviews · ${outside.length}`);
+			for (const item of outside) renderEntry(section, item, project.path, today);
 			sections.set("reviews", section);
 		}
-		if (counts.done + counts.dropped > 0) {
+		if (kept.done + kept.dropped > 0) {
 			const section = page.createDiv({ cls: "vaultmate-project-section", attr: { "data-section": "closed" } });
-			const disclosure = createDisclosure(section, { label: `Closed tracks · ${counts.done + counts.dropped}`, open: showClosed, onToggle: (open) => (showClosed = open) });
+			const disclosure = createDisclosure(section, { label: `Closed tracks · ${kept.done + kept.dropped}`, open: showClosed, onToggle: (open) => (showClosed = open) });
 			for (const status of ["done", "dropped"] as const) {
 				project.model.tracks.forEach((track, index) => {
-					if (track.status === status) renderTrack(disclosure.body, view, index, today);
+					const part = parts.get(index);
+					if (track.status === status && part) renderTrack(disclosure.body, view, index, today, part);
 				});
 			}
 			sections.set("closed", section);
 			closed = disclosure;
 		}
 
-		for (const chip of chips) {
+		for (const chip of shownChips) {
 			const label = chip.id === "ideas" ? `Ideas · ${chip.count}` : chip.id === "reviews" ? `Reviews · ${chip.count}` : chip.id === "closed" ? `Closed tracks · ${chip.count}` : `${STATUS_INFO[chip.id].label} · ${chip.count}`;
 			const element = chipRow.createEl("button", { cls: "vaultmate-button vaultmate-section-chip", attr: { type: "button" } });
 			setIconTooltip(element, `Go to ${label}`);
@@ -338,6 +371,7 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 			allowed = next;
 			void draw(false);
 		});
+		addPageSearch(body, search, "Search projects", () => void draw(false));
 		const content = body.createDiv();
 		let token = 0;
 
@@ -378,7 +412,13 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 				return;
 			}
 			const today = startOfDay();
-			renderDashboard(content, projects.map((entry) => summarizeProject(entry.project, entry, today, host.progressProperty(entry.project.path))), (path) => openProject(path));
+			const searching = search.query.trim() !== "";
+			const found = searching ? projects.filter((entry) => matches([entry.project.name, ...entry.project.model.tracks.flatMap((track) => [track.title, ...openTasks(track).map((task) => task.text)])].join(" "))) : projects;
+			if (found.length === 0) {
+				createNoMatch(content, search.query);
+				return;
+			}
+			renderDashboard(content, found.map((entry) => summarizeProject(entry.project, entry, today, host.progressProperty(entry.project.path))), (path) => openProject(path));
 			createSpriteButton(content.createDiv({ cls: "vaultmate-hub-section" }), { sprite: SPRITES.actionNewProject, text: "New project" }).addEventListener("click", () => host.newProject());
 			if (focusTile) content.querySelector<HTMLElement>(`[data-path="${CSS.escape(focusTile)}"]`)?.focus();
 		};
