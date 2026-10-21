@@ -207,7 +207,7 @@ The links between the two are documented for the app's developers in [docs/andro
 
 ## Privacy
 
-The plugin collects no telemetry. Its network requests are the AI actions you run (sent to the AI provider you configured, with the content you previewed) and the place searches you start (sent to OpenStreetMap Nominatim, with your search text only). VaultMate needs no account, shows no ads and has no paid features; the Buy Me a Coffee link below is an optional donation. See [PRIVACY.md](https://github.com/fabsamson/VaultMate-Obsidian/blob/main/PRIVACY.md).
+The plugin collects no telemetry. Its network requests are the AI actions you run (sent to the AI provider you configured, with the content you previewed) and the place searches you start (sent to OpenStreetMap Nominatim, with your search text only). VaultMate needs no account, shows no ads and has no paid features; the Buy Me a Coffee link below is an optional donation. It lists the Markdown notes of your vault to find your decisions, ideas, projects and connections, on your device only, and it only writes to the clipboard when you click a copy button; it never reads it. See [PRIVACY.md](https://github.com/fabsamson/VaultMate-Obsidian/blob/main/PRIVACY.md).
 
 ## Support
 

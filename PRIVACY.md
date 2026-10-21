@@ -4,6 +4,11 @@ VaultMate does not collect telemetry, analytics, or accounts, and it has no serv
 
 Notes are read on your device to compute the plugin's views. VaultMate changes a note only when you run one of its commands, and only the note that command names.
 
+## Vault files and clipboard
+
+- **Vault files:** VaultMate lists the Markdown notes of your vault (not other files) to find your decisions, predictions, ideas, projects, AI action files and new connections, and to suggest notes in its forms. The list and the notes stay on your device; nothing leaves it except what an AI action shows you before you send it.
+- **Clipboard:** VaultMate only writes to the clipboard, when you click a copy button (**Copy title** and **Copy** in an AI action's results, **Copy link** on a new connection). It never reads the clipboard.
+
 ## New connections
 
 The New connections page is computed entirely on your device and sends nothing. To search quickly, VaultMate keeps an index of the words of your notes (word counts and each note's modification time, not the notes themselves) in the app's IndexedDB, on each device. It is not written to `data.json`, so it is not synced, and it is rebuilt if you clear the app's data. When you press "Not useful" on a connection, the paths of the two notes are saved in `data.json`, so that the pair is not proposed again; `data.json` is shared between your devices by whatever sync you use, like the other settings.
