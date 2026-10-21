@@ -15,6 +15,7 @@ import { renderLine } from "./insertion";
 import { parseQuestions, type Question } from "./questions";
 import { buildMessages, collectSources, entryParam, sourceProblem, type RequestMessages, type SourceInput } from "./request";
 import type { SourceText } from "./sources";
+import { noteLines, openTrackChoices } from "./track-source";
 import { renderSuggestionCards } from "./suggestion-cards";
 import { parseSuggestions, searchUrl, type Suggestion } from "./suggestions";
 
@@ -23,7 +24,7 @@ export interface RunContext extends SourceInput {
 	path: string;
 }
 
-const SOURCE_LABELS = { note: "Note", selection: "Selection", properties: "Properties", "collection-profile": "Collection profile" } as const;
+const SOURCE_LABELS = { note: "Note", selection: "Selection", properties: "Properties", "collection-profile": "Collection profile", track: "Track" } as const;
 
 const ALL_RATINGS = "All my ratings";
 
@@ -52,10 +53,13 @@ export class RunModal extends Modal {
 		private readonly plugin: VaultMatePlugin,
 		private readonly action: ActionDefinition,
 		private readonly context: RunContext,
+		/** Parameter values chosen by the caller; when they cover every parameter, the params step is skipped. */
+		preset: Record<string, string> = {},
 	) {
 		super(app);
 		this.modalEl.addClass("vaultmate");
-		this.state = { type: action.params.length > 0 ? "params" : "preview" };
+		this.values = { ...preset };
+		this.state = { type: action.params.some((param) => preset[param.name] === undefined) ? "params" : "preview" };
 		if (this.state.type === "preview") this.prepare();
 	}
 
@@ -77,6 +81,7 @@ export class RunModal extends Modal {
 
 	/** The options of a parameter. The entries depend on the type chosen in the `type` parameter. */
 	private choices(param: ParamDefinition, type: string): Array<{ id: string; label: string; text: string }> {
+		if (param.choices === "project-tracks") return openTrackChoices(noteLines(this.context.raw)).map((choice) => ({ ...choice, text: choice.label }));
 		if (param.choices === "collection-entries") {
 			return [{ id: "", label: ALL_RATINGS, text: ALL_RATINGS }, ...entryChoices(this.context.collection, type).map((entry) => ({ ...entry, text: entry.label }))];
 		}
@@ -159,7 +164,7 @@ export class RunModal extends Modal {
 			if (select.options.length === 0) {
 				empty = true;
 				select.remove();
-				line.createSpan({ text: "No collection found. Check the Collections settings." });
+				line.createSpan({ text: param.choices === "project-tracks" ? "No open track in this note." : "No collection found. Check the Collections settings." });
 			}
 		}
 		// The entries depend on the type: when it changes, they are listed again.
