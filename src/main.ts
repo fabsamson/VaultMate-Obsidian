@@ -8,6 +8,7 @@ import { IdeasFeature } from "./features/ideas/ideas";
 import { JournalFeature } from "./features/journal/journal";
 import { LocationFeature } from "./features/location/location";
 import { ProjectsFeature } from "./features/projects/projects";
+import { registerWeeklyReview } from "./features/weekly-review/weekly-command";
 import { VaultMateSettingTab } from "./settings";
 import { runTagCheck } from "./ui/tag-check-modal";
 import { HUB_VIEW_TYPE, HubView, type HubPage } from "./ui/hub-view";
@@ -49,6 +50,7 @@ export default class VaultMatePlugin extends Plugin {
 		this.location.register();
 		registerDailyLink(this);
 		this.context.register();
+		registerWeeklyReview(this);
 		this.app.workspace.onLayoutReady(() => void runTagCheck(this));
 		// The pages name the note they work on, so redraw when another note opens.
 		this.registerEvent(this.app.workspace.on("file-open", debounce(() => this.refreshHubs(), 300, true)));
@@ -110,8 +112,8 @@ export default class VaultMatePlugin extends Plugin {
 		return null;
 	}
 
-	/** Opens the hub in the side panel, on the page `page` when given. */
-	public async openHub(page?: string): Promise<void> {
+	/** Opens the hub in the side panel, on the page `page` when given (and, on the Projects page, on the project `project`). */
+	public async openHub(page?: string, project?: string): Promise<void> {
 		const { workspace } = this.app;
 		let leaf: WorkspaceLeaf | null = workspace.getLeavesOfType(HUB_VIEW_TYPE)[0] ?? null;
 		if (!leaf) {
@@ -120,6 +122,6 @@ export default class VaultMatePlugin extends Plugin {
 		}
 		if (!leaf) return;
 		await workspace.revealLeaf(leaf);
-		if (page !== undefined && leaf.view instanceof HubView) leaf.view.showPage(page);
+		if (page !== undefined && leaf.view instanceof HubView) leaf.view.showPage(page, project);
 	}
 }

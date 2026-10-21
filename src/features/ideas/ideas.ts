@@ -219,13 +219,20 @@ export class IdeasFeature {
 		modal.open();
 	}
 
-	/** Tend mode over `items`, else over every fresh idea of the vault, oldest first. */
-	public tend(items: IdeaItem[] = tendQueue(this.index.items(), startOfDay(), { tag: this.tag().replace(/^#/, ""), subtag: this.seedSubtag() })): void {
+	/** Every fresh idea of the vault, oldest first. */
+	public freshIdeas(): IdeaItem[] {
+		return tendQueue(this.index.items(), startOfDay(), { tag: this.tag().replace(/^#/, ""), subtag: this.seedSubtag() });
+	}
+
+	/** Tend mode over `items`, else over every fresh idea of the vault, oldest first; `ended` is told when the window closes. */
+	public tend(items: IdeaItem[] = this.freshIdeas(), ended?: (sorted: number, completed: boolean) => void): void {
 		if (items.length === 0) {
 			new Notice("No fresh ideas to tend.");
 			return;
 		}
-		new IdeaModal(this.plugin.app, this.portalHost(), items, true).open();
+		const modal = new IdeaModal(this.plugin.app, this.portalHost(), items, true);
+		modal.onEnded = ended;
+		modal.open();
 	}
 
 	/** Drops the idea without a note, then offers Undo for a few seconds. */

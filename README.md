@@ -71,6 +71,16 @@ The title after the marker is never changed by VaultMate. A heading with no mark
 - **First-run check:** once per vault, if 20 or more lines carry the idea tag without being tasks, or 20 or more notes carry the Project tag, a dialog shows the counts and where to change the tags. It only informs; nothing is written.
 - **Local only:** projects are read from your notes on your device. Nothing is sent anywhere. Turn the feature, change the Project tag, the title of new Tracks sections, the **Project folder** (empty: the vault root) or the **Project template** (empty: the built-in skeleton) in the settings under Projects.
 
+## Weekly review
+
+The **Weekly review** command goes through the windows you already know, one after the other, with no page of its own:
+
+1. the **Time to judge?** window of each review due (review date today or earlier), oldest first;
+2. **Tend fresh ideas**, over the fresh ideas of the whole vault;
+3. if a project has an In progress track without an open task, the hub opens on the page of the first such project (a notice counts the other projects).
+
+A step with nothing to do is skipped, and so is a feature that is turned off. Closing a window without writing stops the whole session. A notice sums up what was done, for example "Weekly review: 3 reviews done, 4 ideas sorted, 1 track needs a next task."
+
 ## AI actions
 
 An AI action is a Markdown file in your vault: a prompt, the data it may send, and the kind of answer you want. VaultMate runs it only when you click, shows exactly what will be sent first, and keeps only short questions or suggestion cards from the answer. It never shows free-form AI text.

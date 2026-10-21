@@ -100,6 +100,11 @@ export class IdeaModal extends JournalModal {
 	private index = 0;
 	private busy = false;
 	private suggest: NoteSuggest | null = null;
+	/** Ideas written so far, and whether the queue was gone through to its end. */
+	private sorted = 0;
+	private completed = false;
+	/** Called once when the window closes, whatever the reason (unlike `onClosed`, which a click on the source note clears). */
+	public onEnded?: (sorted: number, completed: boolean) => void;
 
 	/** `items` is one idea, or the queue of Tend mode (`tend`). */
 	public constructor(
@@ -118,6 +123,9 @@ export class IdeaModal extends JournalModal {
 	public onClose(): void {
 		this.suggest?.close();
 		super.onClose();
+		const ended = this.onEnded;
+		this.onEnded = undefined;
+		ended?.(this.sorted, this.completed);
 	}
 
 	/** Moves to the next idea, or ends the session. */
@@ -128,6 +136,7 @@ export class IdeaModal extends JournalModal {
 			return;
 		}
 		if (this.tend) new Notice("All fresh ideas tended.");
+		this.completed = true;
 		this.close();
 	}
 
@@ -147,6 +156,7 @@ export class IdeaModal extends JournalModal {
 		}
 		if (written) {
 			this.written = true;
+			this.sorted++;
 			this.host.stampDone();
 			this.advance();
 		} else {

@@ -114,8 +114,9 @@ export class HubView extends ItemView {
 		return this.state.page === id;
 	}
 
-	/** Opens a page from code (a command). */
-	public showPage(id: string): void {
+	/** Opens a page from code (a command); `project` is the project page the Projects page shows. */
+	public showPage(id: string, project?: string): void {
+		if (project !== undefined) this.state.project = project;
 		this.go(id);
 	}
 

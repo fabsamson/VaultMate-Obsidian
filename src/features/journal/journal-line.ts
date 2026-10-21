@@ -309,12 +309,20 @@ export function tidyUp<T extends { entry: JournalEntry }>(items: readonly T[]): 
 	return { closed, total: closed.length };
 }
 
+/** The open entries due today or earlier, oldest review date first. */
+export function dueItems<T extends { entry: JournalEntry }>(items: readonly T[], today: Date): T[] {
+	const days = new Map<T, number>();
+	for (const item of items) {
+		const due = item.entry.status === "open" && item.entry.due !== null ? parseDate(item.entry.due) : null;
+		const away = due === null ? 1 : daysBetween(today, due);
+		if (away <= 0) days.set(item, away);
+	}
+	return [...days.keys()].sort((a, b) => (days.get(a) ?? 0) - (days.get(b) ?? 0));
+}
+
 /** Number of open entries due today or earlier. */
 export function countDue<T extends { entry: JournalEntry }>(items: readonly T[], today: Date): number {
-	return items.filter((item) => {
-		const due = item.entry.status === "open" && item.entry.due !== null ? parseDate(item.entry.due) : null;
-		return due !== null && daysBetween(today, due) <= 0;
-	}).length;
+	return dueItems(items, today).length;
 }
 
 // ---- Badge text -------------------------------------------------------------------------------------
