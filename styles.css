@@ -1951,7 +1951,7 @@ body:not(.is-mobile) .modal-container.vaultmate-modal-top > .modal {
 
 /* In a short window the cat is smaller (a whole multiple of its pixels), to leave room for the pictures. */
 .vaultmate-guide-sheet.is-short .vaultmate-guide-steps {
-	--vaultmate-head: 40px;
+	--vaultmate-head: 48px;
 }
 
 /* The timeline: a dotted rule behind the cards, seen in the gaps between the moments. */
@@ -2375,6 +2375,89 @@ body:not(.is-mobile) .modal-container.vaultmate-modal-top > .modal {
 
 .vaultmate-guide-nav.is-next {
 	justify-self: end;
+}
+
+/*
+ * Short windows (640 to 699 px high): the sheet takes more of the window and the header, the bottom blocks and the
+ * footer are tighter, so the story cards keep the height the pictures need to stay readable.
+ */
+@media (max-height: 699px) {
+	.modal.vaultmate-guide {
+		width: min(97vw, 1200px);
+		height: min(96vh, 760px);
+	}
+
+	.vaultmate-guide .modal-content.vaultmate-guide-sheet {
+		gap: 8px;
+		padding-bottom: 8px;
+	}
+
+	.vaultmate-guide-sheet .vaultmate-pattern-band {
+		height: 8px;
+	}
+
+	.vaultmate-guide-heading {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: 0 12px;
+	}
+
+	.vaultmate-guide-title {
+		order: 1;
+		font-size: 22px;
+	}
+
+	.vaultmate-guide-eyebrow {
+		order: 2;
+	}
+
+	.vaultmate-guide-purpose {
+		order: 3;
+		flex-basis: 100%;
+		margin: 0;
+		font-size: 13px;
+	}
+
+	.vaultmate-guide-close {
+		min-height: 32px;
+	}
+
+	.vaultmate-guide-step {
+		gap: 4px;
+		padding: 6px 10px 8px;
+	}
+
+	.vaultmate-guide-steps {
+		--vaultmate-pad: 6px;
+	}
+
+	.vaultmate-guide-mock {
+		padding: 4px 6px;
+	}
+
+	.vaultmate-guide-step-text {
+		line-height: 1.32;
+	}
+
+	.vaultmate-guide-write,
+	.vaultmate-guide-tips {
+		padding: 6px 12px 8px;
+	}
+
+	.vaultmate-guide-code {
+		padding: 3px 8px;
+		line-height: 1.4;
+	}
+
+	.vaultmate-guide-tips ul {
+		gap: 2px;
+	}
+
+	.vaultmate .vaultmate-button.vaultmate-guide-nav {
+		min-height: 30px;
+		padding-block: 0;
+	}
 }
 
 /* The cards come in one after the other, in pixel steps (Animations setting; never with reduced motion). */

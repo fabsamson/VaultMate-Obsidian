@@ -134,7 +134,9 @@ export class GuideModal extends Modal {
 			const mark = STEP_MARKS[index];
 			if (mark) createSprite(when, mark, 32);
 			when.createEl("h3", { text: step.when });
-			createSprite(top, step.cat, contentEl.hasClass("is-short") ? 40 : 64);
+			const cat = createSprite(top, step.cat, 64);
+			// In a short window the cat is 48 px: crisp at 1x and 2x, a little uneven at 1.5x, and it leaves the pictures more room.
+			if (contentEl.hasClass("is-short")) cat.setCssProps({ "--vaultmate-sprite-size": "48px" });
 			// A picture of the page at this moment: the story below carries the meaning.
 			const frame = card.createDiv({ cls: "vaultmate-guide-mock", attr: { "aria-hidden": "true", inert: "" } });
 			const inner = frame.createDiv({ cls: "vaultmate-guide-mock-inner" });

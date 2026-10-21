@@ -157,6 +157,11 @@ export const PROJECT_GUIDE: Guide = {
 			text: "The Cover track runs dry: **No next task**. Press **Add task**, or ask for **Suggest next steps** and pick two.",
 			mock: (el) => {
 				projectHead(el, 75);
+				for (const title of ["Outline", "Draft"]) {
+					const row = el.createDiv({ cls: "vaultmate-track-row vaultmate-guide-done" });
+					createMark(row, TRACK_SEALS.done);
+					row.createSpan({ cls: "vaultmate-idea-statement", text: title });
+				}
 				const card = trackLine(el, { title: "Cover", seal: "progress", action: "Done", tasks: [3, 3] });
 				const flag = card.createDiv({ cls: "vaultmate-track-nonext" });
 				flag.createSpan({ cls: "vaultmate-track-flag", text: "No next task" });
