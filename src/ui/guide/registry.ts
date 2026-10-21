@@ -1,4 +1,4 @@
-// Every page guide, by id. A page names its guide with `ctx.setGuide(id)`.
+// The guides that are written, by id; the other chapters of `chapters.ts` are coming. A page names its guide with `ctx.setGuide(id)`.
 import { PROJECT_GUIDE, PROJECTS_GUIDE } from "../../features/projects/projects-guides";
 import type { Guide } from "./guide";
 

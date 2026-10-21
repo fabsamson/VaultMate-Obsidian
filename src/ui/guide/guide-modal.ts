@@ -1,11 +1,14 @@
-// The sheet that a page's "?" button opens: the promise of the page, its story in 3 or 4 cards, the Markdown
-// to write and a few tips. Built from a `Guide`; the pictures are inert copies of the real components.
+// The sheet that a page's "?" button opens: a chapter of the book, told as moments in time with the cat acting
+// each one, the Markdown to write and a few tips. Built from a `Guide`; the pictures are inert copies of the
+// real components. The footer moves to the neighbouring chapters without closing the sheet.
 import { Modal, type App } from "obsidian";
 
 import { createMark } from "../components";
 import { focusFromInput } from "../focus";
 import { createSprite } from "../pixel";
 import { SPRITES } from "../sprites";
+import { setQuickTooltip } from "../tooltip";
+import { CHAPTERS, chapterNumber, neighbours, type Chapter } from "./chapters";
 import type { Guide } from "./guide";
 
 /** README is a file name: keep its capitals. */
@@ -15,6 +18,16 @@ const STEP_MARKS = [SPRITES.stateStep1, SPRITES.stateStep2, SPRITES.stateStep3, 
 
 /** Tags, dates and the markers of a task line stand out in the example. */
 const HIGHLIGHT = /(#[\p{L}\p{N}_/-]+|\d{4}-\d{2}-\d{2}|[➕📅⏳✅]|\[[ x]\])/gu;
+
+/** What the sheet needs from the plugin. */
+export interface GuideHost {
+	/** The written guide of a chapter, or undefined while it is coming. */
+	guide(id: string): Guide | undefined;
+	/** A guide was shown: remember it (an update never reopens it). */
+	markSeen(id: string): void;
+	/** Opens the page of a chapter in the panel. */
+	openPage(chapter: Chapter): void;
+}
 
 function writeLine(parent: HTMLElement, line: string): void {
 	const row = parent.createDiv({ cls: "vaultmate-guide-code-line" });
@@ -28,31 +41,83 @@ function writeLine(parent: HTMLElement, line: string): void {
 	row.appendText(line.slice(last));
 }
 
+/** A sentence with `**bold**` names of the interface. */
+function story(parent: HTMLElement, text: string): void {
+	text.split("**").forEach((part, index) => {
+		if (index % 2 === 1) parent.createEl("strong", { text: part });
+		else parent.appendText(part);
+	});
+}
+
+/** The largest size of the picture's unit (`--g`) at which it still fits its frame, in px; null in a stacked layout, which keeps the CSS size. */
+function fitMock(frame: HTMLElement, inner: HTMLElement): number {
+	const style = frame.win.getComputedStyle(frame);
+	const room = frame.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+	let low = 8;
+	let high = 22;
+	for (let i = 0; i < 7; i++) {
+		const middle = (low + high) / 2;
+		inner.style.setProperty("--g", `${middle}px`);
+		if (inner.offsetHeight <= room && inner.scrollWidth <= inner.clientWidth + 1) low = middle;
+		else high = middle;
+	}
+	return low;
+}
+
 export class GuideModal extends Modal {
-	/** `animate`: the cards come in one after the other (the Animations setting and the system's reduced motion). */
+	private shown: string;
+	private observer: ResizeObserver | null = null;
+
+	/**
+	 * `current` is the guide of the page that is open in the panel; `animate`: the cards come in one after the
+	 * other (the Animations setting and the system's reduced motion).
+	 */
 	public constructor(
 		app: App,
-		private readonly guide: Guide,
+		start: string,
+		private readonly current: string,
 		private readonly animate: boolean,
+		private readonly host: GuideHost,
 	) {
 		super(app);
+		this.shown = start;
 		this.modalEl.addClasses(["vaultmate", "vaultmate-guide"]);
 		this.modalEl.setAttr("role", "dialog");
 		this.modalEl.setAttr("aria-modal", "true");
 	}
 
 	public onOpen(): void {
-		const { guide, contentEl } = this;
+		this.show(this.shown, true);
+		// Obsidian moves the focus into the window after `onOpen`: ask again once it has.
+		const close = this.contentEl.querySelector<HTMLElement>(".vaultmate-guide-close");
+		if (close) close.win.setTimeout(() => focusFromInput(close), 50);
+	}
+
+	public onClose(): void {
+		this.observer?.disconnect();
+		this.contentEl.empty();
+	}
+
+	/** Draws the chapter `id` in the sheet. */
+	private show(id: string, first = false): void {
+		const guide = this.host.guide(id);
+		const chapter = CHAPTERS.find((candidate) => candidate.id === id);
+		if (!guide || !chapter) return;
+		this.shown = id;
+		this.host.markSeen(id);
+		const { contentEl } = this;
+		this.observer?.disconnect();
+		contentEl.empty();
 		contentEl.addClass("vaultmate-guide-sheet");
-		if (this.animate) contentEl.addClass("is-animated");
+		contentEl.toggleClass("is-animated", this.animate);
+		contentEl.toggleClass("is-short", contentEl.win.innerHeight < 700);
 
 		contentEl.createDiv({ cls: "vaultmate-pattern-band" }).setCssProps({ "--vaultmate-pattern": `url("${SPRITES.patternSeigaiha.src}")` });
-		// Page and cat sprites are crisp at whole multiples; in a short window they take the smaller step.
-		const big = contentEl.win.innerHeight < 700 ? 40 : 64;
 		const head = contentEl.createEl("header", { cls: "vaultmate-guide-head" });
-		createSprite(head, guide.sprite, big);
+		createSprite(head, guide.sprite, 48);
 		const heading = head.createDiv({ cls: "vaultmate-guide-heading" });
-		const title = heading.createEl("h2", { cls: "vaultmate-guide-title", text: guide.title, attr: { id: "vaultmate-guide-title" } });
+		heading.createDiv({ cls: "vaultmate-guide-eyebrow", text: `Chapter ${chapterNumber(id)} of ${CHAPTERS.length} · ${chapter.page}` });
+		const title = heading.createEl("h2", { cls: "vaultmate-guide-title", text: chapter.title, attr: { id: "vaultmate-guide-title" } });
 		this.modalEl.setAttr("aria-labelledby", title.id);
 		heading.createEl("p", { cls: "vaultmate-guide-purpose", text: guide.purpose });
 		const close = head.createEl("button", { cls: "vaultmate-guide-close", text: "Close", attr: { type: "button" } });
@@ -60,17 +125,22 @@ export class GuideModal extends Modal {
 
 		const steps = contentEl.createEl("ol", { cls: "vaultmate-guide-steps" });
 		steps.setCssProps({ "--vaultmate-steps": String(guide.steps.length) });
+		const mocks: Array<{ frame: HTMLElement; inner: HTMLElement }> = [];
 		guide.steps.forEach((step, index) => {
 			const card = steps.createEl("li", { cls: "vaultmate-guide-step" });
 			card.setCssProps({ "--vaultmate-step-index": String(index) });
 			const top = card.createDiv({ cls: "vaultmate-guide-step-head" });
+			const when = top.createDiv({ cls: "vaultmate-guide-when" });
 			const mark = STEP_MARKS[index];
-			if (mark) createSprite(top, mark, 32);
-			top.createEl("h3", { text: step.title });
-			// A picture of the page: the caption below carries the meaning.
-			const mock = card.createDiv({ cls: "vaultmate-guide-mock", attr: { "aria-hidden": "true", inert: "" } });
-			step.mock(mock.createDiv({ cls: "vaultmate-guide-mock-inner" }));
-			card.createEl("p", { cls: "vaultmate-guide-step-text", text: step.text });
+			if (mark) createSprite(when, mark, 32);
+			when.createEl("h3", { text: step.when });
+			createSprite(top, step.cat, contentEl.hasClass("is-short") ? 40 : 64);
+			// A picture of the page at this moment: the story below carries the meaning.
+			const frame = card.createDiv({ cls: "vaultmate-guide-mock", attr: { "aria-hidden": "true", inert: "" } });
+			const inner = frame.createDiv({ cls: "vaultmate-guide-mock-inner" });
+			step.mock(inner);
+			mocks.push({ frame, inner });
+			story(card.createEl("p", { cls: "vaultmate-guide-step-text" }), step.text);
 		});
 
 		const bottom = contentEl.createDiv({ cls: "vaultmate-guide-bottom" });
@@ -90,16 +160,47 @@ export class GuideModal extends Modal {
 		}
 
 		const foot = contentEl.createEl("footer", { cls: "vaultmate-guide-foot" });
-		const cat = foot.createDiv({ cls: "vaultmate-guide-cat" });
-		cat.createSpan({ cls: "vaultmate-guide-bubble", text: guide.cat.bubble });
-		createSprite(cat, guide.cat.sprite, big);
-		foot.createEl("a", { text: README_LINK, attr: { href: guide.readme, target: "_blank", rel: "noopener" } });
+		const around = neighbours(id);
+		this.navButton(foot, around.previous, `‹ ${around.previous?.title ?? ""}`, "is-previous");
+		const middle = foot.createDiv({ cls: "vaultmate-guide-foot-links" });
+		if (id !== this.current) {
+			const open = middle.createEl("button", { cls: "vaultmate-button", text: "Open this page", attr: { type: "button" } });
+			open.addEventListener("click", () => {
+				this.host.openPage(chapter);
+				this.close();
+			});
+		}
+		middle.createEl("a", { text: README_LINK, attr: { href: guide.readme, target: "_blank", rel: "noopener" } });
+		this.navButton(foot, around.next, `${around.next?.title ?? ""} ›`, "is-next");
 
-		// Obsidian moves the focus into the window after `onOpen`: ask again once it has.
-		close.win.setTimeout(() => focusFromInput(close), 50);
+		// The pictures share one size, the largest that fits them all, so the same Book looks the same from card to card.
+		const fit = (): void => {
+			const stacked = contentEl.win.getComputedStyle(contentEl).display === "block";
+			if (stacked) {
+				for (const { inner } of mocks) inner.style.removeProperty("--g");
+				return;
+			}
+			const size = Math.min(...mocks.map(({ frame, inner }) => fitMock(frame, inner)));
+			for (const { inner } of mocks) inner.style.setProperty("--g", `${size}px`);
+		};
+		contentEl.win.requestAnimationFrame(fit);
+		this.observer = new ResizeObserver(fit);
+		this.observer.observe(contentEl);
+		if (!first) focusFromInput(close);
 	}
 
-	public onClose(): void {
-		this.contentEl.empty();
+	/** A button to a neighbouring chapter; disabled, with the reason, while its guide is not written. */
+	private navButton(parent: HTMLElement, chapter: Chapter | null, label: string, cls: string): void {
+		if (!chapter) {
+			parent.createSpan({ cls: `vaultmate-guide-nav ${cls}` });
+			return;
+		}
+		const button = parent.createEl("button", { cls: `vaultmate-button vaultmate-guide-nav ${cls}`, text: label, attr: { type: "button" } });
+		if (!this.host.guide(chapter.id)) {
+			button.setAttr("aria-disabled", "true");
+			setQuickTooltip(button, `${chapter.title}: coming soon`);
+			return;
+		}
+		button.addEventListener("click", () => this.show(chapter.id));
 	}
 }

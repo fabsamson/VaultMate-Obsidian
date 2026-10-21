@@ -1893,6 +1893,14 @@ body:not(.is-mobile) .modal-container.vaultmate-modal-top > .modal {
 	min-width: 0;
 }
 
+.vaultmate-guide-eyebrow {
+	color: var(--vaultmate-primary);
+	font-size: var(--font-ui-smaller);
+	font-weight: 900;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+}
+
 .vaultmate-guide-title {
 	margin: 0;
 	color: var(--vaultmate-text);
@@ -1935,6 +1943,27 @@ body:not(.is-mobile) .modal-container.vaultmate-modal-top > .modal {
 	margin: 0;
 	padding: 0 2px 2px 0;
 	list-style: none;
+	--vaultmate-pad: clamp(8px, 1.4vh, 14px);
+	--vaultmate-head: 64px;
+	position: relative;
+	isolation: isolate;
+}
+
+/* In a short window the cat is smaller (a whole multiple of its pixels), to leave room for the pictures. */
+.vaultmate-guide-sheet.is-short .vaultmate-guide-steps {
+	--vaultmate-head: 40px;
+}
+
+/* The timeline: a dotted rule behind the cards, seen in the gaps between the moments. */
+.vaultmate-guide-steps::before {
+	content: "";
+	position: absolute;
+	z-index: -1;
+	top: calc(var(--vaultmate-pad) + var(--vaultmate-head) / 2 - 2px);
+	right: 0;
+	left: 0;
+	height: 4px;
+	background: repeating-linear-gradient(90deg, var(--vaultmate-border) 0 6px, transparent 6px 12px);
 }
 
 .vaultmate-guide-step,
@@ -1951,29 +1980,44 @@ body:not(.is-mobile) .modal-container.vaultmate-modal-top > .modal {
 	gap: clamp(6px, 1.1vh, 10px);
 	min-height: 0;
 	margin: 0;
-	padding: clamp(8px, 1.4vh, 14px) clamp(8px, 1vw, 14px);
+	padding: var(--vaultmate-pad) clamp(8px, 1vw, 14px);
 	container-type: size;
 }
 
 .vaultmate-guide-step-head {
 	display: flex;
 	align-items: center;
+	justify-content: space-between;
 	gap: 8px;
+	height: var(--vaultmate-head);
 }
 
-.vaultmate-guide-step-head h3 {
+.vaultmate-guide-when {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+}
+
+.vaultmate-guide-when h3 {
 	margin: 0;
 	color: var(--vaultmate-text);
-	font-size: clamp(14px, 2.2vh, 19px);
-	font-weight: 800;
+	font-size: clamp(16px, 2.5vh, 22px);
+	font-weight: 900;
 	line-height: 1.2;
+	white-space: nowrap;
 }
 
 .vaultmate-guide-step-text {
 	margin: 0;
 	color: var(--vaultmate-text);
-	font-size: clamp(12px, 1.95vh, 16px);
+	font-size: clamp(12px, 1.9vh, 15px);
 	line-height: 1.4;
+}
+
+.vaultmate-guide-step-text strong {
+	color: var(--vaultmate-primary);
+	font-weight: 800;
 }
 
 /* The picture: paper under the real components, drawn small and inert. */
@@ -2113,6 +2157,11 @@ body:not(.is-mobile) .modal-container.vaultmate-modal-top > .modal {
 
 .vaultmate-guide-mock .vaultmate-track-line {
 	flex-wrap: wrap;
+}
+
+.vaultmate-guide-mock .vaultmate-track-main {
+	flex: 1 1 6em;
+	min-width: 6em;
 }
 
 .vaultmate-guide-mock .vaultmate-progress span {
@@ -2290,12 +2339,18 @@ body:not(.is-mobile) .modal-container.vaultmate-modal-top > .modal {
 	margin-top: 1px;
 }
 
-/* Footer: the cat with its bubble, and the way to the README. */
+/* Footer: the chapter before, the way to the README, the chapter after. */
 .vaultmate-guide-foot {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+	align-items: center;
+	gap: 12px;
+}
+
+.vaultmate-guide-foot-links {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
-	gap: 12px;
+	gap: 16px;
 }
 
 .vaultmate-guide-foot a {
@@ -2305,37 +2360,21 @@ body:not(.is-mobile) .modal-container.vaultmate-modal-top > .modal {
 	font-weight: 700;
 }
 
-.vaultmate-guide-cat {
-	display: flex;
-	flex-direction: row-reverse;
-	align-items: center;
-	gap: 10px;
-	min-width: 0;
-}
-
-.vaultmate-guide-bubble {
-	position: relative;
-	padding: 4px 12px;
-	border: 2px solid var(--vaultmate-border);
-	background-color: var(--vaultmate-surface-raised);
-	box-shadow: 2px 2px 0 var(--vaultmate-shadow);
-	color: var(--vaultmate-text);
+.vaultmate .vaultmate-button.vaultmate-guide-nav {
+	min-height: 36px;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 	font-size: clamp(12px, 1.75vh, 14px);
-	font-weight: 700;
 }
 
-/* The tail of the bubble points at the cat, on its left. */
-.vaultmate-guide-bubble::before {
-	content: "";
-	position: absolute;
-	top: 50%;
-	left: -7px;
-	width: 10px;
-	height: 10px;
-	border-bottom: 2px solid var(--vaultmate-border);
-	border-left: 2px solid var(--vaultmate-border);
-	background-color: var(--vaultmate-surface-raised);
-	transform: translateY(-50%) rotate(45deg);
+.vaultmate-guide-nav.is-previous {
+	justify-self: start;
+}
+
+.vaultmate-guide-nav.is-next {
+	justify-self: end;
 }
 
 /* The cards come in one after the other, in pixel steps (Animations setting; never with reduced motion). */
@@ -2396,7 +2435,20 @@ body:not(.is-mobile) .modal-container.vaultmate-modal-top > .modal {
 	}
 
 	.vaultmate-guide-foot {
-		flex-wrap: wrap;
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.vaultmate-guide-nav.is-previous,
+	.vaultmate-guide-nav.is-next {
+		justify-self: stretch;
+	}
+
+	.vaultmate-guide-steps::before {
+		display: none;
+	}
+
+	.vaultmate-guide-step-head {
+		height: auto;
 	}
 
 	.vaultmate-guide-head {
@@ -2450,6 +2502,23 @@ body:not(.is-mobile) .modal-container.vaultmate-modal-top > .modal {
 
 .is-mobile .vaultmate-guide-mock-inner {
 	--g: clamp(11px, 3.6cqw, 14px);
+}
+
+.is-mobile .vaultmate-guide-foot {
+	grid-template-columns: minmax(0, 1fr);
+}
+
+.is-mobile .vaultmate-guide-nav.is-previous,
+.is-mobile .vaultmate-guide-nav.is-next {
+	justify-self: stretch;
+}
+
+.is-mobile .vaultmate-guide-steps::before {
+	display: none;
+}
+
+.is-mobile .vaultmate-guide-step-head {
+	height: auto;
 }
 
 .is-mobile .vaultmate-guide-head {

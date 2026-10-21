@@ -12,7 +12,7 @@ import { registerWeeklyReview } from "./features/weekly-review/weekly-command";
 import { VaultMateSettingTab } from "./settings";
 import { watchInput } from "./ui/focus";
 import { runTagCheck } from "./ui/tag-check-modal";
-import { GuideModal } from "./ui/guide/guide-modal";
+import { GuideModal, type GuideHost } from "./ui/guide/guide-modal";
 import { shouldAutoOpen, withSeen } from "./ui/guide/auto-open";
 import { GUIDES } from "./ui/guide/registry";
 import { HUB_VIEW_TYPE, HubView, type HubPage } from "./ui/hub-view";
@@ -88,16 +88,23 @@ export default class VaultMatePlugin extends Plugin {
 		if (animationsOn(this.settings.ui.animations)) playStampMoment(sprite);
 	}
 
-	/** Opens a page guide and remembers it as seen (saved once). */
-	public openGuide(id: string): void {
-		const guide = GUIDES.get(id);
-		if (!guide) return;
+	/** Remembers a guide as seen, saving once. */
+	private markGuideSeen(id: string): void {
 		const seen = withSeen(this.settings.guides.seen, id);
-		if (seen) {
-			this.settings.guides.seen = seen;
-			void this.saveSettings();
-		}
-		new GuideModal(this.app, guide, animationsOn(this.settings.ui.animations)).open();
+		if (!seen) return;
+		this.settings.guides.seen = seen;
+		void this.saveSettings();
+	}
+
+	/** Opens a page guide (the sheet can move on to the other chapters) and remembers it as seen. */
+	public openGuide(id: string): void {
+		if (!GUIDES.has(id)) return;
+		const host: GuideHost = {
+			guide: (chapter) => GUIDES.get(chapter),
+			markSeen: (chapter) => this.markGuideSeen(chapter),
+			openPage: (chapter) => void this.openHub(chapter.pageId ?? undefined, chapter.id === "project" ? this.projects.index.notes()[0]?.path : undefined, true),
+		};
+		new GuideModal(this.app, id, id, animationsOn(this.settings.ui.animations), host).open();
 	}
 
 	/** A page with a guide has drawn: the guide opens by itself on the first visit. */
