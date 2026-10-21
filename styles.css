@@ -1805,3 +1805,16 @@ button.vaultmate-badge:focus-visible {
 		display: none;
 	}
 }
+
+/* Page search: the native Obsidian search field, full width under the switchers. */
+.vaultmate-page-search {
+	margin-bottom: var(--size-4-3);
+}
+
+.vaultmate-page-search .search-input-container {
+	width: 100%;
+}
+
+.is-mobile .vaultmate-page-search .search-input-container input {
+	min-height: 44px;
+}
