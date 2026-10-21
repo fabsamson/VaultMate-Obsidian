@@ -135,19 +135,19 @@ function renderCards(parent: HTMLElement, host: ContextPageHost, file: TFile, co
 		}
 
 		const actions = card.createDiv({ cls: "vaultmate-related-actions vaultmate-icon-actions" });
-		const insert = createIconButton(actions, SPRITES.actionLink, `Insert link to ${title}`, () => {
+		const insert = createIconButton(actions, SPRITES.actionLink, "Insert link", () => {
 			if (canInsert) host.insertLink(file, connection.path);
-		});
+		}, { describedBy: open });
 		if (!canInsert) {
 			// Not `disabled`, so that the tooltip and screen readers still reach the button.
 			insert.setAttribute("aria-disabled", "true");
 			insert.title = "Open the note to insert a link";
 		}
-		createIconButton(actions, SPRITES.actionCopy, `Copy link to ${title}`, () => host.copyLink(file, connection.path));
-		const dismiss = createIconButton(actions, SPRITES.actionDismiss, `Not useful: ${title}`, () => {
+		createIconButton(actions, SPRITES.actionCopy, "Copy link", () => host.copyLink(file, connection.path), { describedBy: open });
+		const dismiss = createIconButton(actions, SPRITES.actionDismiss, "Not useful", () => {
 			item.remove();
 			host.dismiss(file, connection.path);
-		});
-		dismiss.title = `Not useful: ${title}. Never propose this pair of notes again`;
+		}, { describedBy: open });
+		dismiss.title = "Not useful. Never propose this pair of notes again";
 	}
 }

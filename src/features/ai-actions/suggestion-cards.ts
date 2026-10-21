@@ -17,7 +17,7 @@ export function renderSuggestionCards(parent: HTMLElement, suggestions: Suggesti
 	for (const suggestion of suggestions) {
 		const card = list.createDiv({ cls: "vaultmate-suggestion" });
 		const head = card.createDiv({ cls: "vaultmate-suggestion-head" });
-		head.createSpan({ cls: "vaultmate-suggestion-title", text: suggestion.title });
+		const titleEl = head.createSpan({ cls: "vaultmate-suggestion-title", text: suggestion.title });
 		const details = [suggestion.year, suggestion.creator].filter((part) => part).join(" · ");
 		if (details) head.createSpan({ cls: "vaultmate-muted", text: details });
 		const because = becauseLine(suggestion, rated);
@@ -25,20 +25,20 @@ export function renderSuggestionCards(parent: HTMLElement, suggestions: Suggesti
 		if (suggestion.why) card.createDiv({ text: suggestion.why });
 
 		const buttons = card.createDiv({ cls: "vaultmate-suggestion-actions vaultmate-icon-actions" });
-		createIconButton(buttons, SPRITES.actionSearch, `Search: ${suggestion.title}`, () => actions.search(suggestion));
-		createIconButton(buttons, SPRITES.actionCopy, `Copy title: ${suggestion.title}`, () => actions.copyTitle(suggestion));
+		createIconButton(buttons, SPRITES.actionSearch, "Search", () => actions.search(suggestion), { describedBy: titleEl });
+		createIconButton(buttons, SPRITES.actionCopy, "Copy title", () => actions.copyTitle(suggestion), { describedBy: titleEl });
 		let rejected = false;
-		const toggle = createIconButton(buttons, SPRITES.actionDismiss, `Not interested: ${suggestion.title}`, () => {
+		const toggle = createIconButton(buttons, SPRITES.actionDismiss, "Not interested", () => {
 			rejected = !rejected;
 			toggle.replaceChildren();
 			createSprite(toggle, rejected ? SPRITES.actionUndo : SPRITES.actionDismiss, 32);
-			const label = rejected ? `Undo Not interested: ${suggestion.title}` : `Not interested: ${suggestion.title}`;
+			const label = rejected ? "Undo" : "Not interested";
 			toggle.setAttribute("aria-label", label);
 			toggle.title = label;
 			toggle.setAttribute("aria-pressed", String(rejected));
 			card.toggleClass("is-dimmed", rejected);
 			actions.setNotInterested(suggestion, rejected);
-		});
+		}, { describedBy: titleEl });
 	}
 	parent.createEl("p", { cls: "vaultmate-muted", text: "AI suggestions can be wrong: a title may not exist or be credited to the wrong person." });
 }

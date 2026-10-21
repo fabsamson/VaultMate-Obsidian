@@ -209,7 +209,7 @@
 	gap: var(--size-4-2);
 }
 
-/* A long label (This note and sub-notes) wraps inside its chip, next to its sprite. */
+/* A long label (With sub-notes) wraps inside its chip, next to its sprite. */
 .vaultmate-chips .vaultmate-choice-option {
 	text-align: left;
 }

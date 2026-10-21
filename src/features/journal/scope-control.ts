@@ -5,7 +5,7 @@ import type { Sprite } from "../../ui/pixel";
 import { SPRITES } from "../../ui/sprites";
 import { folderNoteFolder, scopePaths, type JournalScope } from "./scope";
 
-const SCOPE_LABEL: Record<JournalScope, string> = { vault: "Whole vault", note: "This note", tree: "This note and sub-notes" };
+const SCOPE_LABEL: Record<JournalScope, string> = { vault: "Whole vault", note: "This note", tree: "With sub-notes" };
 
 const SCOPE_SPRITE: Record<JournalScope, Sprite> = { vault: SPRITES.stateScopeVault, note: SPRITES.stateScopeNote, tree: SPRITES.stateScopeTree };
 

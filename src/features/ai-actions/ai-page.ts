@@ -45,9 +45,9 @@ export function createAiPage(host: AiPageHost): HubPage {
 				const card = createPanel(body, "vaultmate-action-card");
 				createActionIcon(card, action.icon);
 				const text = card.createDiv({ cls: "vaultmate-action-text" });
-				text.createDiv({ cls: "vaultmate-action-name", text: action.name });
+				const nameEl = text.createDiv({ cls: "vaultmate-action-name", text: action.name });
 				if (action.description) text.createDiv({ cls: "vaultmate-muted", text: action.description });
-				createIconButton(card, SPRITES.actionRun, `Run ${action.name}`, () => host.run(action));
+				createIconButton(card, SPRITES.actionRun, "Run", () => host.run(action), { describedBy: nameEl });
 			}
 			if (invalid > 0) body.createEl("p", { cls: "vaultmate-muted", text: `${invalid} unavailable action${invalid === 1 ? "" : "s"}. Run Open AI actions to see why.` });
 		},

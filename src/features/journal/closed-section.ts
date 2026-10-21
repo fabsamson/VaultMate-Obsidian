@@ -5,7 +5,7 @@ import { createIconButton } from "../../ui/components";
 import { createSprite } from "../../ui/pixel";
 import { SPRITES } from "../../ui/sprites";
 import type { JournalItem } from "./journal-index";
-import { closedWithoutReview, kindName } from "./journal-line";
+import { closedWithoutReview } from "./journal-line";
 
 export interface ClosedHost {
 	/** Opens the note at the entry's line. */
@@ -33,13 +33,12 @@ export function createClosedBlock(host: ClosedHost): (body: HTMLElement, items: 
 			const row = group.createDiv({ cls: "vaultmate-review-row" });
 			createSprite(row, entry.kind === "decision" ? SPRITES.moduleDecision : SPRITES.modulePrediction, 24);
 			const main = row.createEl("button", { cls: "vaultmate-review-main", attr: { type: "button" } });
-			main.createSpan({ cls: "vaultmate-review-statement", text: entry.statement || "(no text)" });
+			const statement = main.createSpan({ cls: "vaultmate-review-statement", text: entry.statement || "(no text)" });
 			main.createSpan({ cls: "vaultmate-muted", text: `${noteName(item.path)} · closed ${keepTogether(entry.done ?? "without a date")}` });
 			main.addEventListener("click", () => host.openItem(item));
 			const actions = row.createDiv({ cls: "vaultmate-icon-actions" });
-			createIconButton(actions, SPRITES.actionReview, `Add the outcome of ${kindName(entry.kind)}: ${entry.statement}`, () => host.addOutcome(item));
-			const skip = createIconButton(actions, SPRITES.actionDismiss, `Not reviewable: ${entry.statement}`, () => host.notReviewable(item));
-			skip.title = "Not reviewable: cancel the box, the entry leaves this list and your statistics";
+			createIconButton(actions, SPRITES.actionReview, "Add the outcome", () => host.addOutcome(item), { describedBy: statement });
+			createIconButton(actions, SPRITES.actionDismiss, "Not reviewable: the box is cancelled and the entry leaves your statistics", () => host.notReviewable(item), { describedBy: statement });
 		}
 		return group;
 	};

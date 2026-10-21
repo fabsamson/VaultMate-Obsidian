@@ -13,14 +13,20 @@ export function createMark(parent: HTMLElement, sprite: Sprite): HTMLImageElemen
 	return sprite.pixels <= MARK ? createNearestSprite(parent, sprite, MARK) : createSmallSprite(parent, sprite, MARK);
 }
 
+let descriptionCount = 0;
+
 /**
  * An icon-only button: a 16 px sprite drawn crisp at 32 px in a 40 px target (44 px on a phone), or a larger one
- * (a 48 px seal) smoothed at 28 px. `label` names the action and its object; it is also the tooltip.
- * `primary` gives it the filled look of a main action.
+ * (a 48 px seal) smoothed at 28 px. `label` names the action only; it is also the tooltip.
+ * `primary` gives it the filled look of a main action. `describedBy` is the row's text (its object), read after the name.
  */
-export function createIconButton(parent: HTMLElement, sprite: Sprite, label: string, onClick: (event: MouseEvent) => void, options: { primary?: boolean } = {}): HTMLButtonElement {
+export function createIconButton(parent: HTMLElement, sprite: Sprite, label: string, onClick: (event: MouseEvent) => void, options: { primary?: boolean; describedBy?: HTMLElement } = {}): HTMLButtonElement {
 	const button = parent.createEl("button", { cls: options.primary ? "vaultmate-icon-button mod-primary" : "vaultmate-icon-button", attr: { type: "button" } });
 	setIconTooltip(button, label);
+	if (options.describedBy) {
+		if (!options.describedBy.id) options.describedBy.id = `vaultmate-desc-${++descriptionCount}`;
+		button.setAttribute("aria-describedby", options.describedBy.id);
+	}
 	if (sprite.pixels <= MARK) createSprite(button, sprite, 32);
 	else createSmallSprite(button, sprite, 28);
 	button.addEventListener("click", onClick);

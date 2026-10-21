@@ -72,8 +72,8 @@ export function createIdeasPage(host: IdeasPageHost): HubPage {
 		open.addEventListener("click", () => host.openItem(item));
 		card.createEl("p", { cls: "vaultmate-muted", text: `in ${baseName(item.path)} · ${keepTogether(ageText(ideaAge(item.date, today)))}` });
 		const actions = card.createDiv({ cls: "vaultmate-related-actions vaultmate-icon-actions" });
-		createIconButton(actions, SPRITES.actionProcess, `Process idea: ${statement}`, () => host.process(item));
-		createIconButton(actions, SPRITES.actionDrop, `Drop idea: ${statement}`, () => host.drop(item));
+		createIconButton(actions, SPRITES.actionProcess, "Process", () => host.process(item), { describedBy: open });
+		createIconButton(actions, SPRITES.actionDrop, "Drop", () => host.drop(item), { describedBy: open });
 	};
 
 	const renderToTend = (parent: HTMLElement, items: IdeaItem[], today: Date): void => {

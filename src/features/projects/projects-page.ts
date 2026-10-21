@@ -148,11 +148,11 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		for (const idea of ideas) {
 			const text = idea.text || "(no text yet)";
 			const row = list.createEl("li", { cls: "vaultmate-idea-line" });
-			row.createSpan({ cls: "vaultmate-idea-line-text", text, attr: { title: text } });
+			const lineText = row.createSpan({ cls: "vaultmate-idea-line-text", text, attr: { title: text } });
 			const actions = row.createDiv({ cls: "vaultmate-icon-actions" });
-			createIconButton(actions, SPRITES.actionPromote, `Promote idea to a track: ${text}`, () => host.promote(project, idea));
-			createIconButton(actions, SPRITES.actionDrop, `Drop idea: ${text}`, () => host.drop(project.path, idea));
-			createIconButton(actions, SPRITES.actionOpenNote, `Open the note at this idea: ${text}`, () => host.open(project.path, idea.line));
+			createIconButton(actions, SPRITES.actionPromote, "Promote to a track", () => host.promote(project, idea), { describedBy: lineText });
+			createIconButton(actions, SPRITES.actionDrop, "Drop", () => host.drop(project.path, idea), { describedBy: lineText });
+			createIconButton(actions, SPRITES.actionOpenNote, "Open in the note", () => host.open(project.path, idea.line), { describedBy: lineText });
 		}
 		return section;
 	};
@@ -163,16 +163,16 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		const row = parent.createDiv({ cls: "vaultmate-entry-line" });
 		createMark(row, entry.kind === "decision" ? SPRITES.stateDecision : SPRITES.statePrediction);
 		const main = row.createEl("button", { cls: "vaultmate-entry-main", attr: { type: "button", "aria-label": `Open the note at this ${kindName(entry.kind)}: ${entry.statement}` } });
-		main.createSpan({ cls: "vaultmate-entry-statement", text: entry.statement || "(no text)" });
+		const statement = main.createSpan({ cls: "vaultmate-entry-statement", text: entry.statement || "(no text)" });
 		const due = entry.due === null ? null : parseDate(entry.due);
 		const where = item.path === projectPath ? "" : `${noteName(item.path)} · `;
 		main.createSpan({ cls: "vaultmate-muted vaultmate-entry-due", text: `${where}${due ? keepTogether(dueLabel(due, today)) : "not tracked yet"}` });
 		main.addEventListener("click", () => host.open(item.path, item.line));
 		if (isUntracked(entry)) {
-			createIconButton(row, SPRITES.actionTrack, `Track as ${kindName(entry.kind)}: ${entry.statement}`, () => host.track(item));
+			createIconButton(row, SPRITES.actionTrack, `Track as ${kindName(entry.kind)}`, () => host.track(item), { describedBy: statement });
 			return;
 		}
-		createIconButton(row, SPRITES.actionReview, `Review ${kindName(entry.kind)}: ${entry.statement}`, () => host.openReview(item));
+		createIconButton(row, SPRITES.actionReview, "Review", () => host.openReview(item), { describedBy: statement });
 	};
 
 	const renderTrack = (parent: HTMLElement, view: ProjectView, index: number, today: Date): void => {
@@ -182,17 +182,18 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		const card = parent.createDiv({ cls: "vaultmate-track-row" });
 		const row = card.createDiv({ cls: "vaultmate-track-line" });
 		const main = row.createDiv({ cls: "vaultmate-track-main" });
-		main.createEl("button", { cls: "vaultmate-idea-statement", text: track.title || "(untitled)", attr: { type: "button", "aria-label": `Open the note at this track: ${track.title}` } }).addEventListener("click", () => host.open(project.path, track.line));
+		const titleButton = main.createEl("button", { cls: "vaultmate-idea-statement", text: track.title || "(untitled)", attr: { type: "button", "aria-label": `Open the note at this track: ${track.title}` } });
+		titleButton.addEventListener("click", () => host.open(project.path, track.line));
 		main.createSpan({ cls: "vaultmate-muted vaultmate-track-meta", text: taskSummary(track) });
 		const actions = row.createDiv({ cls: "vaultmate-track-actions" });
 		const primary = primaryAction(track.status);
-		createIconButton(actions, SEALS[primary.target], `${primary.label}: ${track.title}`, () => host.move(project.path, track, primary.target), { primary: true });
-		createIconButton(actions, SPRITES.actionMove, `Move ${track.title} to…`, (event) => {
+		createIconButton(actions, SEALS[primary.target], primary.label, () => host.move(project.path, track, primary.target), { primary: true, describedBy: titleButton });
+		createIconButton(actions, SPRITES.actionMove, "Move to…", (event) => {
 			const menu = new Menu();
 			for (const status of moveTargets(track.status)) menu.addItem((entry) => entry.setTitle(STATUS_INFO[status].label).onClick(() => host.move(project.path, track, status)));
 			menu.showAtMouseEvent(event);
-		});
-		if (track.status !== "done" && track.status !== "dropped") createIconButton(actions, SPRITES.actionAddTask, `Add a task to ${track.title}`, () => host.addTask(project.path, track));
+		}, { describedBy: titleButton });
+		if (track.status !== "done" && track.status !== "dropped") createIconButton(actions, SPRITES.actionAddTask, "Add task", () => host.addTask(project.path, track), { describedBy: titleButton });
 		if (needsNextTask(track)) card.createDiv({ cls: "vaultmate-track-nonext" }).createSpan({ cls: "vaultmate-track-flag", text: "No next task" });
 		for (const item of view.byTrack[index] ?? []) renderEntry(card, item, project.path, today);
 	};

@@ -28,16 +28,16 @@ function renderRow(host: ReviewsHost, list: HTMLElement, item: JournalItem, toda
 	const row = list.createDiv({ cls: "vaultmate-review-row" });
 	createSprite(row, entry.kind === "decision" ? SPRITES.moduleDecision : SPRITES.modulePrediction, 24);
 	const main = row.createEl("button", { cls: "vaultmate-review-main", attr: { type: "button" } });
-	main.createSpan({ cls: "vaultmate-review-statement", text: entry.statement || "(no text)" });
+	const statement = main.createSpan({ cls: "vaultmate-review-statement", text: entry.statement || "(no text)" });
 	if (entry.answer !== null) main.createSpan({ cls: "vaultmate-muted", text: `${entry.kind === "decision" ? "Your decision" : "Your answer"}: ${entry.answer}` });
 	const due = entry.due === null ? null : parseDate(entry.due);
 	main.createSpan({ cls: "vaultmate-muted", text: `${noteName(item.path)} · ${due ? keepTogether(dueLabel(due, today)) : "no review date"}` });
 	main.addEventListener("click", () => host.openItem(item));
 	if (untracked) {
-		createIconButton(row, SPRITES.actionTrack, `Track as ${kindName(entry.kind)}: ${entry.statement}`, () => host.track(item));
+		createIconButton(row, SPRITES.actionTrack, `Track as ${kindName(entry.kind)}`, () => host.track(item), { describedBy: statement });
 		return;
 	}
-	createIconButton(row, SPRITES.actionReview, `Review ${kindName(entry.kind)}: ${entry.statement}`, () => host.openReview(item));
+	createIconButton(row, SPRITES.actionReview, "Review", () => host.openReview(item), { describedBy: statement });
 }
 
 /** Returns the function that draws the reviews of `items` (open entries of one kind) into a body. */
