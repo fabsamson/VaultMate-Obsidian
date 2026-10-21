@@ -15,8 +15,8 @@ import { createProjectNote } from "./project-create";
 import { ProjectIndex, type ProjectContent } from "./project-index";
 import { NewProjectModal, PromoteModal, StatusModal, TaskModal } from "./project-modals";
 import { newProjectPath } from "./project-new";
-import { readProject, type ProjectIdea, type ProjectTrack, type TrackStatus } from "./project-note";
-import { addTrackTask, dropIdea, promoteIdea, refusalMessage, setTrackStatus, undoDropIdea, type NewTask } from "./project-write";
+import { readProject, type ProjectIdea, type ProjectTrack, type TrackStatus, type TrackTask } from "./project-note";
+import { addTrackTask, dropIdea, promoteIdea, refusalMessage, setTaskState, setTrackStatus, taskStateLine, undoDropIdea, undoTaskState, type NewTask } from "./project-write";
 import { createProjectsPage, PROJECTS_PAGE_ID } from "./projects-page";
 import { hasProjectTag, withProjectTag } from "./project-tag";
 import { lineIn, moveTargets, projectTags } from "./projects-model";
@@ -79,6 +79,7 @@ export class ProjectsFeature {
 				drop: (path, idea) => void this.dropIdea(path, idea),
 				move: (path, track, status) => this.move(path, track, status),
 				addTask: (path, track) => this.addTask(path, track),
+				setTaskState: (path, task, state) => void this.setTaskState(path, task, state),
 				canSuggest: () => this.plugin.aiActions.nextStepsAction() !== null,
 				suggest: (path, track) => this.plugin.aiActions.suggestNextSteps(path, track.line),
 			}),
@@ -208,6 +209,15 @@ export class ProjectsFeature {
 			textRequired: true,
 			onSubmit: ({ text, due }) => void this.written(path, (lines) => addTrackTask(lines, track, this.newTask(text, due))),
 		}).open();
+	}
+
+	/** Marks an open task done or cancelled, then offers Undo for a few seconds: it puts the exact previous line back. */
+	private async setTaskState(path: string, task: TrackTask, state: "done" | "cancelled"): Promise<void> {
+		const today = formatDate(startOfDay());
+		if (!(await this.written(path, (lines) => setTaskState(lines, task, state, today)))) return;
+		const closed = taskStateLine(task.raw, state, today);
+		if (closed === null) return;
+		noticeWithButton(state === "done" ? "Task done." : "Task dropped.", "Undo", () => void this.written(path, (lines) => undoTaskState(lines, task, closed)));
 	}
 
 	// ---- Commands -----------------------------------------------------------------------------------

@@ -18,7 +18,7 @@ import {
 	sectionChips,
 	splitEntries,
 	summarizeProject,
-	taskSummary,
+	taskProgress,
 	tileCounters,
 	tileSummary,
 	trackProgress,
@@ -61,8 +61,9 @@ describe("buttons", () => {
 	});
 
 	it("summarizes the tasks and flags a track that needs a next task", () => {
-		expect(taskSummary(byTitle("Busy"))).toBe("2 open tasks · next: first");
-		expect(taskSummary(byTitle("Idle"))).toBe("No open tasks");
+		expect(taskProgress(byTitle("Busy"))).toEqual({ done: 1, total: 3 });
+		expect(taskProgress(byTitle("Idle"))).toEqual({ done: 1, total: 1 });
+		expect(taskProgress(byTitle("Later"))).toBeNull();
 		expect(needsNextTask(byTitle("Idle"))).toBe(true);
 		expect(needsNextTask(byTitle("Busy"))).toBe(false);
 		expect(needsNextTask(byTitle("Later"))).toBe(false);

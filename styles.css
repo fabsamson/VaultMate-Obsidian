@@ -1770,6 +1770,32 @@ button.vaultmate-badge:focus-visible {
 	background-color: var(--vaultmate-primary);
 }
 
+/* In the project page header, next to the name; under it when the panel is narrow (it wraps) and on a phone. */
+.vaultmate-project-head-progress {
+	flex: 1 1 140px;
+	align-self: center;
+	max-width: 240px;
+}
+
+.is-mobile .vaultmate-project-head-progress {
+	flex-basis: 100%;
+	max-width: none;
+}
+
+/* The tasks of a track: a thinner bar with its text beside it. */
+.vaultmate-progress-compact {
+	flex-direction: row;
+	align-items: center;
+	gap: var(--size-4-2);
+	font-size: var(--font-ui-smaller);
+}
+
+.vaultmate-progress-compact .vaultmate-progress-bar {
+	flex: 0 1 120px;
+	height: 6px;
+	border-width: 1px;
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.vaultmate-banner-clouds {
 		animation: none;
