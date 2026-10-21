@@ -55,8 +55,8 @@ export const PLACES_GUIDE: Guide = {
 			cat: SPRITES.mascotPoint,
 			text: "Chapter 3 now holds **latitude**, **longitude** and **location** in its properties. VaultMate writes only these three.",
 			mock: (el) => {
-				property(el, "latitude", "48.4549");
-				property(el, "longitude", "-5.1288");
+				property(el, "latitude", "48.4593");
+				property(el, "longitude", "-5.1311");
 				property(el, "location", LIGHTHOUSE);
 			},
 		},
@@ -84,7 +84,7 @@ export const PLACES_GUIDE: Guide = {
 			},
 		},
 	],
-	write: { caption: "Chapter 3, in the note's properties", lines: ["---", "latitude: 48.4549", "longitude: -5.1288", "location: Créac'h lighthouse", "---"] },
+	write: { caption: "Chapter 3, in the note's properties", lines: ["---", "latitude: 48.4593", "longitude: -5.1311", "location: Créac'h lighthouse", "---"] },
 	tips: [
 		"A search sends only your text, at most once a second, and never while you type.",
 		"VaultMate asks before it replaces a location already in the note.",

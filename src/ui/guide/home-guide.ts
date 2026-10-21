@@ -60,7 +60,7 @@ export const HOME_GUIDE: Guide = {
 		},
 		{
 			when: "Road ahead",
-			cat: SPRITES.mascotRead,
+			cat: SPRITES.mascotMap,
 			text: "Every page has its own chapter behind **?**, and the book reads in order. Follow the story to the epilogue.",
 			mock: (el) => {
 				const head = el.createDiv({ cls: "vaultmate-guide-help" });
