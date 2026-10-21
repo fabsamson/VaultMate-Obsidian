@@ -11,7 +11,7 @@ class TagCheckModal extends JournalModal {
 	public constructor(
 		app: App,
 		private readonly counts: TagCheckCounts,
-		private readonly tags: { idea: string; project: string },
+		private readonly tags: { idea: string; decision: string; prediction: string; project: string },
 	) {
 		super(app);
 	}
@@ -23,6 +23,8 @@ class TagCheckModal extends JournalModal {
 		contentEl.createEl("p", { text: "VaultMate looks for these tags in your vault. Check that they mean what you expect." });
 		const list = contentEl.createEl("ul");
 		if (counts.ideaLines !== null) list.createEl("li", { text: `Ideas: ${many(counts.ideaLines, "line", "lines")} tagged #${tags.idea} that ${counts.ideaLines === 1 ? "is" : "are"} not tasks. They appear as ideas to process.` });
+		if (counts.decisionLines !== null) list.createEl("li", { text: `Decisions: ${many(counts.decisionLines, "line", "lines")} tagged #${tags.decision} that ${counts.decisionLines === 1 ? "is" : "are"} not tasks. ${counts.decisionLines === 1 ? "It appears" : "They appear"} under Not tracked yet in Reviews, ready to track.` });
+		if (counts.predictionLines !== null) list.createEl("li", { text: `Predictions: ${many(counts.predictionLines, "line", "lines")} tagged #${tags.prediction} that ${counts.predictionLines === 1 ? "is" : "are"} not tasks. ${counts.predictionLines === 1 ? "It appears" : "They appear"} under Not tracked yet in Reviews, ready to track.` });
 		if (counts.projectNotes !== null) list.createEl("li", { text: `Projects: ${many(counts.projectNotes, "note", "notes")} with #${tags.project} in the tags property. They appear on the Projects page.` });
 		contentEl.createEl("p", { cls: "vaultmate-muted", text: "To use other tags, change the idea tag or the project tag in the VaultMate settings." });
 		const actions = contentEl.createDiv({ cls: "vaultmate-actions" });
@@ -47,7 +49,7 @@ export async function runTagCheck(plugin: VaultMatePlugin): Promise<void> {
 	}
 	const counts = countTagUse(
 		files().map((file) => app.metadataCache.getFileCache(file) as CachedNote | null),
-		{ ideasOn: settings.ideas.enabled, ideaTag: settings.ideas.tag, projectsOn: settings.projects.enabled, projectTag: settings.projects.tag },
+		{ ideasOn: settings.ideas.enabled, ideaTag: settings.ideas.tag, journalOn: settings.journal.enabled, decisionTag: settings.journal.decisionTag, predictionTag: settings.journal.predictionTag, projectsOn: settings.projects.enabled, projectTag: settings.projects.tag },
 	);
 	settings.firstRun.tagCheckDone = true;
 	try {
@@ -55,5 +57,5 @@ export async function runTagCheck(plugin: VaultMatePlugin): Promise<void> {
 	} catch {
 		new Notice("VaultMate could not save its settings.");
 	}
-	if (needsTagNotice(counts)) new TagCheckModal(app, counts, { idea: settings.ideas.tag, project: settings.projects.tag }).open();
+	if (needsTagNotice(counts)) new TagCheckModal(app, counts, { idea: settings.ideas.tag, decision: settings.journal.decisionTag, prediction: settings.journal.predictionTag, project: settings.projects.tag }).open();
 }
