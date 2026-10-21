@@ -1,7 +1,7 @@
 import { applyEdits } from "../src/core/note-edit";
 import { describe, expect, it } from "vitest";
 
-import { addTrackTask, dedentChildren, dropIdea, promoteIdea, refusalMessage, setTrackStatus, trackTaskLine, undoDropIdea, type WritePlan } from "../src/features/projects/project-write";
+import { addTrackTask, addTrackTasks, dedentChildren, dropIdea, promoteIdea, refusalMessage, setTrackStatus, trackTaskLine, undoDropIdea, type WritePlan } from "../src/features/projects/project-write";
 import { readProject } from "../src/features/projects/project-note";
 
 const NOTE = [
@@ -94,6 +94,29 @@ describe("setTrackStatus", () => {
 		const next = apply(NOTE, setTrackStatus(NOTE, ref, "progress", { text: "next", today: "2026-10-14" }));
 		expect(next[15]).toBe("- [ ] next ➕ 2026-10-14");
 		expect(setTrackStatus(NOTE, ref, "progress", { text: "  ", today: "2026-10-14" })).toEqual({ ok: false, reason: "empty-text" });
+	});
+});
+
+describe("addTrackTasks", () => {
+	const today = "2026-10-14";
+
+	it("adds every task, in order, in one edit after the last non-blank line of the block", () => {
+		const plan = addTrackTasks(NOTE, track(NOTE, "Beta"), [{ text: "One", today }, { text: "Two", today }]);
+		expect(plan.ok && plan.edits).toHaveLength(1);
+		expect(apply(NOTE, plan).slice(12, 19)).toEqual(["## 🔨 Beta", "- [ ] existing ➕ 2026-10-01", "    - note under the task", "- [ ] One ➕ 2026-10-14", "- [ ] Two ➕ 2026-10-14", "", "## 📥 Gamma"]);
+	});
+
+	it("skips empty texts and refuses when nothing is left", () => {
+		expect(apply(NOTE, addTrackTasks(NOTE, track(NOTE, "Gamma"), [{ text: " ", today }, { text: "Real", today }]))[17]).toBe("- [ ] Real ➕ 2026-10-14");
+		expect(addTrackTasks(NOTE, track(NOTE, "Gamma"), [{ text: " ", today }])).toEqual({ ok: false, reason: "empty-text" });
+		expect(addTrackTasks(NOTE, track(NOTE, "Gamma"), [])).toEqual({ ok: false, reason: "empty-text" });
+	});
+
+	it("re-checks the heading line it was given and writes nothing when the note moved", () => {
+		const gamma = track(NOTE, "Gamma");
+		const moved = ["new first line", ...NOTE];
+		expect(addTrackTasks(moved, gamma, [{ text: "One", today }])).toEqual({ ok: false, reason: "changed" });
+		expect(addTrackTasks(NOTE, { line: 0, raw: NOTE[0] ?? "" }, [{ text: "One", today }])).toEqual({ ok: false, reason: "not-found" });
 	});
 });
 

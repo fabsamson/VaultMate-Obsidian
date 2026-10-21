@@ -92,14 +92,15 @@ export class AiActionsFeature {
 		};
 	}
 
-	public async run(action: ActionDefinition): Promise<void> {
+	/** `options.path`: the note to run on instead of the context note; `options.preset`: launch parameter values the user need not choose. */
+	public async run(action: ActionDefinition, options: { path?: string; preset?: Record<string, string> } = {}): Promise<void> {
 		// An action that reads only the collection does not need a note, and does not read one.
 		const needsNote = action.sources.some((source) => source !== "collection-profile");
-		const file = needsNote ? this.plugin.contextFile() : null;
+		const file = needsNote ? (options.path ? this.plugin.app.vault.getFileByPath(options.path) : this.plugin.contextFile()) : null;
 		if (needsNote && !file) {
 			new Notice("Open a note first.");
 			return;
 		}
-		new RunModal(this.plugin.app, this.plugin, action, await this.readContext(file, action)).open();
+		new RunModal(this.plugin.app, this.plugin, action, await this.readContext(file, action), options.preset).open();
 	}
 }

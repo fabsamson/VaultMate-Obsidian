@@ -3,19 +3,23 @@ import { Modal, Notice, setIcon, type App } from "obsidian";
 
 import { complete, configurationProblem } from "../../core/ai/client";
 import { baseUrlHost } from "../../core/ai/endpoint";
+import { formatDate, startOfDay } from "../../core/dates";
 import type VaultMatePlugin from "../../main";
 import { createInfoPanel, createPanel, createSectionHeader } from "../../ui/components";
 import { SPRITES } from "../../ui/sprites";
+import { writeProject } from "../projects/project-apply";
+import { addTrackTasks } from "../projects/project-write";
 import { collectionTypes, entryChoices, normalizeTitle, type CollectionNote } from "./collection";
 import { collectionProfile, type RatedTitle } from "./collection-profile";
 import { isConfirmed, withConfirmation } from "./confirmation";
 import type { ActionDefinition, ParamDefinition } from "./definition";
 import { insertQuestions } from "./insert-write";
 import { renderLine } from "./insertion";
+import { parseItems } from "./items";
 import { parseQuestions, type Question } from "./questions";
-import { buildMessages, collectSources, entryParam, sourceProblem, type RequestMessages, type SourceInput } from "./request";
+import { buildMessages, collectSources, entryParam, sourceProblem, trackParam, type RequestMessages, type SourceInput } from "./request";
 import type { SourceText } from "./sources";
-import { noteLines, openTrackChoices } from "./track-source";
+import { noteLines, openTrackChoices, trackAt } from "./track-source";
 import { renderSuggestionCards } from "./suggestion-cards";
 import { parseSuggestions, searchUrl, type Suggestion } from "./suggestions";
 
@@ -37,6 +41,7 @@ type State =
 	| { type: "preview" }
 	| { type: "loading" }
 	| { type: "results"; questions: Question[] }
+	| { type: "items"; items: string[] }
 	| { type: "suggestions"; suggestions: Suggestion[]; rated: RatedTitle[] }
 	| { type: "error"; message: string };
 
@@ -122,6 +127,9 @@ export class RunModal extends Modal {
 				break;
 			case "results":
 				this.renderResults(this.state.questions);
+				break;
+			case "items":
+				this.renderItems(this.state.items);
 				break;
 			case "suggestions":
 				this.renderSuggestions(this.state.suggestions, this.state.rated);
@@ -277,6 +285,10 @@ export class RunModal extends Modal {
 	private parse(answer: string): State {
 		const { action, context } = this;
 		if (action.output === "questions") return { type: "results", questions: parseQuestions(answer, { count: action.count, noteText: context.raw }) };
+		if (action.output === "items") {
+			const open = trackAt(noteLines(context.raw), this.values[trackParam(action) ?? ""] ?? "")?.tasks.filter((task) => task.state === "open");
+			return { type: "items", items: parseItems(answer, { count: action.count, existing: (open ?? []).map((task) => task.text) }) };
+		}
 		const type = this.values.type ?? "";
 		const { rated, excluded } = collectionProfile(context.collection, type, this.plugin.settings.aiState.notInterested[type] ?? [], this.entry()?.path);
 		return { type: "suggestions", suggestions: parseSuggestions(answer, { count: action.count, rated, excluded }), rated };
@@ -306,6 +318,42 @@ export class RunModal extends Modal {
 		const actions = contentEl.createDiv({ cls: "vaultmate-actions" });
 		this.button(actions, "Close", false, () => this.close());
 		this.button(actions, "Ask again", true, () => this.askAgain());
+	}
+
+	private renderItems(items: string[]): void {
+		const { contentEl } = this;
+		if (items.length === 0) {
+			createInfoPanel(contentEl, { sprite: SPRITES.mascotSleep, title: "The AI answer had no usable next steps", compact: true });
+			const none = contentEl.createDiv({ cls: "vaultmate-actions" });
+			this.button(none, "Close", false, () => this.close());
+			this.button(none, "Ask again", true, () => this.askAgain());
+			return;
+		}
+		const checks: HTMLInputElement[] = [];
+		const list = createPanel(contentEl, "vaultmate-questions");
+		for (const item of items) {
+			const card = list.createEl("label", { cls: "vaultmate-question" });
+			checks.push(card.createEl("input", { attr: { type: "checkbox" } }));
+			card.createDiv({ cls: "vaultmate-question-body" }).createSpan({ cls: "vaultmate-question-text", text: item });
+		}
+		const actions = contentEl.createDiv({ cls: "vaultmate-actions" });
+		this.button(actions, "Close", false, () => this.close());
+		this.button(actions, "Ask again", false, () => this.askAgain());
+		this.button(actions, "Add selected", true, () => void this.addItems(items.filter((_, index) => checks[index]?.checked)));
+	}
+
+	/** Writes the kept items as tasks of the chosen track, in one edit that re-checks the track's heading line. */
+	private async addItems(items: string[]): Promise<void> {
+		if (items.length === 0) return void new Notice("Select at least one next step.");
+		const id = this.values[trackParam(this.action) ?? ""] ?? "";
+		const track = trackAt(noteLines(this.context.raw), id);
+		if (!track) return void new Notice("VaultMate could not find this track.");
+		const today = formatDate(startOfDay());
+		const ok = await writeProject(this.app, this.context.path, (lines) => addTrackTasks(lines, track, items.map((text) => ({ text, today }))));
+		if (!ok) return;
+		this.plugin.refreshHubs();
+		new Notice(items.length === 1 ? "1 task added to the track." : `${items.length} tasks added to the track.`);
+		this.close();
 	}
 
 	private async copyTitle(title: string): Promise<void> {
