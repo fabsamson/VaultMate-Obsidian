@@ -63,6 +63,7 @@ export function createJournalPage(host: JournalPageHost): HubPage {
 			return parts.length > 0 ? parts.join(" · ") : "Nothing to review";
 		},
 		render: (body, ctx) => {
+			ctx.setGuide("journal");
 			const notePath = host.activeNote();
 			const markdownPaths = host.markdownPaths();
 			const controls = body.createDiv({ cls: "vaultmate-switcher" });
