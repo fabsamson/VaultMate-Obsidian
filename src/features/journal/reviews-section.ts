@@ -45,9 +45,9 @@ export function createReviewsBlock(host: ReviewsHost): (body: HTMLElement, items
 	const expanded = new Set<string>();
 	let shownItems: JournalItem[] = [];
 
-	const renderGroup = (body: HTMLElement, title: string, items: JournalItem[], today: Date, limit?: number, untracked = false): void => {
+	const renderGroup = (body: HTMLElement, id: string, title: string, items: JournalItem[], today: Date, limit?: number, untracked = false): void => {
 		if (items.length === 0) return;
-		const group = body.createDiv({ cls: "vaultmate-review-group" });
+		const group = body.createDiv({ cls: "vaultmate-review-group", attr: { "data-section": id } });
 		group.createDiv({ cls: "vaultmate-review-group-title", text: `${title} · ${items.length}`, attr: { role: "heading", "aria-level": "3" } });
 		const shown = limit !== undefined && !expanded.has(title) ? items.slice(0, limit) : items;
 		for (const item of shown) renderRow(host, group, item, today, untracked);
@@ -68,10 +68,10 @@ export function createReviewsBlock(host: ReviewsHost): (body: HTMLElement, items
 			createInfoPanel(body, { sprite: SPRITES.mascotSleep, title: "Nothing to review", text: `End a line with #${host.decisionTag()}, or run New decision.` });
 			return;
 		}
-		renderGroup(body, "Not tracked yet", groups.undated, today, SHOWN, true);
-		renderGroup(body, "Overdue", groups.overdue, today);
-		renderGroup(body, "This week", groups.week, today);
-		renderGroup(body, "Upcoming", groups.upcoming, today, SHOWN);
+		renderGroup(body, "untracked", "Not tracked yet", groups.undated, today, SHOWN, true);
+		renderGroup(body, "overdue", "Overdue", groups.overdue, today);
+		renderGroup(body, "week", "This week", groups.week, today);
+		renderGroup(body, "upcoming", "Upcoming", groups.upcoming, today, SHOWN);
 	};
 
 	return (body, items) => {

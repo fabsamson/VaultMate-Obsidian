@@ -153,6 +153,20 @@ export function itemStatement(item: IdeaItem): string {
 	return item.idea.type === "task" ? item.idea.entry.statement : item.idea.statement;
 }
 
+export type IdeasSectionId = "fresh" | "waiting" | "wilting" | "seeds" | "processed";
+
+/** The Ideas page's sections in page order with their sizes (zero kept: the page decides what to show). */
+export function ideasSections(items: readonly IdeaItem[], today: Date, seed: SeedFilter): Array<{ id: IdeasSectionId; count: number }> {
+	const groups = groupOpen(items, today, seed);
+	return [
+		{ id: "fresh", count: groups.fresh.length },
+		{ id: "waiting", count: groups.waiting.length },
+		{ id: "wilting", count: groups.wilting.length },
+		{ id: "seeds", count: seedCount(items, seed) },
+		{ id: "processed", count: processedRows(items, "all").length },
+	];
+}
+
 /** The processed ideas matching `filter`, newest done date first (no date last). */
 export function processedRows(items: readonly IdeaItem[], filter: ProcessedFilter): IdeaItem[] {
 	const rows = items.filter((item) => !isOpenIdea(item.idea) && (filter === "all" || itemResult(item) === filter));

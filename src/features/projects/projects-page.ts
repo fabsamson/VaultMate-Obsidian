@@ -10,8 +10,8 @@ import { focusFromInput } from "../../ui/focus";
 import type { HubPage, HubPageContext } from "../../ui/hub-view";
 import { addPageSearch, createNoMatch, type PageSearchState } from "../../ui/page-search";
 import { createSmallSprite, type Sprite } from "../../ui/pixel";
+import { createSectionNav } from "../../ui/section-nav";
 import { SPRITES } from "../../ui/sprites";
-import { setIconTooltip } from "../../ui/tooltip";
 import type { JournalItem } from "../journal/journal-index";
 import { isUntracked, kindName } from "../journal/journal-line";
 import { addScopeControls } from "../journal/scope-control";
@@ -281,7 +281,6 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 			newTrack(createInfoPanel(page, { sprite: SPRITES.mascotSleep, title: "No tracks yet", compact: true }));
 			return;
 		}
-		const chipRow = page.createDiv({ cls: "vaultmate-chip-row", attr: { role: "group", "aria-label": "Sections" } });
 		const sections = new Map<SectionId, HTMLElement>();
 		// What the search keeps: every track when it is blank, else a track whose title matches (whole) or whose tasks or entries match (those only).
 		const searching = search.query.trim() !== "";
@@ -301,11 +300,21 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 		for (const index of parts.keys()) kept[project.model.tracks[index]?.status ?? "explore"]++;
 		const shownChips = sectionChips(kept, ideas.length, outside.length);
 		if (searching && shownChips.length === 0) {
-			chipRow.remove();
 			createNoMatch(page, search.query);
 			return;
 		}
 		let closed: { setOpen(open: boolean): void } | null = null;
+		createSectionNav(
+			page,
+			shownChips.map((chip) => {
+				const label = chip.id === "ideas" ? "Ideas" : chip.id === "reviews" ? "Reviews" : chip.id === "closed" ? "Closed tracks" : STATUS_INFO[chip.id].label;
+				const open = chip.id === "closed" ? () => {
+					showClosed = true;
+					closed?.setOpen(true);
+				} : undefined;
+				return { id: chip.id, sprite: CHIP_SPRITES[chip.id], label, count: chip.count, target: () => sections.get(chip.id) ?? null, open };
+			}),
+		);
 
 		if (ideas.length > 0) sections.set("ideas", renderIdeas(page, project, ideas));
 		for (const status of OPEN_STATUSES) {
@@ -331,22 +340,6 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 			}
 			sections.set("closed", section);
 			closed = disclosure;
-		}
-
-		for (const chip of shownChips) {
-			const label = chip.id === "ideas" ? `Ideas · ${chip.count}` : chip.id === "reviews" ? `Reviews · ${chip.count}` : chip.id === "closed" ? `Closed tracks · ${chip.count}` : `${STATUS_INFO[chip.id].label} · ${chip.count}`;
-			const element = chipRow.createEl("button", { cls: "vaultmate-button vaultmate-section-chip", attr: { type: "button" } });
-			setIconTooltip(element, `Go to ${label}`);
-			createMark(element, CHIP_SPRITES[chip.id]);
-			element.createSpan({ text: String(chip.count) });
-			element.addEventListener("click", () => {
-				if (chip.id === "closed") {
-					showClosed = true;
-					closed?.setOpen(true);
-				}
-				const reduce = element.win.matchMedia("(prefers-reduced-motion: reduce)").matches;
-				sections.get(chip.id)?.scrollIntoView({ block: "start", behavior: reduce ? "auto" : "smooth" });
-			});
 		}
 	};
 

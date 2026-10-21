@@ -69,12 +69,18 @@ import stampHit from "../../assets/sprites/stamp_hit.png";
 import stampMiss from "../../assets/sprites/stamp_miss.png";
 import stampReview from "../../assets/sprites/stamp_review.png";
 import stateDecision from "../../assets/sprites/state_decision.png";
+import stateFresh from "../../assets/sprites/state_fresh.png";
 import stateIdea from "../../assets/sprites/state_idea.png";
+import stateOverdue from "../../assets/sprites/state_overdue.png";
 import statePrediction from "../../assets/sprites/state_prediction.png";
 import stateScopeNote from "../../assets/sprites/state_scope_note.png";
 import stateScopeTree from "../../assets/sprites/state_scope_tree.png";
 import stateScopeVault from "../../assets/sprites/state_scope_vault.png";
 import stateTask from "../../assets/sprites/state_task.png";
+import stateUpcoming from "../../assets/sprites/state_upcoming.png";
+import stateWaiting from "../../assets/sprites/state_waiting.png";
+import stateWeek from "../../assets/sprites/state_week.png";
+import stateWilting from "../../assets/sprites/state_wilting.png";
 
 import type { Sprite } from "./pixel";
 
@@ -125,12 +131,18 @@ export const SPRITES = {
 	stampMiss: { src: stampMiss, pixels: 20 },
 	stampReview: { src: stampReview, pixels: 20 },
 	stateDecision: { src: stateDecision, pixels: 16 },
+	stateFresh: { src: stateFresh, pixels: 16 },
 	stateIdea: { src: stateIdea, pixels: 16 },
+	stateOverdue: { src: stateOverdue, pixels: 16 },
 	statePrediction: { src: statePrediction, pixels: 16 },
 	stateScopeNote: { src: stateScopeNote, pixels: 16 },
 	stateScopeTree: { src: stateScopeTree, pixels: 16 },
 	stateScopeVault: { src: stateScopeVault, pixels: 16 },
 	stateTask: { src: stateTask, pixels: 16 },
+	stateUpcoming: { src: stateUpcoming, pixels: 16 },
+	stateWaiting: { src: stateWaiting, pixels: 16 },
+	stateWeek: { src: stateWeek, pixels: 16 },
+	stateWilting: { src: stateWilting, pixels: 16 },
 } satisfies Record<string, Sprite>;
 
 /**
