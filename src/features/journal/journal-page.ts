@@ -1,7 +1,7 @@
 // The hub's "Decisions and predictions" page: reviews and track record of one kind, in one scope.
 import { groupByDue, tidyUp, type JournalKind } from "./journal-line";
 import { startOfDay } from "../../core/dates";
-import { createDisclosure, createSectionHeader, createSegmentedControl } from "../../ui/components";
+import { createDisclosure, createSectionHeader, createSegmentedControl, type Choice } from "../../ui/components";
 import type { HubPage } from "../../ui/hub-view";
 import { SPRITES } from "../../ui/sprites";
 import type { JournalItem } from "./journal-index";
@@ -20,9 +20,9 @@ export interface JournalPageHost extends ReviewsHost, TrackRecordHost, ClosedHos
 }
 
 const KINDS = [
-	{ value: "decision", label: "Decisions" },
-	{ value: "prediction", label: "Predictions" },
-] as const satisfies ReadonlyArray<{ value: JournalKind; label: string }>;
+	{ value: "decision", label: "Decisions", sprite: SPRITES.stateDecision },
+	{ value: "prediction", label: "Predictions", sprite: SPRITES.statePrediction },
+] as const satisfies ReadonlyArray<Choice<JournalKind>>;
 
 export function createJournalPage(host: JournalPageHost): HubPage {
 	const renderReviews = createReviewsBlock(host);
