@@ -774,6 +774,12 @@ button.vaultmate-badge:focus-visible {
 	font-weight: 900;
 }
 
+/* Focus put there by code after a mouse click: no ring (focusFromInput). */
+.vaultmate .vaultmate-focus-quiet:focus-visible {
+	outline: none;
+	box-shadow: none;
+}
+
 .vaultmate-hub-title:focus-visible {
 	outline: 2px solid var(--vaultmate-seal);
 	outline-offset: 2px;
@@ -1088,6 +1094,15 @@ button.vaultmate-badge:focus-visible {
 
 .vaultmate-portal-panel .vaultmate-note-link {
 	margin-top: var(--size-4-2);
+}
+
+/* On desktop the portal stays at the top while its content grows, instead of being re-centred (it would jump). */
+body:not(.is-mobile) .modal-container.vaultmate-modal-top {
+	align-items: flex-start;
+}
+
+body:not(.is-mobile) .modal-container.vaultmate-modal-top > .modal {
+	margin-top: 12vh;
 }
 
 .vaultmate-track-status {

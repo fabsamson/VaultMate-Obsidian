@@ -6,6 +6,7 @@ import { AbstractInputSuggest, normalizePath, Notice, type App, type TFile } fro
 import { startOfDay } from "../../core/dates";
 import { baseName } from "../context/note-meta";
 import { createIconButton, createSectionHeader } from "../../ui/components";
+import { focusFromInput } from "../../ui/focus";
 import { SPRITES } from "../../ui/sprites";
 import type { Sprite } from "../../ui/pixel";
 import type { JournalKind } from "../journal/journal-line";
@@ -17,7 +18,7 @@ import { ideaAge, titleFromIdea, type IdeaItem } from "./idea-line";
 import { defaultIdeaHeading, newNotePath, orderedHeadings } from "./idea-note";
 import { addIdeaToNote, createNoteFromIdea, dropIdea, locateIdea, makeProjectSeed, newTrackFromIdea, trackIdeaAs, type IdeaWriteHost, type NewTrackChoice } from "./idea-write";
 import { itemStatement, plantedText } from "./ideas-model";
-import { ACTION_LABELS, addState, findProject, hasPanel, newNoteState, noteLinkLabel, portalActions, seedSentence, trackState, type PortalAction, type ProjectChoice } from "./portal-actions";
+import { ACTION_LABELS, addState, findProject, hasPanel, newNoteState, noteLinkLabel, portalActions, seedSentence, tendSummary, trackState, type PortalAction, type ProjectChoice } from "./portal-actions";
 
 /** The icon of each portal action; its name (`ACTION_LABELS`) is the button's label and tooltip. */
 const ACTION_SPRITES: Record<PortalAction, Sprite> = {
@@ -114,6 +115,7 @@ export class IdeaModal extends JournalModal {
 		private readonly tend = false,
 	) {
 		super(app);
+		this.containerEl.addClass("vaultmate-modal-top");
 	}
 
 	public onOpen(): void {
@@ -135,7 +137,7 @@ export class IdeaModal extends JournalModal {
 			this.show();
 			return;
 		}
-		if (this.tend) new Notice("All fresh ideas tended.");
+		if (this.tend) new Notice(tendSummary(this.sorted, this.items.length));
 		this.completed = true;
 		this.close();
 	}
@@ -221,7 +223,10 @@ export class IdeaModal extends JournalModal {
 			buttons.set(action, button);
 		}
 		// Opening the modal focuses its first control (the note link) after this runs: focus the first action next.
-		row.win.setTimeout(() => row.querySelector("button")?.focus(), 0);
+		row.win.setTimeout(() => {
+			const first = row.querySelector("button");
+			if (first) focusFromInput(first);
+		}, 0);
 	}
 
 	/** Decision and Prediction open the journal form over the portal, prefilled with the idea. */
@@ -444,7 +449,7 @@ export class IdeaModal extends JournalModal {
 
 	private focusLater(element: HTMLElement): void {
 		element.win.setTimeout(() => {
-			element.focus();
+			focusFromInput(element);
 			if (element.instanceOf(HTMLInputElement)) element.select();
 		}, 0);
 	}

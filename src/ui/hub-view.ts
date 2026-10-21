@@ -3,6 +3,7 @@ import { ItemView, setIcon, type ViewStateResult, type WorkspaceLeaf } from "obs
 import type { JournalKind } from "../features/journal/journal-line";
 import { SCOPES, type JournalScope } from "../features/journal/scope";
 import { createInfoPanel, createSectionHeader } from "./components";
+import { focusFromInput } from "./focus";
 import { CAT_ICON_ID } from "./icon";
 import { createSprite, type Sprite } from "./pixel";
 import { SceneBanner } from "./scene-banner";
@@ -160,7 +161,7 @@ export class HubView extends ItemView {
 			text.createSpan({ cls: "vaultmate-tile-label", text: page.title });
 			text.createSpan({ cls: "vaultmate-muted", text: page.summary() });
 			tile.addEventListener("click", () => this.go(page.id));
-			if (page.id === focusId) tile.focus();
+			if (page.id === focusId) focusFromInput(tile);
 		}
 	}
 
@@ -171,7 +172,7 @@ export class HubView extends ItemView {
 		this.up = null;
 		back.addEventListener("click", () => (this.up ? this.up() : this.go(null)));
 		const title = bar.createEl("h1", { cls: "vaultmate-hub-title", text: page.title, attr: { tabindex: "-1" } });
-		if (focusTitle) title.focus();
+		if (focusTitle) focusFromInput(title);
 		void this.fill(page, root.createDiv({ cls: "vaultmate-hub-section" }), back);
 	}
 
