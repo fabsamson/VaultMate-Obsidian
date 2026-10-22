@@ -28,7 +28,7 @@ The properties above say what the action reads and what it returns. The text bel
 - name: the name shown in the AI actions page. Required.
 - description: one line shown under the name.
 - icon: the name of a Lucide icon, for example sparkles or search.
-- command: true adds a command "VaultMate: <name>" to the command palette.
+- command: true adds a command named AI: followed by the name to the command palette.
 - sources: what is sent with the prompt, after a preview you confirm. Choose from
   - note: the text of the current note.
   - selection: the selected text of the current note.
