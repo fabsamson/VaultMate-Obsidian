@@ -2005,7 +2005,6 @@ body:not(.is-mobile) .modal-container.vaultmate-modal-top > .modal {
 	font-size: clamp(16px, 2.5vh, 22px);
 	font-weight: 900;
 	line-height: 1.2;
-	white-space: nowrap;
 }
 
 .vaultmate-guide-step-text {
@@ -2228,13 +2227,73 @@ body:not(.is-mobile) .modal-container.vaultmate-modal-top > .modal {
 	white-space: nowrap;
 }
 
-.vaultmate-guide-note-line.is-h1 {
-	font-size: calc(var(--g) * 1.3);
+/* Guide mocks: The storm, from spark to done. The status ladder: current step outlined and bold, passed steps solid, steps ahead dashed and faded. */
+.vaultmate-guide-mock:has(.vaultmate-guide-ladder) {
+	justify-content: flex-start;
 }
 
-.vaultmate-guide-note-line.is-h2 {
-	padding-left: calc(var(--g) * 0.8);
-	font-size: calc(var(--g) * 1.05);
+.vaultmate-guide-ladder {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--g) * 0.3);
+}
+
+.vaultmate-guide-ladder-steps {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: calc(var(--g) * 0.3);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.vaultmate-guide-rung {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: calc(var(--g) * 0.2);
+	min-width: 0;
+	padding: calc(var(--g) * 0.3) 0;
+	border: 1px solid var(--vaultmate-border);
+	background-color: var(--vaultmate-surface-raised);
+	color: var(--vaultmate-text-muted);
+	font-size: calc(var(--g) * 0.75);
+	line-height: 1.15;
+	overflow-wrap: anywhere;
+	text-align: center;
+}
+
+.vaultmate-guide-rung.is-current {
+	border: 2px solid var(--vaultmate-primary);
+	background-color: var(--vaultmate-surface);
+	color: var(--vaultmate-text);
+	font-weight: 800;
+}
+
+.vaultmate-guide-rung.is-ahead {
+	border-style: dashed;
+	opacity: 0.55;
+}
+
+.vaultmate-guide-ladder-hint {
+	color: var(--vaultmate-text-muted);
+	font-size: var(--font-ui-smaller);
+	text-align: right;
+}
+
+/* Guide mocks: A second reader. The count list of the preview, drawn small; a long value wraps. */
+.vaultmate-guide-mock .vaultmate-source-row > span:last-child {
+	min-width: 0;
+	overflow-wrap: anywhere;
+	text-align: right;
+}
+
+.vaultmate-guide-mock .vaultmate-source-row select.dropdown {
+	min-width: 0;
+	max-width: 5em;
+	height: auto;
+	padding: 0 calc(var(--g) * 1.4) 0 calc(var(--g) * 0.5);
+	font-size: var(--font-ui-smaller);
 }
 
 /* Guide mocks: Prologue and Epilogue */
