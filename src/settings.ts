@@ -3,6 +3,7 @@ import { Notice, PluginSettingTab, SecretComponent, type Setting, type SettingDe
 import { validateBaseUrl } from "./core/ai/endpoint";
 import { DEFAULT_SETTINGS, MAX_CONNECTIONS, validateActionsFolder, validateDistinctCollectionProperties, validateDistinctIdeaTag, validateDistinctProperties, validateDistinctTags, validateSeedSubtag, cleanSeedSubtag, cleanProjectTag, validateProjectTag, validatePropertyList, validatePropertyName, validateTag, validateTracksTitle, parseList, cleanFolderPath } from "./core/settings-model";
 import { createDefaultActions } from "./features/ai-actions/default-actions";
+import { createNewAction } from "./features/ai-actions/new-action";
 import type VaultMatePlugin from "./main";
 
 /** Settings stored as a list but edited as comma-separated text. */
@@ -42,37 +43,6 @@ export class VaultMateSettingTab extends PluginSettingTab {
 						name: "Open page guides on first visit",
 						desc: "Open the guide of a page of the VaultMate panel by itself the first time you visit it. The ? button at the top right of the page always opens it.",
 						control: { type: "toggle", key: "guides.autoOpen" },
-					},
-				],
-			},
-			{
-				type: "group",
-				heading: "Decision journal",
-				items: [
-					{
-						name: "Enable decision journal",
-						desc: "Track decisions and predictions written as task lines, and review them from the VaultMate panel.",
-						control: { type: "toggle", key: "journal.enabled" },
-					},
-					{
-						name: "Decision tag",
-						desc: "Lines with this tag are decisions. Enter it without #.",
-						control: {
-							type: "text",
-							key: "journal.decisionTag",
-							placeholder: "decision",
-							validate: (value) => validateTag(value) ?? validateDistinctTags(value, journal.predictionTag) ?? validateDistinctIdeaTag(ideas.tag, value),
-						},
-					},
-					{
-						name: "Prediction tag",
-						desc: "Lines with this tag are predictions. Enter it without #.",
-						control: {
-							type: "text",
-							key: "journal.predictionTag",
-							placeholder: "prediction",
-							validate: (value) => validateTag(value) ?? validateDistinctTags(journal.decisionTag, value) ?? validateDistinctIdeaTag(ideas.tag, value),
-						},
 					},
 				],
 			},
@@ -145,6 +115,63 @@ export class VaultMateSettingTab extends PluginSettingTab {
 			},
 			{
 				type: "group",
+				heading: "Decision journal",
+				items: [
+					{
+						name: "Enable decision journal",
+						desc: "Track decisions and predictions written as task lines, and review them from the VaultMate panel.",
+						control: { type: "toggle", key: "journal.enabled" },
+					},
+					{
+						name: "Decision tag",
+						desc: "Lines with this tag are decisions. Enter it without #.",
+						control: {
+							type: "text",
+							key: "journal.decisionTag",
+							placeholder: "decision",
+							validate: (value) => validateTag(value) ?? validateDistinctTags(value, journal.predictionTag) ?? validateDistinctIdeaTag(ideas.tag, value),
+						},
+					},
+					{
+						name: "Prediction tag",
+						desc: "Lines with this tag are predictions. Enter it without #.",
+						control: {
+							type: "text",
+							key: "journal.predictionTag",
+							placeholder: "prediction",
+							validate: (value) => validateTag(value) ?? validateDistinctTags(journal.decisionTag, value) ?? validateDistinctIdeaTag(ideas.tag, value),
+						},
+					},
+				],
+			},
+			{
+				type: "group",
+				heading: "New connections",
+				items: [
+					{
+						name: "Enable new connections",
+						desc: "Find a few notes that are not connected to the active note yet but whose ideas could work with it, with the reasons. Everything is computed on this device; nothing is sent anywhere.",
+						control: { type: "toggle", key: "context.enabled" },
+					},
+					{
+						name: "Excluded folders",
+						desc: "Notes in these folders are never proposed. Separate folders with commas, for example Templates, Scripts.",
+						control: { type: "text", key: "context.excludedFolders", placeholder: "Templates, Scripts" },
+					},
+					{
+						name: "People and place properties",
+						desc: "Two notes with the same value in one of these properties can be connected. Separate property names with commas.",
+						control: { type: "text", key: "context.peopleProperties", placeholder: DEFAULT_SETTINGS.context.peopleProperties.join(", "), validate: validatePropertyList },
+					},
+					{
+						name: "Maximum connections",
+						desc: "Most connections shown for a note. Fewer is often better: nothing new is a normal result.",
+						control: { type: "dropdown", key: "context.maxConnections", options: Object.fromEntries(Array.from({ length: MAX_CONNECTIONS }, (_, i) => [String(i + 1), String(i + 1)])) },
+					},
+				],
+			},
+			{
+				type: "group",
 				heading: "AI actions",
 				items: [
 					{
@@ -176,6 +203,11 @@ export class VaultMateSettingTab extends PluginSettingTab {
 						name: "Create default actions",
 						desc: "Creates the Challenge this note, Recommend me and Next steps actions in the actions folder, without overwriting anything.",
 						render: (setting) => setting.addButton((button) => button.setButtonText("Create actions").onClick(() => void this.createActions())),
+					},
+					{
+						name: "New action",
+						desc: "Creates a template action with every property explained, in the actions folder, and opens it.",
+						render: (setting) => setting.addButton((button) => button.setButtonText("New action").onClick(() => void createNewAction(this.app, this.plugin.settings.ai.actionsFolder))),
 					},
 				],
 			},
@@ -238,32 +270,6 @@ export class VaultMateSettingTab extends PluginSettingTab {
 						name: "Use the VaultMate Android app for the current position",
 						desc: "On Android, adds a command that asks the VaultMate app for your current position. It needs the VaultMate app, which is optional; leave this off without it.",
 						control: { type: "toggle", key: "location.androidApp" },
-					},
-				],
-			},
-			{
-				type: "group",
-				heading: "New connections",
-				items: [
-					{
-						name: "Enable new connections",
-						desc: "Find a few notes that are not connected to the active note yet but whose ideas could work with it, with the reasons. Everything is computed on this device; nothing is sent anywhere.",
-						control: { type: "toggle", key: "context.enabled" },
-					},
-					{
-						name: "Excluded folders",
-						desc: "Notes in these folders are never proposed. Separate folders with commas, for example Templates, Scripts.",
-						control: { type: "text", key: "context.excludedFolders", placeholder: "Templates, Scripts" },
-					},
-					{
-						name: "People and place properties",
-						desc: "Two notes with the same value in one of these properties can be connected. Separate property names with commas.",
-						control: { type: "text", key: "context.peopleProperties", placeholder: DEFAULT_SETTINGS.context.peopleProperties.join(", "), validate: validatePropertyList },
-					},
-					{
-						name: "Maximum connections",
-						desc: "Most connections shown for a note. Fewer is often better: nothing new is a normal result.",
-						control: { type: "dropdown", key: "context.maxConnections", options: Object.fromEntries(Array.from({ length: MAX_CONNECTIONS }, (_, i) => [String(i + 1), String(i + 1)])) },
 					},
 				],
 			},

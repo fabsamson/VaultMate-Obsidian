@@ -28,12 +28,12 @@ export function applyParams(prompt: string, labels: Record<string, string>): str
 
 /**
  * System = the action's prompt, then the output contract (last, so the prompt cannot override it). User = labelled sources.
- * `{{based_on}}` is the chosen entry (`entryTitle`) or, without one, the user's ratings.
+ * `count` is the "How many" of the run window; `{{count}}` becomes that number. `{{based_on}}` is the chosen entry (`entryTitle`) or, without one, the user's ratings.
  */
-export function buildMessages(action: ActionDefinition, sources: SourceText[], labels: Record<string, string> = {}, entryTitle = ""): RequestMessages {
+export function buildMessages(action: ActionDefinition, sources: SourceText[], labels: Record<string, string> = {}, entryTitle = "", count = action.count): RequestMessages {
 	const basedOn = entryTitle ? `the title \u201c${entryTitle}\u201d` : "the titles they rated high and low";
 	return {
-		system: `${applyParams(action.prompt, { ...labels, based_on: basedOn })}\n\n${CONTRACTS[action.output](action.count, entryTitle)}`,
+		system: `${applyParams(action.prompt, { count: String(count), ...labels, based_on: basedOn })}\n\n${CONTRACTS[action.output](count, entryTitle)}`,
 		user: sources.map((source) => `### ${LABELS[source.name]}\n${source.text}`).join("\n\n"),
 	};
 }
