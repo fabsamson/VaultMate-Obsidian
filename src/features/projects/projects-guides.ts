@@ -7,7 +7,7 @@ import type { Guide } from "../../ui/guide/guide";
 import { SPRITES } from "../../ui/sprites";
 import { STATUS_INFO, type TrackStatus } from "./project-note";
 import { createMeter, createProjectTile } from "./projects-page";
-import type { ProjectSummary } from "./projects-model";
+import { primaryAction, type ProjectSummary } from "./projects-model";
 import { TRACK_SEALS } from "./track-seals";
 
 const README = "https://github.com/fabsamson/VaultMate-Obsidian#projects";
@@ -36,15 +36,13 @@ function projectHead(parent: HTMLElement, percent: number, newTrack = false): vo
 
 interface TrackLineOptions {
 	title: string;
-	/** The status whose seal is the main button. */
-	seal: TrackStatus;
-	/** What that button does. */
-	action: string;
+	/** The track's status. */
+	status: TrackStatus;
 	/** Done and total of the bar. */
 	tasks?: [number, number];
 }
 
-/** One track as the project page draws it: its title (and bar), then its icons. */
+/** One track as the project page draws it: its title (and bar), then its icons. The main button shows the seal of the status it leads to. */
 function trackLine(parent: HTMLElement, options: TrackLineOptions): HTMLElement {
 	const card = parent.createDiv({ cls: "vaultmate-track-row" });
 	const line = card.createDiv({ cls: "vaultmate-track-line" });
@@ -52,7 +50,8 @@ function trackLine(parent: HTMLElement, options: TrackLineOptions): HTMLElement 
 	main.createSpan({ cls: "vaultmate-idea-statement", text: options.title });
 	if (options.tasks) createMeter(main, { label: "Tasks done", now: options.tasks[0], max: options.tasks[1], text: `${options.tasks[0]}/${options.tasks[1]} tasks` }, "vaultmate-progress-compact");
 	const actions = line.createDiv({ cls: "vaultmate-track-actions" });
-	createIconButton(actions, TRACK_SEALS[options.seal], options.action, noop, { primary: true });
+	const primary = primaryAction(options.status);
+	createIconButton(actions, TRACK_SEALS[primary.target], primary.label, noop, { primary: true });
 	createIconButton(actions, SPRITES.actionMove, "Move to…", noop);
 	createIconButton(actions, SPRITES.actionAddTask, "Add task", noop);
 	return card;
@@ -95,15 +94,15 @@ export const PROJECTS_GUIDE: Guide = {
 			text: "Click the tile and the book opens as a page. Its tracks, its ideas and **New track** are all there.",
 			mock: (el) => {
 				projectHead(el, 50, true);
-				trackLine(el, { title: "Draft", seal: "progress", action: "Done" });
-				trackLine(el, { title: "Cover", seal: "backlog", action: "Start" });
+				trackLine(el, { title: "Draft", status: "progress" });
+				trackLine(el, { title: "Cover", status: "backlog" });
 			},
 		},
 	],
 	write: { caption: "Month 1, in the note's properties", lines: ["---", "tags: [project]", "progress: 25", "---"] },
 	tips: [
 		"The progress property (0 to 100) replaces the tracks-done bar.",
-		"Pick This note in the scope list on a project note to open its page directly.",
+		"Pick Note in the scope list on a project note to open its page directly.",
 		"Search finds project names, track titles and open tasks.",
 	],
 	readme: README,
@@ -118,7 +117,7 @@ const LADDER: TrackStatus[] = ["explore", "backlog", "progress", "done"];
  * the steps ahead are dashed and faded, so the position never rests on colour alone. `button` is the main button that
  * moves the track on from here.
  */
-function ladder(parent: HTMLElement, current: TrackStatus, button: string): void {
+function ladder(parent: HTMLElement, current: TrackStatus, button?: string): void {
 	const box = parent.createDiv({ cls: "vaultmate-guide-ladder" });
 	const steps = box.createEl("ol", { cls: "vaultmate-guide-ladder-steps", attr: { "aria-label": "Track status" } });
 	const at = LADDER.indexOf(current);
@@ -128,7 +127,7 @@ function ladder(parent: HTMLElement, current: TrackStatus, button: string): void
 		createSprite(step, TRACK_SEALS[status], 24);
 		step.createSpan({ text: STATUS_INFO[status].label });
 	});
-	box.createDiv({ cls: "vaultmate-guide-ladder-hint", text: `Main button: ${button}` });
+	if (button) box.createDiv({ cls: "vaultmate-guide-ladder-hint", text: `Main button: ${button}` });
 }
 
 /** The track as the project page draws it, closed: a seal and its title. */
@@ -156,7 +155,7 @@ export const PROJECT_GUIDE: Guide = {
 				const actions = row.createDiv({ cls: "vaultmate-icon-actions" });
 				createIconButton(actions, SPRITES.actionPromote, "Promote to a track", noop, { primary: true });
 				createIconButton(actions, SPRITES.actionDrop, "Drop", noop);
-				trackLine(el, { title: TRACK, seal: "explore", action: "To backlog" });
+				trackLine(el, { title: TRACK, status: "explore" });
 			},
 		},
 		{
@@ -165,7 +164,7 @@ export const PROJECT_GUIDE: Guide = {
 			text: `You decide to write it, so you press **To backlog**. The track moves to **${STATUS_INFO.backlog.label}** and waits for its turn.`,
 			mock: (el) => {
 				ladder(el, "backlog", "Start");
-				trackLine(el, { title: TRACK, seal: "backlog", action: "Start" });
+				trackLine(el, { title: TRACK, status: "backlog" });
 			},
 		},
 		{
@@ -174,7 +173,7 @@ export const PROJECT_GUIDE: Guide = {
 			text: `**Start** moves it to **${STATUS_INFO.progress.label}**. Tick tasks with **Done**; with none left, **No next task** offers **Add task** or **Suggest next steps**.`,
 			mock: (el) => {
 				ladder(el, "progress", "Done");
-				const card = trackLine(el, { title: TRACK, seal: "progress", action: "Done", tasks: [2, 5] });
+				const card = trackLine(el, { title: TRACK, status: "progress", tasks: [2, 5] });
 				const task = card.createDiv({ cls: "vaultmate-entry-line" });
 				createMark(task, SPRITES.stateTask);
 				task.createSpan({ cls: "vaultmate-entry-main", text: "Write the storm scene" });
@@ -188,7 +187,7 @@ export const PROJECT_GUIDE: Guide = {
 			cat: SPRITES.mascotCheer,
 			text: `The last task is ticked, so you press **Done** on the track. It is sealed ${STATUS_INFO.done.marker}, the stamp lands and the bar of **Book** climbs.`,
 			mock: (el) => {
-				ladder(el, "done", "Reopen");
+				ladder(el, "done");
 				projectHead(el, 60);
 				closedTrack(el, TRACK);
 				createHankoStamp(el, { sprite: SPRITES.stampDone, label: "Done" });
@@ -196,7 +195,7 @@ export const PROJECT_GUIDE: Guide = {
 		},
 	],
 	write: {
-		caption: "The same heading, before and after Start",
+		caption: "The same heading in Month 2, then after Start",
 		lines: [`## ${STATUS_INFO.explore.marker} ${TRACK}`, `## ${STATUS_INFO.progress.marker} ${TRACK}`, "- [ ] Write the storm scene ➕ 2027-02-03 📅 2027-02-10"],
 	},
 	tips: [

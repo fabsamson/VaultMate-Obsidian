@@ -67,7 +67,7 @@ export const AI_ACTIONS_GUIDE: Guide = {
 			text: `Before printing, **Challenge this note** on Chapter 3 opens a preview. Check **How many**, tick the confirmation to send it to ${HOST}, then **Send**.`,
 			mock: (el) => {
 				const panel = createPanel(el, "vaultmate-guide-compact");
-				row(panel, "Note", "4,812 characters");
+				row(panel, "Note", "Chapter 3.md");
 				countRow(panel, 5);
 				row(panel, "Sent to", `${HOST} · gpt-5.6-luna`);
 				const label = el.createEl("label", { cls: "vaultmate-confirm" });

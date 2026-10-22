@@ -35,7 +35,7 @@ export const PLACES_GUIDE: Guide = {
 		{
 			when: "Month 8",
 			cat: SPRITES.mascotMap,
-			text: "For the map on the book's website, **Search a place** finds the real lighthouse on OpenStreetMap. Pick a result, tidy the label, then **Add to note**.",
+			text: "For the book's website, **Search a place** finds the real lighthouse on OpenStreetMap. Pick it, then **Add to note**.",
 			mock: (el) => {
 				const row = el.createDiv({ cls: "vaultmate-search-row" });
 				const input = row.createEl("input", { cls: "vaultmate-input", attr: { type: "text", readonly: "", tabindex: "-1" } });
@@ -63,7 +63,7 @@ export const PLACES_GUIDE: Guide = {
 		{
 			when: "Launch day",
 			cat: SPRITES.mascotTea,
-			text: "At the launch reading in the café, **Add current location** asks the optional VaultMate Android app for your position, so the note says where it happened.",
+			text: "At the launch reading in the café, **Add current location** asks the optional VaultMate Android app where you are.",
 			mock: (el) => {
 				const panel = createPanel(el);
 				panel.createEl("p", { cls: "vaultmate-muted", text: "Location of the launch reading" });
@@ -74,7 +74,7 @@ export const PLACES_GUIDE: Guide = {
 		{
 			when: "After launch",
 			cat: SPRITES.mascotBook,
-			text: "Make a Base with a **Map** view and set **Marker coordinates** to [latitude, longitude]. Your chapters show up as pins, and the printed book is on the shelf.",
+			text: "A Base with a **Map** view and **Marker coordinates** set to [latitude, longitude] pins your chapters. The printed book is out.",
 			mock: (el) => {
 				const map = el.createDiv({ cls: "vaultmate-guide-map" });
 				map.createDiv({ cls: "vaultmate-guide-land" });
