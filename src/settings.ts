@@ -3,6 +3,7 @@ import { Notice, PluginSettingTab, SecretComponent, type Setting, type SettingDe
 import { validateBaseUrl } from "./core/ai/endpoint";
 import { DEFAULT_SETTINGS, MAX_CONNECTIONS, validateActionsFolder, validateDistinctCollectionProperties, validateDistinctIdeaTag, validateDistinctProperties, validateDistinctTags, validateSeedSubtag, cleanSeedSubtag, cleanProjectTag, validateProjectTag, validatePropertyList, validatePropertyName, validateTag, validateTracksTitle, parseList, cleanFolderPath } from "./core/settings-model";
 import { createDefaultActions } from "./features/ai-actions/default-actions";
+import { createNewAction } from "./features/ai-actions/new-action";
 import type VaultMatePlugin from "./main";
 
 /** Settings stored as a list but edited as comma-separated text. */
@@ -176,6 +177,11 @@ export class VaultMateSettingTab extends PluginSettingTab {
 						name: "Create default actions",
 						desc: "Creates the Challenge this note, Recommend me and Next steps actions in the actions folder, without overwriting anything.",
 						render: (setting) => setting.addButton((button) => button.setButtonText("Create actions").onClick(() => void this.createActions())),
+					},
+					{
+						name: "New action",
+						desc: "Creates a template action with every property explained, in the actions folder, and opens it.",
+						render: (setting) => setting.addButton((button) => button.setButtonText("New action").onClick(() => void createNewAction(this.app, this.plugin.settings.ai.actionsFolder))),
 					},
 				],
 			},

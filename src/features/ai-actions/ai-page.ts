@@ -1,8 +1,9 @@
 // The hub's "AI actions" page: the valid actions as compact cards.
 import type { HubPage } from "../../ui/hub-view";
-import { createIconButton, createInfoPanel, createPanel } from "../../ui/components";
+import { createIconButton, createInfoPanel, createPanel, createSpriteButton } from "../../ui/components";
 import { SPRITES } from "../../ui/sprites";
 import type { ActionDefinition, ActionEntry } from "./definition";
+import { ACTIONS_GUIDE_URL } from "./action-template";
 import { createActionIcon } from "./run-modal";
 
 export interface AiPageHost {
@@ -14,6 +15,8 @@ export interface AiPageHost {
 	/** What is missing before a call can be made, or null. */
 	configurationProblem(): string | null;
 	run(action: ActionDefinition): void;
+	/** Creates the template action file and opens it in a new tab. */
+	newAction(): void;
 }
 
 export function createAiPage(host: AiPageHost): HubPage {
@@ -36,7 +39,8 @@ export function createAiPage(host: AiPageHost): HubPage {
 			const valid = entries.flatMap((entry) => (entry.ok ? [entry.action] : []));
 			const invalid = entries.length - valid.length;
 			if (entries.length === 0) {
-				createInfoPanel(body, { sprite: SPRITES.mascotSleep, title: "No AI actions yet", text: `Create the default actions in the VaultMate settings, or add action files to ${host.folder()}.` });
+				const empty = createInfoPanel(body, { sprite: SPRITES.mascotSleep, title: "No AI actions yet", text: `Create the default actions in the VaultMate settings, or add action files to ${host.folder()}.` });
+				createSpriteButton(empty, { sprite: SPRITES.actionNewNote, text: "New action" }).addEventListener("click", () => host.newAction());
 				return;
 			}
 			const name = host.contextName();
@@ -51,6 +55,14 @@ export function createAiPage(host: AiPageHost): HubPage {
 				createIconButton(card, SPRITES.actionRun, "Run", () => host.run(action), { describedBy: nameEl });
 			}
 			if (invalid > 0) body.createEl("p", { cls: "vaultmate-muted", text: `${invalid} unavailable action${invalid === 1 ? "" : "s"}. Run Open AI actions to see why.` });
+			const own = createInfoPanel(body, {
+				sprite: SPRITES.mascotTea,
+				title: "Make your own action",
+				text: `An action is a note in ${host.folder()}: its properties say what it reads and returns, its text is the prompt.`,
+				compact: true,
+			});
+			createSpriteButton(own, { sprite: SPRITES.actionNewNote, text: "New action" }).addEventListener("click", () => host.newAction());
+			own.createEl("a", { cls: "vaultmate-muted", text: "How actions work", href: ACTIONS_GUIDE_URL });
 		},
 	};
 }

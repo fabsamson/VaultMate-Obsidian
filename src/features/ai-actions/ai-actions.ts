@@ -10,6 +10,7 @@ import { CatalogueModal } from "./catalogue-modal";
 import { collectionNoteOf, inFolder, type CollectionNote } from "./collection";
 import type { ActionDefinition } from "./definition";
 import { trackParam } from "./request";
+import { createNewAction } from "./new-action";
 import { RunModal, type RunContext } from "./run-modal";
 
 export class AiActionsFeature {
@@ -44,6 +45,7 @@ export class AiActionsFeature {
 				contextName: () => plugin.contextFile()?.basename ?? null,
 				configurationProblem: () => configurationProblem(plugin.app, plugin.settings.ai),
 				run: (action) => void this.run(action),
+				newAction: () => void createNewAction(plugin.app, this.catalogue.folder()),
 			}),
 		);
 		this.catalogue.onChange(() => plugin.refreshHubs());

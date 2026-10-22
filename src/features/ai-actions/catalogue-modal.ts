@@ -16,7 +16,7 @@ export class CatalogueModal extends SuggestModal<ActionEntry> {
 	) {
 		super(app);
 		this.setPlaceholder("Search AI actions");
-		this.emptyStateText = "No AI action found. Create the default actions in the VaultMate settings.";
+		this.emptyStateText = "No AI action found. Create the default actions or a New action in the VaultMate settings.";
 	}
 
 	public getSuggestions(query: string): ActionEntry[] {
