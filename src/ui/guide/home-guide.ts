@@ -45,8 +45,8 @@ export const HOME_GUIDE: Guide = {
 			mock: (el) => {
 				const tiles = el.createDiv({ cls: "vaultmate-tiles" });
 				homeTile(tiles, SPRITES.moduleIdea, "Ideas", "1 fresh");
-				homeTile(tiles, SPRITES.moduleDecision, "Decisions and predictions", "Nothing to review");
 				homeTile(tiles, SPRITES.moduleProjects, "Projects", "No projects yet");
+				homeTile(tiles, SPRITES.moduleDecision, "Decisions and predictions", "Nothing to review");
 			},
 		},
 		{
@@ -61,7 +61,7 @@ export const HOME_GUIDE: Guide = {
 		{
 			when: "Road ahead",
 			cat: SPRITES.mascotMap,
-			text: "Every page has its own chapter behind **?**, and the book reads in order. Follow the story to the epilogue.",
+			text: "Every page has its own chapter behind **?**, and the book reads in order. The next chapters follow the book to launch day.",
 			mock: (el) => {
 				const head = el.createDiv({ cls: "vaultmate-guide-help" });
 				createIconButton(head, SPRITES.actionHelp, "How this page works", () => undefined, { primary: true });

@@ -8,4 +8,4 @@ import { PROJECT_GUIDE, PROJECTS_GUIDE } from "../../features/projects/projects-
 import type { Guide } from "./guide";
 import { HOME_GUIDE } from "./home-guide";
 
-export const GUIDES: ReadonlyMap<string, Guide> = new Map([HOME_GUIDE, IDEAS_GUIDE, CONNECTIONS_GUIDE, PLACES_GUIDE, PROJECTS_GUIDE, AI_ACTIONS_GUIDE, PROJECT_GUIDE, JOURNAL_GUIDE].map((guide) => [guide.id, guide]));
+export const GUIDES: ReadonlyMap<string, Guide> = new Map([HOME_GUIDE, IDEAS_GUIDE, PROJECTS_GUIDE, PROJECT_GUIDE, JOURNAL_GUIDE, CONNECTIONS_GUIDE, AI_ACTIONS_GUIDE, PLACES_GUIDE].map((guide) => [guide.id, guide]));

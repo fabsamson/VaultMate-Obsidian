@@ -1,5 +1,5 @@
-// Chapter 6 of the book: the AI actions page (`ai-actions`). The story is a first novel; here an AI reads the
-// draft as a second reader, only when asked and after the preview. Each picture is drawn with the real classes.
+// Chapter 7 of the book: the AI actions page (`ai-actions`). The story is a first novel; at Month 7 an AI reads the
+// book as a second reader before it is printed, only when asked and after the preview. Each picture is drawn with the real classes.
 import { setIcon } from "obsidian";
 
 import { createPanel } from "../../ui/components";
@@ -23,6 +23,15 @@ function row(parent: HTMLElement, label: string, value: string): void {
 	line.createSpan({ text: value });
 }
 
+/** The "How many" row of the preview: a label and the list of 1 to 10, showing the action's count. */
+function countRow(parent: HTMLElement, count: number): void {
+	const line = parent.createDiv({ cls: "vaultmate-source-row" });
+	line.createSpan({ cls: "vaultmate-field-label", text: "How many" });
+	const select = line.createEl("select", { cls: "dropdown", attr: { tabindex: "-1" } });
+	for (let value = 1; value <= 10; value++) select.createEl("option", { value: String(value), text: String(value) });
+	select.value = String(count);
+}
+
 /** The tickable list of the run window, as the questions and the next steps draw it. */
 function choices(parent: HTMLElement, texts: string[], checked: boolean[], icon: boolean): void {
 	const list = createPanel(parent, "vaultmate-questions vaultmate-guide-compact");
@@ -41,7 +50,7 @@ export const AI_ACTIONS_GUIDE: Guide = {
 	purpose: "Ask an AI for sharp questions or next steps, only when you click.",
 	steps: [
 		{
-			when: "Day 1",
+			when: "Month 7",
 			cat: SPRITES.mascotLaptop,
 			text: "Under AI actions in the settings, give a base URL, a model and a key from Obsidian's secret storage. **Create actions** adds three.",
 			mock: (el) => {
@@ -53,13 +62,14 @@ export const AI_ACTIONS_GUIDE: Guide = {
 			},
 		},
 		{
-			when: "Week 9",
+			when: "Before sending",
 			cat: SPRITES.mascotThink,
-			text: `**Challenge this note** on Chapter 3 opens a preview: the provider and each source with its size. Tick **Send this to ${HOST}**, then **Send**.`,
+			text: `Before printing, **Challenge this note** on Chapter 3 opens a preview. Check **How many**, tick the confirmation to send it to ${HOST}, then **Send**.`,
 			mock: (el) => {
 				const panel = createPanel(el, "vaultmate-guide-compact");
-				row(panel, "Sent to", `${HOST} · gpt-5.6-luna`);
 				row(panel, "Note", "4,812 characters");
+				countRow(panel, 5);
+				row(panel, "Sent to", `${HOST} · gpt-5.6-luna`);
 				const label = el.createEl("label", { cls: "vaultmate-confirm" });
 				label.createEl("input", { attr: { type: "checkbox", tabindex: "-1" } }).checked = true;
 				label.createSpan({ text: `Send this to ${HOST}` });
@@ -80,7 +90,7 @@ export const AI_ACTIONS_GUIDE: Guide = {
 			},
 		},
 		{
-			when: "Month 4",
+			when: "Same week",
 			cat: SPRITES.mascotPaint,
 			text: "On the project page the Cover track says **No next task**. **Suggest next steps** proposes three tasks: tick two, then **Add selected**.",
 			mock: (el) => {
@@ -94,7 +104,7 @@ export const AI_ACTIONS_GUIDE: Guide = {
 	write: { caption: "Chapter 3, after Insert selected", lines: ["## Questions", `- ${QUESTIONS[0]}`, `- ${QUESTIONS[1]}`] },
 	tips: [
 		"Nothing is sent without your click. Ask again is another call.",
-		"You can write your own action: a Markdown file that starts with vaultmate-action: 1.",
+		"Make your own action › New action (page bottom) creates a template that explains every property.",
 		"The key stays in Obsidian's secret storage, never in the plugin's settings.",
 	],
 	readme: README,

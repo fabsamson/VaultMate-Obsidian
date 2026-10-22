@@ -1,5 +1,5 @@
-// Chapter 4 of the book: the Places page (`places`). The story is a first novel; here the notes get pinned to the
-// lighthouse that inspires it and to the café where it is written. Each picture is drawn with the real classes.
+// Chapter 8 of the book, the epilogue: the Places page (`places`). The story is a first novel; here the notes get pinned
+// to the lighthouse that inspires it and to the café of the launch reading. Each picture is drawn with the real classes.
 import { createPanel, createSpriteButton } from "../../ui/components";
 import type { Guide } from "../../ui/guide/guide";
 import { SPRITES } from "../../ui/sprites";
@@ -33,9 +33,9 @@ export const PLACES_GUIDE: Guide = {
 	purpose: "Pin a note to a real place, and see all your places on a map.",
 	steps: [
 		{
-			when: "Week 3",
+			when: "Month 8",
 			cat: SPRITES.mascotMap,
-			text: "**Search a place** finds the lighthouse that inspires the novel on OpenStreetMap. Pick a result, tidy the label, then **Add to note**.",
+			text: "For the map on the book's website, **Search a place** finds the real lighthouse on OpenStreetMap. Pick a result, tidy the label, then **Add to note**.",
 			mock: (el) => {
 				const row = el.createDiv({ cls: "vaultmate-search-row" });
 				const input = row.createEl("input", { cls: "vaultmate-input", attr: { type: "text", readonly: "", tabindex: "-1" } });
@@ -61,20 +61,20 @@ export const PLACES_GUIDE: Guide = {
 			},
 		},
 		{
-			when: "Month 2",
+			when: "Launch day",
 			cat: SPRITES.mascotTea,
-			text: "At the café, **Add current location** asks the optional VaultMate Android app for your position, so the note says where you wrote.",
+			text: "At the launch reading in the café, **Add current location** asks the optional VaultMate Android app for your position, so the note says where it happened.",
 			mock: (el) => {
 				const panel = createPanel(el);
-				panel.createEl("p", { cls: "vaultmate-muted", text: "Location of chapter 4" });
+				panel.createEl("p", { cls: "vaultmate-muted", text: "Location of the launch reading" });
 				panel.createEl("p", { cls: "vaultmate-action-name", text: "Café des quais" });
 				createSpriteButton(el, { sprite: SPRITES.actionLocate, text: "Add current location" });
 			},
 		},
 		{
-			when: "Month 4",
-			cat: SPRITES.mascotCheer,
-			text: "Make a Base with a **Map** view and set **Marker coordinates** to [latitude, longitude]. Your chapters show up as pins.",
+			when: "After launch",
+			cat: SPRITES.mascotBook,
+			text: "Make a Base with a **Map** view and set **Marker coordinates** to [latitude, longitude]. Your chapters show up as pins, and the printed book is on the shelf.",
 			mock: (el) => {
 				const map = el.createDiv({ cls: "vaultmate-guide-map" });
 				map.createDiv({ cls: "vaultmate-guide-land" });

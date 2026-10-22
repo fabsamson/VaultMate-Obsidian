@@ -1,6 +1,6 @@
-// Chapter 8 of the book: the Decisions and predictions page (`journal`). The story is the first novel, six months after
-// the launch: a decision and a prediction written on day one, judged later. Each picture is the same two bets at that
-// moment, drawn with the real components and classes.
+// Chapter 5 of the book: the Decisions and predictions page (`journal`). The story is the first novel: the Self-publish
+// decision of day one and a prediction made at Month 5, both judged around Month 6. Each picture is the same two bets
+// at that moment, drawn with the real components and classes.
 import { createHankoStamp, createIconButton, createSegmentedControl } from "../../ui/components";
 import type { Guide } from "../../ui/guide/guide";
 import { createSprite } from "../../ui/pixel";
@@ -12,9 +12,9 @@ const README = "https://github.com/fabsamson/VaultMate-Obsidian#decision-journal
 const noop = (): void => undefined;
 const TAGS: JournalTags = { decisionTag: "decision", predictionTag: "prediction" };
 
-/** The two bets of the story, as the note holds them on the day they are written. */
+/** The two bets of the story, as the note holds them on the day they are written: the decision on Day 1, the prediction at Month 5. */
 export const SELF_PUBLISH = "- [ ] Self-publish #decision ➕ 2026-10-21 📅 2027-04-21";
-export const HUNDRED_COPIES = "- [ ] 100 copies by spring #prediction [confidence: 60%] ➕ 2026-10-21 📅 2027-04-21";
+export const DRAFT_BY_APRIL = "- [ ] Draft done by April #prediction [confidence: 60%] ➕ 2027-03-05 📅 2027-04-21";
 
 /** A line of a note with the end-of-line badge the plugin draws on it (the real text, for the day `today`). */
 export function badgedLine(parent: HTMLElement, line: string, today: Date): void {
@@ -41,17 +41,17 @@ export const JOURNAL_GUIDE: Guide = {
 	purpose: "Write a call down now, judge it later, and learn how good your calls are.",
 	steps: [
 		{
-			when: "Month 1",
+			when: "Month 5",
 			cat: SPRITES.mascotCrystal,
-			text: "You decide to **Self-publish** and write a review date, then predict 100 copies by spring at 60%. Each line gets a small badge at its end.",
+			text: "Next to the **Self-publish** decision of Day 1, you predict **Draft done by April** at 60%. Each line gets a small badge at its end.",
 			mock: (el) => {
-				const day = new Date(2026, 9, 21);
+				const day = new Date(2027, 2, 5);
 				badgedLine(el, SELF_PUBLISH, day);
-				badgedLine(el, HUNDRED_COPIES, day);
+				badgedLine(el, DRAFT_BY_APRIL, day);
 			},
 		},
 		{
-			when: "Month 7",
+			when: "Month 6",
 			cat: SPRITES.mascotThink,
 			text: "The **Overdue** chip counts both bets. **Review** opens **Time to judge?**, and **Yes** starts the verdict while **Not yet** waits.",
 			mock: (el) => {
@@ -70,7 +70,7 @@ export const JOURNAL_GUIDE: Guide = {
 		{
 			when: "The verdict",
 			cat: SPRITES.mascotStamp,
-			text: "The outcome is **Better** and it was a **Good decision**, so you type the lesson. **Close decision** writes it, and the prediction is a hit.",
+			text: "The outcome is **Better** and it was a **Good decision**, so you type the lesson. **Close decision** writes it, and the prediction counts as a hit.",
 			mock: (el) => {
 				createSegmentedControl(el, { label: "Outcome", choices: [{ value: "better", label: "Better" }, { value: "as-expected", label: "As expected" }, { value: "worse", label: "Worse" }], value: "better", onChange: noop });
 				createSegmentedControl(el, { label: "Quality of the decision", choices: [{ value: "good", label: "Good decision" }, { value: "unsure", label: "Unsure" }, { value: "bad", label: "Bad" }], value: "good", onChange: noop });
@@ -81,9 +81,9 @@ export const JOURNAL_GUIDE: Guide = {
 			},
 		},
 		{
-			when: "Next book",
+			when: "Next call",
 			cat: SPRITES.mascotCheer,
-			text: "The **Track record** adds up your hits and misses, your Brier score and your calibration. Your last lessons wait under **New decision**.",
+			text: "The **Track record** adds up your hits and misses, your Brier score and your calibration. Deciding the print run, you find your lessons under **New decision**.",
 			mock: (el) => {
 				const stamps = el.createDiv({ cls: "vaultmate-stamp-row" });
 				createHankoStamp(stamps, { sprite: SPRITES.stampHit, label: "4 hits" });

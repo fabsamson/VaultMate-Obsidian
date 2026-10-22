@@ -15,12 +15,12 @@ export interface Chapter {
 export const CHAPTERS: readonly Chapter[] = [
 	{ id: "home", title: "Prologue: a book begins", page: "Home", pageId: null },
 	{ id: "ideas", title: "Sparks", page: "Ideas", pageId: "ideas" },
-	{ id: "connections", title: "Threads", page: "New connections", pageId: "connections" },
-	{ id: "places", title: "Where the story lives", page: "Places", pageId: "places" },
 	{ id: "projects", title: "The book becomes a project", page: "Projects", pageId: "projects" },
+	{ id: "project", title: "The storm, from spark to done", page: "A project's page", pageId: "projects" },
+	{ id: "journal", title: "Judging your bets", page: "Decisions and predictions", pageId: "journal" },
+	{ id: "connections", title: "Threads", page: "New connections", pageId: "connections" },
 	{ id: "ai-actions", title: "A second reader", page: "AI actions", pageId: "ai-actions" },
-	{ id: "project", title: "From outline to print", page: "A project's page", pageId: "projects" },
-	{ id: "journal", title: "Epilogue: judging your bets", page: "Decisions and predictions", pageId: "journal" },
+	{ id: "places", title: "Epilogue: where the story lives", page: "Places", pageId: "places" },
 ];
 
 /** The chapter number, from 1, or 0 for an id that is not a chapter. */
