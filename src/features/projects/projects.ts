@@ -70,6 +70,7 @@ export class ProjectsFeature {
 					const frontmatter: Record<string, unknown> | undefined = file ? plugin.app.metadataCache.getFileCache(file)?.frontmatter : undefined;
 					return frontmatter?.progress;
 				},
+				modified: (path) => plugin.app.vault.getFileByPath(path)?.stat.mtime ?? 0,
 				entries: () => (plugin.journal.enabled() ? plugin.journal.index.entries() : []),
 				openReview: (item) => plugin.journal.openReview(item),
 				track: (item) => plugin.journal.track(item),

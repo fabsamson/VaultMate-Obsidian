@@ -8,6 +8,9 @@ import {
 	needsNextTask,
 	nextDueTask,
 	nextTaskLine,
+	RECENT_ACTIVITY_MS,
+	isActiveProject,
+	latestActivity,
 	orderTiles,
 	primaryAction,
 	progressPercent,
@@ -18,6 +21,8 @@ import {
 	sectionChips,
 	splitEntries,
 	summarizeProject,
+	type ProjectActivity,
+	type ProjectSummary,
 	taskProgress,
 	tileCounters,
 	tileSummary,
@@ -114,6 +119,13 @@ describe("dashboard summary", () => {
 		expect(reviewsDueText(0)).toBe("");
 	});
 
+	it("counts open tracks, the open tasks of open tracks only, and keeps the activity", () => {
+		const project = { path: "P.md", name: "P", model: readProject(["# Tracks", "## ★ A", "- [ ] a1", "## 📥 B", "- [ ] b1", "- [x] b2", "## 🔨 C", "## ✅ D", "- [ ] d1", "## 🗑️ E", "- [ ] e1"]) };
+		const summary = summarizeProject(project, { byTrack: [], outside: [] }, today, undefined, 1234);
+		expect(summary).toMatchObject({ openTracks: 3, openTasks: 2, lastActivity: 1234 });
+		expect(summarizeProject(project, { byTrack: [], outside: [] }, today).lastActivity).toBe(0);
+	});
+
 	it("says nothing for a project with no tracks and no ideas", () => {
 		const summary = summarizeProject({ path: "E.md", name: "E", model: { tracks: [], ideas: [] } }, { byTrack: [], outside: [] }, today);
 		expect(tileCounters(summary)).toEqual({ statuses: [], ideas: "" });
@@ -122,17 +134,81 @@ describe("dashboard summary", () => {
 });
 
 describe("orderTiles", () => {
-	const tile = (name: string, progress: number, reviewsDue: number) => ({ path: name, name, counts: { explore: 0, backlog: 0, progress, done: 0, dropped: 0 }, ideas: 0, reviewsDue, next: null, progress: null });
+	const NOW = Date.UTC(2026, 9, 23, 12);
+	const DAY = 24 * 60 * 60 * 1000;
+	const tile = (name: string, over: Partial<ProjectSummary & ProjectActivity> = {}): ProjectSummary & ProjectActivity => ({
+		path: name,
+		name,
+		counts: { explore: 0, backlog: 0, progress: 0, done: 0, dropped: 0 },
+		ideas: 0,
+		reviewsDue: 0,
+		next: null,
+		progress: null,
+		openTracks: 0,
+		openTasks: 0,
+		lastActivity: NOW - 90 * DAY,
+		...over,
+	});
+	const names = (tiles: ProjectSummary[]): string[] => tiles.map((entry) => entry.name);
 
-	it("puts review due first, then in progress, and the rest under Other", () => {
-		const { shown, other } = orderTiles([tile("a", 0, 0), tile("b", 2, 0), tile("c", 0, 1), tile("d", 1, 3), tile("e", 0, 0)]);
-		expect(shown.map((entry) => entry.name)).toEqual(["c", "d", "b"]);
-		expect(other.map((entry) => entry.name)).toEqual(["a", "e"]);
+	it("shows a project with a review due, an open track, an open task or recent activity", () => {
+		const { shown, other } = orderTiles([tile("due", { reviewsDue: 1 }), tile("track", { openTracks: 1 }), tile("tasks", { openTasks: 2 }), tile("recent", { lastActivity: NOW - DAY }), tile("quiet")], NOW);
+		expect(names(shown).sort()).toEqual(["due", "recent", "tasks", "track"]);
+		expect(names(other)).toEqual(["quiet"]);
 	});
 
-	it("keeps everything under Other when nothing is active", () => {
-		expect(orderTiles([tile("a", 0, 0)]).shown).toEqual([]);
-		expect(orderTiles([]).other).toEqual([]);
+	it("shows a project that only has Backlog or Explore tracks", () => {
+		const { shown, other } = orderTiles([tile("backlog", { openTracks: 1, counts: { explore: 0, backlog: 1, progress: 0, done: 0, dropped: 0 } }), tile("explore", { openTracks: 2 })], NOW);
+		expect(names(shown)).toEqual(["explore", "backlog"]);
+		expect(other).toEqual([]);
+	});
+
+	it("counts activity as recent for less than 30 days", () => {
+		expect(isActiveProject(tile("a", { lastActivity: NOW - RECENT_ACTIVITY_MS + 1 }), NOW)).toBe(true);
+		expect(isActiveProject(tile("b", { lastActivity: NOW - RECENT_ACTIVITY_MS }), NOW)).toBe(false);
+		expect(isActiveProject(tile("c", { lastActivity: 0 }), NOW)).toBe(false);
+		expect(RECENT_ACTIVITY_MS).toBe(30 * DAY);
+	});
+
+	it("sorts the shown ones: review due, then activity, open tracks, open tasks, name", () => {
+		const { shown } = orderTiles(
+			[
+				tile("old-due", { reviewsDue: 2, lastActivity: NOW - 80 * DAY }),
+				tile("fresh", { openTracks: 1, lastActivity: NOW - DAY }),
+				tile("older", { openTracks: 5, lastActivity: NOW - 3 * DAY }),
+				tile("same-b", { openTracks: 1, openTasks: 1, lastActivity: NOW - 10 * DAY }),
+				tile("same-a", { openTracks: 1, openTasks: 1, lastActivity: NOW - 10 * DAY }),
+				tile("more-tracks", { openTracks: 3, lastActivity: NOW - 10 * DAY }),
+				tile("more-tasks", { openTracks: 1, openTasks: 4, lastActivity: NOW - 10 * DAY }),
+			],
+			NOW,
+		);
+		expect(names(shown)).toEqual(["old-due", "fresh", "older", "more-tracks", "more-tasks", "same-a", "same-b"]);
+	});
+
+	it("sorts Other projects by latest activity, then name", () => {
+		const { shown, other } = orderTiles([tile("b", { lastActivity: NOW - 50 * DAY }), tile("a", { lastActivity: NOW - 50 * DAY }), tile("c", { lastActivity: NOW - 40 * DAY }), tile("z", { lastActivity: 0 })], NOW);
+		expect(shown).toEqual([]);
+		expect(names(other)).toEqual(["c", "a", "b", "z"]);
+	});
+
+	it("handles an empty list", () => {
+		expect(orderTiles([], NOW)).toEqual({ shown: [], other: [] });
+	});
+});
+
+describe("latestActivity", () => {
+	const mtimes: Record<string, number> = { "Book.md": 100, "Book/Ch1.md": 300, "Book/Ch2.md": 200 };
+	const modified = (path: string): number => mtimes[path] ?? 0;
+
+	it("takes the latest modification of the note, or of a folder note's tree", () => {
+		expect(latestActivity(["Book.md"], modified)).toBe(100);
+		expect(latestActivity(new Set(["Book.md", "Book/Ch1.md", "Book/Ch2.md"]), modified)).toBe(300);
+	});
+
+	it("is 0 without notes or for unknown notes", () => {
+		expect(latestActivity([], modified)).toBe(0);
+		expect(latestActivity(["Gone.md"], modified)).toBe(0);
 	});
 });
 

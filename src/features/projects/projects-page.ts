@@ -23,6 +23,7 @@ import {
 	moveTargets,
 	needsNextTask,
 	nextTaskLine,
+	latestActivity,
 	orderTiles,
 	primaryAction,
 	projectProgress,
@@ -35,6 +36,7 @@ import {
 	tileCounters,
 	tileSummary,
 	type ProjectProgress,
+	type ProjectActivity,
 	type ProjectSummary,
 	type SectionId,
 } from "./projects-model";
@@ -53,6 +55,8 @@ export interface ProjectsPageHost {
 	markdownPaths(): string[];
 	/** The `progress` property of the project note (metadata cache), whatever its type; undefined when absent. */
 	progressProperty(path: string): unknown;
+	/** Last modification of the note, in ms since the epoch; 0 when the note is gone. */
+	modified(path: string): number;
 	/** The journal's entries; empty while the Decisions and predictions module is off. */
 	entries(): JournalItem[];
 	/** Opens the "Time to judge?" review of an entry. */
@@ -154,8 +158,8 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 
 	// ---- Dashboard ----------------------------------------------------------------------------------
 
-	const renderDashboard = (parent: HTMLElement, summaries: ProjectSummary[], open: (path: string) => void): void => {
-		const { shown, other } = orderTiles(summaries);
+	const renderDashboard = (parent: HTMLElement, summaries: Array<ProjectSummary & ProjectActivity>, open: (path: string) => void): void => {
+		const { shown, other } = orderTiles(summaries, Date.now());
 		if (shown.length > 0) {
 			const grid = parent.createDiv({ cls: "vaultmate-project-tiles" });
 			for (const summary of shown) createProjectTile(grid, summary).addEventListener("click", () => open(summary.path));
@@ -411,7 +415,7 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 				createNoMatch(content, search.query);
 				return;
 			}
-			renderDashboard(content, found.map((entry) => summarizeProject(entry.project, entry, today, host.progressProperty(entry.project.path))), (path) => openProject(path));
+			renderDashboard(content, found.map((entry) => summarizeProject(entry.project, entry, today, host.progressProperty(entry.project.path), latestActivity(scopePaths("tree", entry.project.path, markdownPaths) ?? [entry.project.path], (modifiedPath) => host.modified(modifiedPath)))), (path) => openProject(path));
 			createSpriteButton(content.createDiv({ cls: "vaultmate-hub-section" }), { sprite: SPRITES.actionNewProject, text: "New project" }).addEventListener("click", () => host.newProject());
 			if (focusTile) content.querySelector<HTMLElement>(`[data-path="${CSS.escape(focusTile)}"]`)?.focus();
 		};
@@ -420,7 +424,7 @@ export function createProjectsPage(host: ProjectsPageHost): HubPage {
 
 	return {
 		id: PROJECTS_PAGE_ID,
-		order: 18,
+		order: 20,
 		title: "Projects",
 		sprite: SPRITES.moduleProjects,
 		enabled: () => host.enabled(),
