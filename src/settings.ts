@@ -48,37 +48,6 @@ export class VaultMateSettingTab extends PluginSettingTab {
 			},
 			{
 				type: "group",
-				heading: "Decision journal",
-				items: [
-					{
-						name: "Enable decision journal",
-						desc: "Track decisions and predictions written as task lines, and review them from the VaultMate panel.",
-						control: { type: "toggle", key: "journal.enabled" },
-					},
-					{
-						name: "Decision tag",
-						desc: "Lines with this tag are decisions. Enter it without #.",
-						control: {
-							type: "text",
-							key: "journal.decisionTag",
-							placeholder: "decision",
-							validate: (value) => validateTag(value) ?? validateDistinctTags(value, journal.predictionTag) ?? validateDistinctIdeaTag(ideas.tag, value),
-						},
-					},
-					{
-						name: "Prediction tag",
-						desc: "Lines with this tag are predictions. Enter it without #.",
-						control: {
-							type: "text",
-							key: "journal.predictionTag",
-							placeholder: "prediction",
-							validate: (value) => validateTag(value) ?? validateDistinctTags(journal.decisionTag, value) ?? validateDistinctIdeaTag(ideas.tag, value),
-						},
-					},
-				],
-			},
-			{
-				type: "group",
 				heading: "Ideas",
 				items: [
 					{
@@ -141,6 +110,63 @@ export class VaultMateSettingTab extends PluginSettingTab {
 						name: "Project template",
 						desc: "Optional note used as the template of new projects. It can use {{title}} and {{date}}; VaultMate adds the project tag to its tags property. Leave empty for the built-in skeleton (Ideas and Notes sections).",
 						control: { type: "file", key: "projects.newProjectTemplate", placeholder: "Built-in skeleton", filter: (file) => file.extension === "md" },
+					},
+				],
+			},
+			{
+				type: "group",
+				heading: "Decision journal",
+				items: [
+					{
+						name: "Enable decision journal",
+						desc: "Track decisions and predictions written as task lines, and review them from the VaultMate panel.",
+						control: { type: "toggle", key: "journal.enabled" },
+					},
+					{
+						name: "Decision tag",
+						desc: "Lines with this tag are decisions. Enter it without #.",
+						control: {
+							type: "text",
+							key: "journal.decisionTag",
+							placeholder: "decision",
+							validate: (value) => validateTag(value) ?? validateDistinctTags(value, journal.predictionTag) ?? validateDistinctIdeaTag(ideas.tag, value),
+						},
+					},
+					{
+						name: "Prediction tag",
+						desc: "Lines with this tag are predictions. Enter it without #.",
+						control: {
+							type: "text",
+							key: "journal.predictionTag",
+							placeholder: "prediction",
+							validate: (value) => validateTag(value) ?? validateDistinctTags(journal.decisionTag, value) ?? validateDistinctIdeaTag(ideas.tag, value),
+						},
+					},
+				],
+			},
+			{
+				type: "group",
+				heading: "New connections",
+				items: [
+					{
+						name: "Enable new connections",
+						desc: "Find a few notes that are not connected to the active note yet but whose ideas could work with it, with the reasons. Everything is computed on this device; nothing is sent anywhere.",
+						control: { type: "toggle", key: "context.enabled" },
+					},
+					{
+						name: "Excluded folders",
+						desc: "Notes in these folders are never proposed. Separate folders with commas, for example Templates, Scripts.",
+						control: { type: "text", key: "context.excludedFolders", placeholder: "Templates, Scripts" },
+					},
+					{
+						name: "People and place properties",
+						desc: "Two notes with the same value in one of these properties can be connected. Separate property names with commas.",
+						control: { type: "text", key: "context.peopleProperties", placeholder: DEFAULT_SETTINGS.context.peopleProperties.join(", "), validate: validatePropertyList },
+					},
+					{
+						name: "Maximum connections",
+						desc: "Most connections shown for a note. Fewer is often better: nothing new is a normal result.",
+						control: { type: "dropdown", key: "context.maxConnections", options: Object.fromEntries(Array.from({ length: MAX_CONNECTIONS }, (_, i) => [String(i + 1), String(i + 1)])) },
 					},
 				],
 			},
@@ -244,32 +270,6 @@ export class VaultMateSettingTab extends PluginSettingTab {
 						name: "Use the VaultMate Android app for the current position",
 						desc: "On Android, adds a command that asks the VaultMate app for your current position. It needs the VaultMate app, which is optional; leave this off without it.",
 						control: { type: "toggle", key: "location.androidApp" },
-					},
-				],
-			},
-			{
-				type: "group",
-				heading: "New connections",
-				items: [
-					{
-						name: "Enable new connections",
-						desc: "Find a few notes that are not connected to the active note yet but whose ideas could work with it, with the reasons. Everything is computed on this device; nothing is sent anywhere.",
-						control: { type: "toggle", key: "context.enabled" },
-					},
-					{
-						name: "Excluded folders",
-						desc: "Notes in these folders are never proposed. Separate folders with commas, for example Templates, Scripts.",
-						control: { type: "text", key: "context.excludedFolders", placeholder: "Templates, Scripts" },
-					},
-					{
-						name: "People and place properties",
-						desc: "Two notes with the same value in one of these properties can be connected. Separate property names with commas.",
-						control: { type: "text", key: "context.peopleProperties", placeholder: DEFAULT_SETTINGS.context.peopleProperties.join(", "), validate: validatePropertyList },
-					},
-					{
-						name: "Maximum connections",
-						desc: "Most connections shown for a note. Fewer is often better: nothing new is a normal result.",
-						control: { type: "dropdown", key: "context.maxConnections", options: Object.fromEntries(Array.from({ length: MAX_CONNECTIONS }, (_, i) => [String(i + 1), String(i + 1)])) },
 					},
 				],
 			},
