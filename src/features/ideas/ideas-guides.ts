@@ -52,7 +52,7 @@ export const IDEAS_GUIDE: Guide = {
 	purpose: "Catch an idea in a second, sort it when you have time.",
 	steps: [
 		{
-			when: "On a walk",
+			when: "Week 1",
 			cat: SPRITES.mascotIdea,
 			text: "The storm comes to you outdoors. Type **Idea:** or end the line with #idea and a space: it is planted as a task dated today, with the badge **Idea · today**.",
 			mock: (el) => {
@@ -79,7 +79,7 @@ export const IDEAS_GUIDE: Guide = {
 			},
 		},
 		{
-			when: "Sunday",
+			when: "First Sunday",
 			cat: SPRITES.mascotThink,
 			text: "**Tend fresh ideas** opens Idea 1 of 3, oldest first. Press **Add to a note**, then pick **Chapter 3**.",
 			mock: (el) => {
@@ -97,7 +97,7 @@ export const IDEAS_GUIDE: Guide = {
 			},
 		},
 		{
-			when: "Later on",
+			when: "Week 3",
 			cat: SPRITES.mascotPoint,
 			text: "Under **Processed**, each idea says what became of it. The seed **Audiobook** waits under **Project seeds** until you press **Launch**.",
 			mock: (el) => {

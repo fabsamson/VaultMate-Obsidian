@@ -1,5 +1,5 @@
-// Chapter 3 of the book: the New connections page (`connections`). Notes on lighthouses pile up, and the page proposes
-// the chapter they belong to. Each picture is drawn with the real classes of the connection card.
+// Chapter 6 of the book: the New connections page (`connections`). Notes on lighthouses pile up, and during the final
+// revision the page proposes the chapter they belong to. Each picture is drawn with the real classes of the connection card.
 import { setIcon } from "obsidian";
 
 import { createIconButton, createPanel } from "../../ui/components";
@@ -11,7 +11,7 @@ import type { ReasonKind } from "./engine";
 const README = "https://github.com/fabsamson/VaultMate-Obsidian#new-connections";
 const noop = (): void => undefined;
 
-/** The connection card of Chapter 3 for Research notes: lighthouses, with only the parts shown at that moment. */
+/** The connection card of Chapter 3 (Month 6) for Research notes: lighthouses, with only the parts shown at that moment. */
 function card(parent: HTMLElement, parts: { about?: boolean; reasons?: boolean; actions?: boolean }): void {
 	const panel = createPanel(parent, "vaultmate-related-card");
 	panel.createSpan({ cls: "vaultmate-related-title", text: "Chapter 3" });
@@ -49,9 +49,9 @@ export const CONNECTIONS_GUIDE: Guide = {
 	purpose: "Find the notes that belong together but are not linked yet.",
 	steps: [
 		{
-			when: "Research",
+			when: "Month 6",
 			cat: SPRITES.mascotRead,
-			text: "Reading about lighthouses, you keep a note. They pile up in **Research notes: lighthouses**, next to the chapters, and none of them links to the others.",
+			text: "In the final revision, your lighthouse notes from Month 1 sit in **Research notes: lighthouses**. None of them links to the chapters.",
 			mock: (el) => {
 				for (const title of ["Chapter 1", "Chapter 2", "Chapter 3", "Research notes: lighthouses"]) {
 					el.createDiv({ cls: title.startsWith("Research") ? "vaultmate-guide-file is-open" : "vaultmate-guide-file", text: title });
