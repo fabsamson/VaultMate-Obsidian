@@ -49,7 +49,7 @@ export function createJournalPage(host: JournalPageHost): HubPage {
 
 	return {
 		id: "journal",
-		order: 10,
+		order: 30,
 		title: "Decisions and predictions",
 		sprite: SPRITES.moduleDecision,
 		enabled: () => host.enabled(),

@@ -24,7 +24,7 @@ export interface LocationPageHost {
 export function createLocationPage(host: LocationPageHost): HubPage {
 	return {
 		id: "places",
-		order: 40,
+		order: 60,
 		title: "Places",
 		// No 24 px location icon exists yet; the map mascot is drawn at the tile size.
 		sprite: SPRITES.moduleLocation,

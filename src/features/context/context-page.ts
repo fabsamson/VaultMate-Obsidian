@@ -40,7 +40,7 @@ export interface ContextPageHost {
 export function createContextPage(host: ContextPageHost): HubPage {
 	return {
 		id: CONTEXT_PAGE_ID,
-		order: 20,
+		order: 40,
 		title: "New connections",
 		sprite: SPRITES.moduleContext,
 		enabled: () => host.enabled(),

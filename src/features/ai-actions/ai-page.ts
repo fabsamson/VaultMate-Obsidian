@@ -19,7 +19,7 @@ export interface AiPageHost {
 export function createAiPage(host: AiPageHost): HubPage {
 	return {
 		id: "ai-actions",
-		order: 30,
+		order: 50,
 		title: "AI actions",
 		sprite: SPRITES.moduleQuestions,
 		enabled: () => host.enabled(),
