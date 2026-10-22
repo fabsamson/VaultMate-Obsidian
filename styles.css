@@ -232,6 +232,13 @@
 	white-space: nowrap;
 }
 
+/* Just above the threshold the widest row can be a few pixels short: the label ends in an ellipsis, never clipped. */
+.vaultmate-scope-chips .vaultmate-choice-text {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
 @container (max-width: 280px) {
 	.vaultmate-scope-chips .vaultmate-choice-text {
 		position: absolute;
@@ -679,6 +686,11 @@ button.vaultmate-badge:focus-visible {
 	padding: var(--size-4-1) 0;
 	border-bottom: 1px solid var(--vaultmate-rule);
 	overflow-wrap: anywhere;
+}
+
+/* A row with a control (How many): the label sits level with it. */
+.vaultmate-source-row:has(select) {
+	align-items: center;
 }
 
 .vaultmate-details {
