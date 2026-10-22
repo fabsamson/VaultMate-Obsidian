@@ -50,6 +50,8 @@ export class RunModal extends Modal {
 	private messages: RequestMessages = { system: "", user: "" };
 	/** Parameter name -> chosen value (a choice id), set in the params step. */
 	private values: Record<string, string> = {};
+	/** "How many": the remembered choice for this action, else the file's count. */
+	private count: number;
 	private state: State;
 	private closed = false;
 
@@ -64,6 +66,7 @@ export class RunModal extends Modal {
 		super(app);
 		this.modalEl.addClass("vaultmate");
 		this.values = { ...preset };
+		this.count = plugin.settings.aiState.counts[action.path] ?? action.count;
 		this.state = { type: action.params.some((param) => preset[param.name] === undefined) ? "params" : "preview" };
 		if (this.state.type === "preview") this.prepare();
 	}
@@ -74,7 +77,7 @@ export class RunModal extends Modal {
 		for (const param of this.action.params) labels[param.name] = this.chosenLabel(param);
 		// The Not interested titles are read now, so a rejection made in this window is part of the next preview.
 		this.sources = collectSources(this.action, { ...this.context, notInterested: this.plugin.settings.aiState.notInterested }, this.values);
-		this.messages = buildMessages(this.action, this.sources, labels, this.entry()?.title ?? "");
+		this.messages = buildMessages(this.action, this.sources, labels, this.entry()?.title ?? "", this.count);
 	}
 
 	/** The entry chosen in the Based on parameter, if the action has one and an entry (not "All my ratings") is chosen. */
@@ -199,6 +202,27 @@ export class RunModal extends Modal {
 		return sourceProblem(this.sources) ?? configurationProblem(this.app, ai);
 	}
 
+	/** Called after "How many" changed and the messages were rebuilt. */
+	private onCountChange: () => void = () => undefined;
+
+	/** The "How many" row: 1 to 10, remembered per action in data.json (nothing is kept when it equals the file's count). */
+	private renderCountRow(panel: HTMLElement): void {
+		const line = panel.createDiv({ cls: "vaultmate-source-row" });
+		line.createSpan({ cls: "vaultmate-field-label", text: "How many" });
+		const select = line.createEl("select", { cls: "dropdown", attr: { "aria-label": "How many" } });
+		for (let n = 1; n <= 10; n++) select.createEl("option", { text: String(n), value: String(n) });
+		select.value = String(this.count);
+		select.addEventListener("change", () => {
+			this.count = Number(select.value);
+			this.prepare();
+			this.onCountChange();
+			const { counts } = this.plugin.settings.aiState;
+			if (this.count === this.action.count) delete counts[this.action.path];
+			else counts[this.action.path] = this.count;
+			void this.plugin.saveSettings();
+		});
+	}
+
 	private renderPreview(): void {
 		const { contentEl, action, sources, context } = this;
 		const { ai, aiState } = this.plugin.settings;
@@ -210,13 +234,17 @@ export class RunModal extends Modal {
 		};
 		if (context.path) row("Note", context.path);
 		for (const param of action.params) row(param.label, this.chosenLabel(param));
+		this.renderCountRow(panel);
 		row("Sent to", `${this.host} · ${ai.model.trim()}`);
 		for (const source of sources) row(SOURCE_LABELS[source.name], `${formatCount(source.chars)}${source.truncated ? " (truncated)" : ""}`);
 		row("Total", formatCount(sources.reduce((sum, source) => sum + source.chars, 0)));
 
 		const details = contentEl.createEl("details", { cls: "vaultmate-details" });
 		details.createEl("summary", { text: "Show the exact messages" });
-		details.createEl("pre", { cls: "vaultmate-pre", text: `System:\n${this.messages.system}\n\nUser:\n${this.messages.user}` });
+		const pre = details.createEl("pre", { cls: "vaultmate-pre" });
+		const showMessages = (): void => pre.setText(`System:\n${this.messages.system}\n\nUser:\n${this.messages.user}`);
+		showMessages();
+		this.onCountChange = showMessages;
 
 		const problem = this.problem();
 		if (problem) contentEl.createEl("p", { cls: "vaultmate-error", text: problem, attr: { role: "alert" } });
@@ -284,14 +312,14 @@ export class RunModal extends Modal {
 
 	private parse(answer: string): State {
 		const { action, context } = this;
-		if (action.output === "questions") return { type: "results", questions: parseQuestions(answer, { count: action.count, noteText: context.raw }) };
+		if (action.output === "questions") return { type: "results", questions: parseQuestions(answer, { count: this.count, noteText: context.raw }) };
 		if (action.output === "items") {
 			const open = trackAt(noteLines(context.raw), this.values[trackParam(action) ?? ""] ?? "")?.tasks.filter((task) => task.state === "open");
-			return { type: "items", items: parseItems(answer, { count: action.count, existing: (open ?? []).map((task) => task.text) }) };
+			return { type: "items", items: parseItems(answer, { count: this.count, existing: (open ?? []).map((task) => task.text) }) };
 		}
 		const type = this.values.type ?? "";
 		const { rated, excluded } = collectionProfile(context.collection, type, this.plugin.settings.aiState.notInterested[type] ?? [], this.entry()?.path);
-		return { type: "suggestions", suggestions: parseSuggestions(answer, { count: action.count, rated, excluded }), rated };
+		return { type: "suggestions", suggestions: parseSuggestions(answer, { count: this.count, rated, excluded }), rated };
 	}
 
 	// ---- Results ------------------------------------------------------------------------------------

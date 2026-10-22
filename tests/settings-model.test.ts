@@ -45,7 +45,7 @@ describe("normalizeSettings", () => {
 			ideas: { enabled: false, tag: "idee", newNoteFolder: "Ideas", newNoteTemplate: "Templates/Idea.md", seedSubtag: "projet" },
 			projects: { enabled: false, tag: "projet", tracksTitle: "🧭 Pistes", newProjectFolder: "Work", newProjectTemplate: "Templates/Project.md" },
 			ai: { enabled: false, baseUrl: "http://localhost:1234/v1", model: "local", apiKeySecret: "kotoba-key", actionsFolder: "Prompts/AI" },
-			aiState: { confirmed: { "Prompts/AI/A.md": ["note", "properties"] }, notInterested: { movie: ["Heat"] } },
+			aiState: { confirmed: { "Prompts/AI/A.md": ["note", "properties"] }, notInterested: { movie: ["Heat"] }, counts: { "Prompts/AI/A.md": 3 } },
 			collections: { folder: "Media", typeProperty: "kind", ratingProperty: "score" },
 			location: { enabled: false, latitudeProperty: "lat", longitudeProperty: "lng", labelProperty: "where", androidApp: true },
 			context: { enabled: false, excludedFolders: ["Templates"], peopleProperties: ["who"], maxConnections: 5 },
@@ -88,7 +88,7 @@ describe("normalizeSettings", () => {
 describe("AI settings", () => {
 	it("has generic defaults", () => {
 		expect(DEFAULT_SETTINGS.ai).toEqual({ enabled: true, baseUrl: "https://api.openai.com/v1", model: "gpt-5.6-luna", apiKeySecret: "", actionsFolder: "VaultMate/AI actions" });
-		expect(DEFAULT_SETTINGS.aiState).toEqual({ confirmed: {}, notInterested: {} });
+		expect(DEFAULT_SETTINGS.aiState).toEqual({ confirmed: {}, notInterested: {}, counts: {} });
 	});
 
 	it("replaces an insecure or malformed base URL, an empty model and an empty folder by their default", () => {
@@ -105,6 +105,12 @@ describe("AI settings", () => {
 		const loaded = normalizeSettings({ aiState: { confirmed: { "a.md": ["note"], "b.md": "note", "c.md": [1], "d.md": null } } });
 		expect(loaded.aiState.confirmed).toEqual({ "a.md": ["note"] });
 		expect(normalizeSettings({ aiState: { confirmed: [] } }).aiState.confirmed).toEqual({});
+	});
+
+	it("keeps only whole counts from 1 to 10 per action path", () => {
+		const counts = { "a.md": 1, "b.md": 10, "c.md": 0, "d.md": 11, "e.md": 2.5, "f.md": "3", "g.md": null };
+		expect(normalizeSettings({ aiState: { counts } }).aiState.counts).toEqual({ "a.md": 1, "b.md": 10 });
+		expect(normalizeSettings({ aiState: { counts: [] } }).aiState.counts).toEqual({});
 	});
 
 	it("cleans and validates the actions folder", () => {

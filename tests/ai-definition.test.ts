@@ -41,17 +41,25 @@ describe("parseAction", () => {
 			count: 5,
 			params: [],
 			insert: null,
-			prompt: "Ask 5 questions.",
+			prompt: "Ask {{count}} questions.",
 		});
 	});
 
-	it("reads every field and replaces {{count}} everywhere", () => {
+	it("reads every field and keeps {{count}} in the prompt for the run window", () => {
 		const action = ok(
 			{ ...valid, description: "d", icon: "scale", command: true, sources: ["note", "selection", "note"], count: 3, insert: { heading: "## Questions", line: "- [ ] {{text}} #question" } },
 			"{{count}} and {{count}}",
 		);
-		expect(action).toMatchObject({ description: "d", icon: "scale", command: true, sources: ["note", "selection"], count: 3, prompt: "3 and 3" });
+		expect(action).toMatchObject({ description: "d", icon: "scale", command: true, sources: ["note", "selection"], count: 3, prompt: "{{count}} and {{count}}" });
 		expect(action.insert).toEqual({ type: "heading", heading: "Questions", line: "- [ ] {{text}} #question" });
+	});
+
+	it("strips %% comments %% from the prompt, on one line or several", () => {
+		expect(ok(valid, "%% about the file %%\nAsk {{count}}.\n%%\nmore\nnotes\n%%\nDone.").prompt).toBe("Ask {{count}}.\n\nDone.");
+	});
+
+	it("reports an empty prompt after the comments are stripped", () => {
+		expect(message(valid, "%% only a comment %%\n")).toContain("The prompt is empty");
 	});
 
 	it("accepts insert at the cursor and defaults the line", () => {
@@ -101,7 +109,7 @@ describe("parseAction", () => {
 			{ name: "type", label: "Kind", choices: "collection-types" },
 			{ name: "other", label: "other", choices: "collection-types" },
 		]);
-		expect(action.prompt).toBe("Recommend 5 {{type}}.");
+		expect(action.prompt).toBe("Recommend {{count}} {{type}}.");
 		expect(ok({ ...valid, params: null }).params).toEqual([]);
 	});
 

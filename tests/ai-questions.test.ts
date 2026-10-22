@@ -156,6 +156,15 @@ describe("request messages", () => {
 		prompt: "Ask 3 questions. Reply in prose please.",
 	};
 
+	it("replaces {{count}} with the chosen count, in the prompt and in the output contract", () => {
+		const asking: ActionDefinition = { ...action, count: 5, prompt: "Ask {{count}} questions." };
+		expect(buildMessages(asking, []).system).toMatch(/^Ask 5 questions\./);
+		const chosen = buildMessages(asking, [], {}, "", 2).system;
+		expect(chosen).toMatch(/^Ask 2 questions\./);
+		expect(chosen).not.toContain("{{count}}");
+		expect(chosen).toBe(buildMessages({ ...asking, count: 2 }, []).system);
+	});
+
 	it("appends the output contract after the prompt", () => {
 		const { system } = buildMessages(action, []);
 		expect(system.startsWith("Ask 3 questions. Reply in prose please.\n\n")).toBe(true);

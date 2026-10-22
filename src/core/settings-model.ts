@@ -52,6 +52,8 @@ export interface AiState {
 	confirmed: Confirmations;
 	/** Collection type (`movie`) -> titles the user does not want suggested again. */
 	notInterested: Record<string, string[]>;
+	/** Action file path -> the "How many" chosen in its run window (1 to 10), only when it differs from the file's count. */
+	counts: Record<string, number>;
 }
 
 /** Where the AI actions find the user's collection notes (`CollectionProperties`). */
@@ -133,7 +135,7 @@ export const DEFAULT_SETTINGS: VaultMateSettings = {
 	ideas: { enabled: true, tag: "idea", newNoteFolder: "", newNoteTemplate: "", seedSubtag: "" },
 	projects: { enabled: true, tag: "project", tracksTitle: "\u{1F9ED} Tracks", newProjectFolder: "", newProjectTemplate: "" },
 	ai: { enabled: true, baseUrl: "https://api.openai.com/v1", model: "gpt-5.6-luna", apiKeySecret: "", actionsFolder: "VaultMate/AI actions" },
-	aiState: { confirmed: {}, notInterested: {} },
+	aiState: { confirmed: {}, notInterested: {}, counts: {} },
 	collections: { folder: "", typeProperty: "type", ratingProperty: "rating" },
 	location: { enabled: true, latitudeProperty: "latitude", longitudeProperty: "longitude", labelProperty: "location", androidApp: false },
 	context: { enabled: true, excludedFolders: [], peopleProperties: ["author", "authors", "people"], maxConnections: 3 },
@@ -285,6 +287,11 @@ export function normalizeSettings(value: unknown): VaultMateSettings {
 	for (const [type, titles] of Object.entries(notInterestedRaw)) {
 		if (Array.isArray(titles)) notInterested[type] = titles.filter((title): title is string => typeof title === "string");
 	}
+	const countsRaw = isRecord(value) && isRecord(value.aiState) && isRecord(value.aiState.counts) ? value.aiState.counts : {};
+	const counts: Record<string, number> = {};
+	for (const [path, count] of Object.entries(countsRaw)) {
+		if (typeof count === "number" && Number.isInteger(count) && count >= 1 && count <= 10) counts[path] = count;
+	}
 	const col = isRecord(value) && isRecord(value.collections) ? value.collections : {};
 	const colDefaults = DEFAULT_SETTINGS.collections;
 	let typeProperty = typeof col.typeProperty === "string" && validatePropertyName(col.typeProperty.trim()) === undefined ? col.typeProperty.trim() : colDefaults.typeProperty;
@@ -335,7 +342,7 @@ export function normalizeSettings(value: unknown): VaultMateSettings {
 			apiKeySecret: typeof ai.apiKeySecret === "string" ? ai.apiKeySecret : aiDefaults.apiKeySecret,
 			actionsFolder: typeof ai.actionsFolder === "string" && cleanFolderPath(ai.actionsFolder) !== "" ? cleanFolderPath(ai.actionsFolder) : aiDefaults.actionsFolder,
 		},
-		aiState: { confirmed, notInterested },
+		aiState: { confirmed, notInterested, counts },
 		firstRun: { tagCheckDone: isRecord(value) && isRecord(value.firstRun) && typeof value.firstRun.tagCheckDone === "boolean" ? value.firstRun.tagCheckDone : DEFAULT_SETTINGS.firstRun.tagCheckDone },
 		collections: { folder: typeof col.folder === "string" ? cleanFolderPath(col.folder) : colDefaults.folder, typeProperty, ratingProperty },
 		journal: { enabled: typeof journal.enabled === "boolean" ? journal.enabled : defaults.enabled, decisionTag, predictionTag },

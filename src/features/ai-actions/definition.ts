@@ -30,11 +30,12 @@ export interface ActionDefinition {
 	command: boolean;
 	sources: SourceName[];
 	output: "questions" | "suggestions" | "items";
+	/** The file's `count`: the default of "How many" in the run window. */
 	count: number;
 	params: ParamDefinition[];
 	/** null = show the result only. */
 	insert: InsertTarget | null;
-	/** The prompt, with `{{count}}` replaced (the parameters are replaced when the action runs). */
+	/** The prompt without its `%% comments %%`. `{{count}}` and the parameters are replaced when the action runs. */
 	prompt: string;
 }
 
@@ -49,6 +50,11 @@ export function splitFrontmatter(text: string): { yaml: string | null; body: str
 	const match = /^---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/.exec(text);
 	if (!match) return { yaml: null, body: text };
 	return { yaml: match[1] ?? "", body: text.slice(match[0].length) };
+}
+
+/** Removes Obsidian comments (`%% ... %%`, on one line or several): they explain the file and are never sent. */
+export function stripComments(text: string): string {
+	return text.replace(/%%[\s\S]*?%%/g, "");
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -149,7 +155,7 @@ export function parseAction(path: string, frontmatter: unknown, body: string): A
 	if (output === "suggestions" && !sources.includes("collection-profile")) return fail("Output suggestions needs the collection-profile source.");
 	if (output === "suggestions" && insert) return fail("Output suggestions cannot be inserted into a note. Remove insert.");
 
-	const prompt = body.replaceAll("{{count}}", String(count)).trim();
+	const prompt = stripComments(body).trim();
 	if (!prompt) return fail("The prompt is empty. Write it below the properties.");
 
 	return {

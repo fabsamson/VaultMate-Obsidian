@@ -43,8 +43,7 @@ describe("Challenge this note", () => {
 		expect(entry.ok).toBe(true);
 		if (!entry.ok) return;
 		expect(entry.action).toMatchObject({ command: true, sources: ["note"], count: 5, insert: { type: "heading", heading: "Questions", line: "- {{text}}" } });
-		expect(entry.action.prompt).toContain("Ask 5 open questions");
-		expect(entry.action.prompt).not.toContain("{{count}}");
+		expect(entry.action.prompt).toContain("Ask {{count}} open questions");
 	});
 });
 
@@ -90,8 +89,7 @@ describe("Recommend me", () => {
 		expect(entry.ok).toBe(true);
 		if (!entry.ok) return;
 		expect(entry.action).toMatchObject({ command: true, sources: ["collection-profile"], output: "suggestions", count: 5, insert: null, params: [{ name: "type", label: "Type", choices: "collection-types" }, { name: "entry", label: "Based on", choices: "collection-entries" }] });
-		expect(entry.action.prompt).toContain("Suggest 5 {{type}} the user has not seen, close to {{based_on}}.");
-		expect(entry.action.prompt).not.toContain("{{count}}");
+		expect(entry.action.prompt).toContain("Suggest {{count}} {{type}} the user has not seen, close to {{based_on}}.");
 		expect(entry.action.prompt).toContain("Already in the vault");
 	});
 });
@@ -135,7 +133,7 @@ describe("Next steps", () => {
 		expect(entry.ok).toBe(true);
 		if (!entry.ok) return;
 		expect(entry.action).toMatchObject({ output: "items", count: 3, sources: ["track"], insert: null });
-		expect(entry.action.prompt).toContain("Suggest 3 concrete next actions");
+		expect(entry.action.prompt).toContain("Suggest {{count}} concrete next actions");
 		expect(entry.action.prompt).toContain("{{track}}");
 	});
 });
