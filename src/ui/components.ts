@@ -106,6 +106,8 @@ export function createHankoStamp(parent: HTMLElement, options: HankoStampOptions
 export interface Choice<T extends string> {
 	value: T;
 	label: string;
+	/** A shorter visible text; `label` stays the accessible name and the tooltip. */
+	shortLabel?: string;
 	/** A mark before the label (`createMark`: a status seal, a scope); the label still carries the meaning. */
 	sprite?: Sprite;
 	/** Why the choice cannot be picked now (its tooltip); it stays visible but the keyboard skips it. */
@@ -135,8 +137,10 @@ function createChoiceGroup<T extends string>(parent: HTMLElement, groupCls: stri
 		if (choice.disabled) button.setAttr("aria-disabled", "true");
 		// The reason is the tooltip and, with the label, the accessible name: the label stays the first thing read.
 		if (choice.disabled) setQuickTooltip(button, `${choice.label}: ${choice.disabled}`);
+		else if (choice.shortLabel) setQuickTooltip(button, choice.label);
+		if (choice.shortLabel) button.setAttr("aria-label", choice.disabled ? `${choice.label}: ${choice.disabled}` : choice.label);
 		if (choice.sprite) createMark(button, choice.sprite);
-		button.createSpan({ text: choice.label });
+		button.createSpan({ cls: choice.shortLabel ? "vaultmate-choice-text" : undefined, text: choice.shortLabel ?? choice.label });
 		return button;
 	});
 	const disabled = options.choices.map((choice) => !!choice.disabled);

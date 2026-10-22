@@ -7,6 +7,8 @@ import { folderNoteFolder, scopePaths, type JournalScope } from "./scope";
 
 const SCOPE_LABEL: Record<JournalScope, string> = { vault: "Whole vault", note: "This note", tree: "With sub-notes" };
 
+const SCOPE_SHORT_LABEL: Record<JournalScope, string> = { vault: "Vault", note: "Note", tree: "Sub-notes" };
+
 const SCOPE_SPRITE: Record<JournalScope, Sprite> = { vault: SPRITES.stateScopeVault, note: SPRITES.stateScopeNote, tree: SPRITES.stateScopeTree };
 
 function noteName(path: string): string {
@@ -30,8 +32,8 @@ export function addScopeControls(
 	let scope: JournalScope = available[ctx.state.scope] ? ctx.state.scope : "vault";
 
 	const reasons: Record<JournalScope, string> = { vault: "", note: "No note open", tree: notePath === null ? "No note open" : "Not a folder note" };
-	const choices = (["vault", "note", "tree"] as const).map((value): Choice<JournalScope> => ({ value, label: SCOPE_LABEL[value], sprite: SCOPE_SPRITE[value], disabled: available[value] ? undefined : reasons[value] }));
-	createChipRow(parent, {
+	const choices = (["vault", "note", "tree"] as const).map((value): Choice<JournalScope> => ({ value, label: SCOPE_LABEL[value], shortLabel: SCOPE_SHORT_LABEL[value], sprite: SCOPE_SPRITE[value], disabled: available[value] ? undefined : reasons[value] }));
+	const row = createChipRow(parent, {
 		label: "Scope",
 		choices,
 		value: scope,
@@ -43,6 +45,7 @@ export function addScopeControls(
 			onChange(scopePaths(scope, notePath, markdownPaths));
 		},
 	});
+	row.el.addClass("vaultmate-scope-chips");
 	const hint = parent.createEl("p", { cls: "vaultmate-muted" });
 	const renderHint = (): void => {
 		hint.setText(scope !== "vault" && notePath ? `In ${noteName(notePath)}${scope === "tree" ? " and its sub-notes" : ""}` : ctx.state.scope !== "vault" ? "Showing the whole vault: this scope does not apply to the current note." : "");

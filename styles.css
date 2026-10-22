@@ -218,6 +218,31 @@
 	text-align: left;
 }
 
+/* The scope row (Vault / Note / Sub-notes) never wraps; in a very narrow panel the chips keep only their sprite. */
+.vaultmate-scope-chips {
+	flex-wrap: nowrap;
+	gap: var(--size-4-1);
+	container-type: inline-size;
+}
+
+.vaultmate-scope-chips .vaultmate-choice-option {
+	flex: 0 1 auto;
+	min-width: 0;
+	padding-inline: var(--size-4-2);
+	white-space: nowrap;
+}
+
+@container (max-width: 280px) {
+	.vaultmate-scope-chips .vaultmate-choice-text {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+}
+
 .vaultmate-choice-option .vaultmate-sprite {
 	flex: none;
 }

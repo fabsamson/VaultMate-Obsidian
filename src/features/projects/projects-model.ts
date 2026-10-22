@@ -165,7 +165,17 @@ export interface ProjectSummary {
 	progress: ProjectProgress | null;
 }
 
-export function summarizeProject(project: ProjectLike, entries: { byTrack: readonly EntryLike[][]; outside: readonly EntryLike[] }, today: Date, progressProperty?: unknown): ProjectSummary {
+/** What the dashboard order needs besides the tile: open tracks, open tasks and the latest activity. */
+export interface ProjectActivity {
+	/** Open tracks: Explore, Backlog and In progress. */
+	openTracks: number;
+	/** Open tasks of the tracks that are not Done or Dropped. */
+	openTasks: number;
+	/** Latest modification (ms since the epoch) of the project note and, for a folder note, of its sub-notes; 0 when unknown. */
+	lastActivity: number;
+}
+
+export function summarizeProject(project: ProjectLike, entries: { byTrack: readonly EntryLike[][]; outside: readonly EntryLike[] }, today: Date, progressProperty?: unknown, lastActivity = 0): ProjectSummary & ProjectActivity {
 	const counts = trackCounts(project.model.tracks);
 	return {
 		path: project.path,
@@ -175,6 +185,9 @@ export function summarizeProject(project: ProjectLike, entries: { byTrack: reado
 		ideas: project.model.ideas.length,
 		reviewsDue: countDue([...entries.byTrack.flat(), ...entries.outside], today),
 		next: nextDueTask(project.model.tracks, today),
+		openTracks: counts.explore + counts.backlog + counts.progress,
+		openTasks: project.model.tracks.filter((track) => OPEN_STATUSES.includes(track.status)).reduce((sum, track) => sum + openTasks(track).length, 0),
+		lastActivity,
 	};
 }
 
@@ -234,11 +247,33 @@ export function reviewsDueText(count: number): string {
 	return count === 0 ? "" : `${count} ${count === 1 ? "review" : "reviews"} due`;
 }
 
-/** Tiles in view: projects with a review due first, then those with a track in progress; the rest go under "Other projects". */
-export function orderTiles<T extends ProjectSummary>(tiles: readonly T[]): { shown: T[]; other: T[] } {
-	const due = tiles.filter((tile) => tile.reviewsDue > 0);
-	const building = tiles.filter((tile) => tile.reviewsDue === 0 && tile.counts.progress > 0);
-	return { shown: [...due, ...building], other: tiles.filter((tile) => tile.reviewsDue === 0 && tile.counts.progress === 0) };
+/** The latest modification time among the notes of a project (its note, or its folder note's tree); 0 when none. */
+export function latestActivity(paths: Iterable<string>, modified: (path: string) => number): number {
+	let latest = 0;
+	for (const path of paths) latest = Math.max(latest, modified(path));
+	return latest;
+}
+
+/** A project touched less than this long ago counts as active. */
+export const RECENT_ACTIVITY_MS = 30 * 24 * 60 * 60 * 1000;
+
+/** Active: a review due, an open track, an open task, or activity in the last 30 days before `now` (ms). */
+export function isActiveProject(tile: ProjectSummary & ProjectActivity, now: number): boolean {
+	return tile.reviewsDue > 0 || tile.openTracks > 0 || tile.openTasks > 0 || now - tile.lastActivity < RECENT_ACTIVITY_MS;
+}
+
+/**
+ * Tiles in view: the active projects, then the others under "Other projects". Shown: a review due first,
+ * then the latest activity, the most open tracks, the most open tasks, the name. Other: the latest activity,
+ * then the name.
+ */
+export function orderTiles<T extends ProjectSummary & ProjectActivity>(tiles: readonly T[], now: number): { shown: T[]; other: T[] } {
+	const byName = (a: T, b: T): number => a.name.localeCompare(b.name);
+	const shown = tiles
+		.filter((tile) => isActiveProject(tile, now))
+		.sort((a, b) => Number(b.reviewsDue > 0) - Number(a.reviewsDue > 0) || b.lastActivity - a.lastActivity || b.openTracks - a.openTracks || b.openTasks - a.openTasks || byName(a, b));
+	const other = tiles.filter((tile) => !isActiveProject(tile, now)).sort((a, b) => b.lastActivity - a.lastActivity || byName(a, b));
+	return { shown, other };
 }
 
 // ---- Project page: the chip row ---------------------------------------------------------------------------

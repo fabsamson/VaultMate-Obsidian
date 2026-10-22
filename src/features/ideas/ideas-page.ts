@@ -195,7 +195,7 @@ export function createIdeasPage(host: IdeasPageHost): HubPage {
 
 	return {
 		id: IDEAS_PAGE_ID,
-		order: 15,
+		order: 10,
 		title: "Ideas",
 		sprite: SPRITES.moduleIdea,
 		enabled: () => host.enabled(),
