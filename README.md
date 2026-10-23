@@ -2,7 +2,7 @@
 
 VaultMate keeps a journal of your decisions and predictions, with review dates, reviews and a track record of how well you judged. It also collects ideas you sort later, moves project tracks from idea to done, and offers optional AI actions that run only when you ask, a place search and suggestions of new connections between notes. Everything is plain Markdown lines in your own notes, it works on desktop and mobile, and your notes stay on your device. It works fully on its own.
 
-Current version: 0.14.0.
+Current version: 0.15.0.
 
 ![Writing a decision, its badge in the note and its review](https://raw.githubusercontent.com/fabsamson/VaultMate-Obsidian/main/docs/media/decision.gif)
 
